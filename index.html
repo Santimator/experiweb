@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
 <title>Save the Coconuts</title>
 
 <style>
@@ -31,6 +32,7 @@ h1{
   font-size:20px;
 }
 
+/* PCB BOARD */
 .microbit{
   background:#0f3b2e;
   padding:30px;
@@ -45,6 +47,7 @@ h1{
   gap:30px;
 }
 
+/* LED PANEL */
 .led-container{
   background:#082a20;
   padding:20px;
@@ -53,28 +56,30 @@ h1{
 
 .led-grid{
   display:grid;
-  grid-template-columns:repeat(5,22px);
-  grid-template-rows:repeat(5,22px);
+  grid-template-columns:repeat(5,18px);
+  grid-template-rows:repeat(5,26px);
   gap:8px;
 }
 
+/* VERTICAL RECTANGLE LED */
 .led{
-  width:22px;
-  height:22px;
-  border-radius:50%;
-  background:#320000;
+  width:18px;
+  height:26px;
+  border-radius:3px;
+  background:#220000;
 }
 
 .led.on{
-  background:red;
-  box-shadow:0 0 6px red;
+  background:#ff3b00;
+  box-shadow:0 0 8px #ff3b00;
 }
 
+/* BUTTONS */
 .btn{
   width:65px;
   height:65px;
   border-radius:50%;
-  background:#444;
+  background:#2a2a2a;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -84,7 +89,7 @@ h1{
 }
 
 .btn:active{
-  background:#666;
+  background:#444;
 }
 
 .hint{
@@ -97,7 +102,7 @@ h1{
 </head>
 <body>
 
-<h1>¡¡Salva los cocos!!</h1>
+<h1>Save the Coconuts</h1>
 
 <div class="microbit">
   <div class="board">
@@ -126,7 +131,6 @@ let gameOver=false;
 let scrolling=false;
 
 function createGrid(){
-  leds=[];
   for(let i=0;i<size*size;i++){
     const d=document.createElement("div");
     d.className="led";
@@ -173,15 +177,16 @@ function step(){
   setTimeout(step,speed);
 }
 
+/* WRAP AROUND MOVEMENT */
 function moveLeft(){
   if(gameOver) return;
-  if(basketX>0) basketX--;
+  basketX = (basketX - 1 + size) % size;
   draw();
 }
 
 function moveRight(){
   if(gameOver) return;
-  if(basketX<size-1) basketX++;
+  basketX = (basketX + 1) % size;
   draw();
 }
 
@@ -205,6 +210,7 @@ function restartGame(){
   setTimeout(step,speed);
 }
 
+/* MARQUEE SCROLL (enters from right, exits left) */
 function scrollScore(text){
   scrolling=true;
 
@@ -222,33 +228,48 @@ function scrollScore(text){
   };
 
   let cols=[];
+
+  /* leading blank space so it enters from right */
+  for(let i=0;i<5;i++) cols.push([0,0,0,0,0]);
+
   text.split("").forEach(c=>{
     const p=font[c];
     for(let x=0;x<3;x++){
       let col=[];
-      for(let y=0;y<5;y++) col.push(p[y][x]==="1");
+      for(let y=0;y<5;y++)
+        col.push(p[y][x]==="1");
       cols.push(col);
     }
     cols.push([0,0,0,0,0]);
   });
-  cols=cols.concat(Array(5).fill([0,0,0,0,0]));
+
+  /* trailing blank so it exits left */
+  for(let i=0;i<5;i++) cols.push([0,0,0,0,0]);
 
   let offset=0;
+
   function loop(){
     if(!scrolling) return;
+
     clearGrid();
+
     for(let x=0;x<5;x++){
       let col=cols[x+offset];
       if(!col) continue;
       for(let y=0;y<5;y++)
         if(col[y]) leds[idx(x,y)].classList.add("on");
     }
+
     offset++;
-    if(offset<cols.length-5)
+
+    if(offset<=cols.length-5){
       setTimeout(loop,120);
-    else
-      setTimeout(()=>{offset=0;loop();},600);
+    } else {
+      offset=0;
+      setTimeout(loop,600);
+    }
   }
+
   loop();
 }
 
