@@ -2,38 +2,47 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Save the Coconuts</title>
+
 <style>
-body{
+html, body {
+  margin:0;
+  padding:0;
+  height:100%;
   background:#0f0f0f;
+  font-family:monospace;
+  color:white;
+  overflow:hidden;
+  touch-action:none;
+}
+
+body{
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  height:100vh;
-  margin:0;
-  font-family:monospace;
-  color:white;
 }
 
 h1{
   margin-bottom:20px;
   letter-spacing:2px;
+  font-size:20px;
 }
 
 .microbit{
   background:#1c1c1c;
-  padding:40px;
+  padding:30px;
   border-radius:40px;
-  position:relative;
   box-shadow:0 0 40px #000 inset;
 }
 
 .board{
   display:flex;
   align-items:center;
-  gap:40px;
+  justify-content:center;
+  gap:30px;
 }
 
 .led-container{
@@ -44,26 +53,26 @@ h1{
 
 .led-grid{
   display:grid;
-  grid-template-columns:repeat(5,24px);
-  grid-template-rows:repeat(5,24px);
-  gap:10px;
+  grid-template-columns:repeat(5,22px);
+  grid-template-rows:repeat(5,22px);
+  gap:8px;
 }
 
 .led{
-  width:24px;
-  height:24px;
+  width:22px;
+  height:22px;
   border-radius:50%;
   background:#320000;
 }
 
 .led.on{
   background:red;
-  box-shadow:0 0 8px red;
+  box-shadow:0 0 6px red;
 }
 
 .btn{
-  width:70px;
-  height:70px;
+  width:65px;
+  height:65px;
   border-radius:50%;
   background:#444;
   display:flex;
@@ -71,6 +80,7 @@ h1{
   justify-content:center;
   font-size:20px;
   user-select:none;
+  touch-action:none;
 }
 
 .btn:active{
@@ -109,6 +119,7 @@ h1{
 const size=5;
 const grid=document.getElementById("grid");
 const hint=document.getElementById("hint");
+
 let leds=[];
 let basketX, fallingX, fallingY, speed, score;
 let gameOver=false;
@@ -117,11 +128,10 @@ let leftPressed=false;
 let rightPressed=false;
 
 function createGrid(){
-  grid.innerHTML="";
   leds=[];
   for(let i=0;i<size*size;i++){
     const d=document.createElement("div");
-    d.classList.add("led");
+    d.className="led";
     grid.appendChild(d);
     leds.push(d);
   }
@@ -185,8 +195,8 @@ function endGame(){
 
 function restartGame(){
   if(!gameOver) return;
-  gameOver=false;
   scrolling=false;
+  gameOver=false;
   hint.style.display="none";
   basketX=2;
   fallingX=null;
@@ -245,35 +255,34 @@ function scrollScore(text){
 }
 
 function checkRestart(){
-  if(leftPressed && rightPressed)
-    restartGame();
+  if(leftPressed && rightPressed) restartGame();
 }
 
-document.getElementById("btnA").addEventListener("pointerdown",()=>{
-  leftPressed=true;
-  if(!gameOver) moveLeft();
-  checkRestart();
-});
-document.getElementById("btnA").addEventListener("pointerup",()=>leftPressed=false);
+function attachButton(el, side){
+  el.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    if(side==="left") leftPressed=true;
+    else rightPressed=true;
+    if(!gameOver){
+      if(side==="left") moveLeft();
+      else moveRight();
+    }
+    checkRestart();
+  },{passive:false});
 
-document.getElementById("btnB").addEventListener("pointerdown",()=>{
-  rightPressed=true;
-  if(!gameOver) moveRight();
-  checkRestart();
-});
-document.getElementById("btnB").addEventListener("pointerup",()=>rightPressed=false);
+  el.addEventListener("touchend",e=>{
+    e.preventDefault();
+    if(side==="left") leftPressed=false;
+    else rightPressed=false;
+  },{passive:false});
+}
+
+attachButton(document.getElementById("btnA"),"left");
+attachButton(document.getElementById("btnB"),"right");
 
 document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"){
-    leftPressed=true;
-    if(!gameOver) moveLeft();
-    checkRestart();
-  }
-  if(e.key==="ArrowRight"){
-    rightPressed=true;
-    if(!gameOver) moveRight();
-    checkRestart();
-  }
+  if(e.key==="ArrowLeft"){leftPressed=true;moveLeft();checkRestart();}
+  if(e.key==="ArrowRight"){rightPressed=true;moveRight();checkRestart();}
 });
 
 document.addEventListener("keyup",e=>{
