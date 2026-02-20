@@ -3,174 +3,204 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Micro:bit Falling Game</title>
+<title>Save the Coconuts</title>
 <style>
-  body {
-    background:#111;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    margin:0;
-    font-family:monospace;
-  }
+body{
+  background:#0f0f0f;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  margin:0;
+  font-family:monospace;
+  color:white;
+}
 
-  .microbit {
-    background:#222;
-    padding:30px 20px 40px 20px;
-    border-radius:30px;
-    box-shadow:0 0 40px #000 inset;
-    text-align:center;
-  }
+h1{
+  margin-bottom:20px;
+  letter-spacing:2px;
+}
 
-  .led-grid {
-    display:grid;
-    grid-template-columns:repeat(5, 20px);
-    grid-gap:8px;
-    justify-content:center;
-    margin-bottom:30px;
-  }
+.microbit{
+  background:#1c1c1c;
+  padding:40px;
+  border-radius:40px;
+  position:relative;
+  box-shadow:0 0 40px #000 inset;
+}
 
-  .led {
-    width:20px;
-    height:20px;
-    border-radius:50%;
-    background:#330000;
-    transition:background 0.05s;
-  }
+.board{
+  display:flex;
+  align-items:center;
+  gap:40px;
+}
 
-  .led.on {
-    background:red;
-    box-shadow:0 0 6px red;
-  }
+.led-container{
+  background:#111;
+  padding:20px;
+  border-radius:20px;
+}
 
-  .buttons {
-    display:flex;
-    justify-content:space-between;
-  }
+.led-grid{
+  display:grid;
+  grid-template-columns:repeat(5,24px);
+  grid-template-rows:repeat(5,24px);
+  gap:10px;
+}
 
-  .btn {
-    width:60px;
-    height:60px;
-    border-radius:50%;
-    background:#555;
-    color:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    user-select:none;
-    font-size:20px;
-  }
+.led{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#320000;
+}
 
-  .btn:active {
-    background:#777;
-  }
+.led.on{
+  background:red;
+  box-shadow:0 0 8px red;
+}
+
+.btn{
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:#444;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  user-select:none;
+}
+
+.btn:active{
+  background:#666;
+}
+
+.hint{
+  margin-top:15px;
+  font-size:12px;
+  opacity:0.7;
+  display:none;
+}
 </style>
 </head>
 <body>
 
-<div class="microbit">
-  <div id="grid" class="led-grid"></div>
+<h1>Save the Coconuts</h1>
 
-  <div class="buttons">
+<div class="microbit">
+  <div class="board">
     <div id="btnA" class="btn">A</div>
+
+    <div class="led-container">
+      <div id="grid" class="led-grid"></div>
+    </div>
+
     <div id="btnB" class="btn">B</div>
+  </div>
+
+  <div id="hint" class="hint">
+    (press two buttons simultaneously to restart the game)
   </div>
 </div>
 
 <script>
-const size = 5;
-const grid = document.getElementById("grid");
-let leds = [];
-let basketX, fallingX, fallingY, speed, score, gameOver;
-let leftPressed = false;
-let rightPressed = false;
+const size=5;
+const grid=document.getElementById("grid");
+const hint=document.getElementById("hint");
+let leds=[];
+let basketX, fallingX, fallingY, speed, score;
+let gameOver=false;
+let scrolling=false;
+let leftPressed=false;
+let rightPressed=false;
 
-function initGrid() {
-  grid.innerHTML = "";
-  leds = [];
-  for (let i = 0; i < size * size; i++) {
-    const led = document.createElement("div");
-    led.classList.add("led");
-    grid.appendChild(led);
-    leds.push(led);
+function createGrid(){
+  grid.innerHTML="";
+  leds=[];
+  for(let i=0;i<size*size;i++){
+    const d=document.createElement("div");
+    d.classList.add("led");
+    grid.appendChild(d);
+    leds.push(d);
   }
 }
 
-function index(x, y) {
-  return y * size + x;
-}
+function idx(x,y){return y*size+x;}
+function clearGrid(){leds.forEach(l=>l.classList.remove("on"));}
 
-function clearGrid() {
-  leds.forEach(l => l.classList.remove("on"));
-}
-
-function draw() {
+function draw(){
+  if(gameOver || scrolling) return;
   clearGrid();
-  if (!gameOver) {
-    leds[index(basketX, size - 1)].classList.add("on");
-    if (fallingX !== null) {
-      leds[index(fallingX, fallingY)].classList.add("on");
-    }
-  }
+  leds[idx(basketX,size-1)].classList.add("on");
+  if(fallingX!==null)
+    leds[idx(fallingX,fallingY)].classList.add("on");
 }
 
-function spawn() {
-  fallingX = Math.floor(Math.random() * size);
-  fallingY = 0;
+function spawn(){
+  fallingX=Math.floor(Math.random()*size);
+  fallingY=0;
 }
 
-function step() {
-  if (gameOver) return;
+function step(){
+  if(gameOver) return;
 
-  if (fallingY === null) spawn();
+  if(fallingY===null) spawn();
   else fallingY++;
 
-  if (fallingY === size - 1) {
-    if (fallingX === basketX) {
+  if(fallingY===size-1){
+    if(fallingX===basketX){
       score++;
-      speed *= 0.93;
-      fallingX = null;
-      fallingY = null;
-    } else {
+      speed*=0.93;
+      fallingX=null;
+      fallingY=null;
+    }else{
       endGame();
       return;
     }
   }
 
   draw();
-  setTimeout(step, speed);
+  setTimeout(step,speed);
 }
 
-function moveLeft() {
-  if (basketX > 0 && !gameOver) basketX--;
+function moveLeft(){
+  if(gameOver) return;
+  if(basketX>0) basketX--;
   draw();
 }
 
-function moveRight() {
-  if (basketX < size - 1 && !gameOver) basketX++;
+function moveRight(){
+  if(gameOver) return;
+  if(basketX<size-1) basketX++;
   draw();
 }
 
-function endGame() {
-  gameOver = true;
+function endGame(){
+  gameOver=true;
+  hint.style.display="block";
   scrollScore(score.toString());
 }
 
-function restartGame() {
-  basketX = 2;
-  fallingX = null;
-  fallingY = null;
-  speed = 600;
-  score = 0;
-  gameOver = false;
+function restartGame(){
+  if(!gameOver) return;
+  gameOver=false;
+  scrolling=false;
+  hint.style.display="none";
+  basketX=2;
+  fallingX=null;
+  fallingY=null;
+  speed=600;
+  score=0;
   draw();
   spawn();
-  setTimeout(step, speed);
+  setTimeout(step,speed);
 }
 
-function scrollScore(text) {
-  const font = {
+function scrollScore(text){
+  scrolling=true;
+  const font={
     "0":["111","101","101","101","111"],
     "1":["010","110","010","010","111"],
     "2":["111","001","111","100","111"],
@@ -183,79 +213,75 @@ function scrollScore(text) {
     "9":["111","101","111","001","111"]
   };
 
-  let columns = [];
-
-  text.split("").forEach(char => {
-    const pattern = font[char];
-    for (let col = 0; col < 3; col++) {
-      let column = [];
-      for (let row = 0; row < 5; row++) {
-        column.push(pattern[row][col] === "1");
-      }
-      columns.push(column);
+  let cols=[];
+  text.split("").forEach(c=>{
+    const p=font[c];
+    for(let x=0;x<3;x++){
+      let col=[];
+      for(let y=0;y<5;y++) col.push(p[y][x]==="1");
+      cols.push(col);
     }
-    columns.push([0,0,0,0,0]);
+    cols.push([0,0,0,0,0]);
   });
+  cols=cols.concat(Array(5).fill([0,0,0,0,0]));
 
-  columns = columns.concat(Array(5).fill([0,0,0,0,0]));
-
-  let offset = 0;
-
-  function scroll() {
+  let offset=0;
+  function loop(){
+    if(!scrolling) return;
     clearGrid();
-    for (let x = 0; x < 5; x++) {
-      let colData = columns[x + offset];
-      if (!colData) continue;
-      for (let y = 0; y < 5; y++) {
-        if (colData[y]) leds[index(x,y)].classList.add("on");
-      }
+    for(let x=0;x<5;x++){
+      let col=cols[x+offset];
+      if(!col) continue;
+      for(let y=0;y<5;y++)
+        if(col[y]) leds[idx(x,y)].classList.add("on");
     }
     offset++;
-    if (offset < columns.length - 5) {
-      setTimeout(scroll, 120);
-    }
+    if(offset<cols.length-5)
+      setTimeout(loop,120);
+    else
+      setTimeout(()=>{offset=0;loop();},600);
   }
-
-  scroll();
+  loop();
 }
 
-function checkRestart() {
-  if (leftPressed && rightPressed) restartGame();
+function checkRestart(){
+  if(leftPressed && rightPressed)
+    restartGame();
 }
 
-document.getElementById("btnA").addEventListener("pointerdown", () => {
-  leftPressed = true;
-  moveLeft();
+document.getElementById("btnA").addEventListener("pointerdown",()=>{
+  leftPressed=true;
+  if(!gameOver) moveLeft();
   checkRestart();
 });
-document.getElementById("btnA").addEventListener("pointerup", () => leftPressed = false);
+document.getElementById("btnA").addEventListener("pointerup",()=>leftPressed=false);
 
-document.getElementById("btnB").addEventListener("pointerdown", () => {
-  rightPressed = true;
-  moveRight();
+document.getElementById("btnB").addEventListener("pointerdown",()=>{
+  rightPressed=true;
+  if(!gameOver) moveRight();
   checkRestart();
 });
-document.getElementById("btnB").addEventListener("pointerup", () => rightPressed = false);
+document.getElementById("btnB").addEventListener("pointerup",()=>rightPressed=false);
 
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") {
-    leftPressed = true;
-    moveLeft();
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"){
+    leftPressed=true;
+    if(!gameOver) moveLeft();
     checkRestart();
   }
-  if (e.key === "ArrowRight") {
-    rightPressed = true;
-    moveRight();
+  if(e.key==="ArrowRight"){
+    rightPressed=true;
+    if(!gameOver) moveRight();
     checkRestart();
   }
 });
 
-document.addEventListener("keyup", e => {
-  if (e.key === "ArrowLeft") leftPressed = false;
-  if (e.key === "ArrowRight") rightPressed = false;
+document.addEventListener("keyup",e=>{
+  if(e.key==="ArrowLeft") leftPressed=false;
+  if(e.key==="ArrowRight") rightPressed=false;
 });
 
-initGrid();
+createGrid();
 restartGame();
 </script>
 
