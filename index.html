@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
 <title>Save the Coconuts</title>
 
 <style>
@@ -16,7 +16,7 @@ html, body {
   font-family:monospace;
   color:white;
   overflow:hidden;
-  touch-action:none;
+  touch-action:manipulation;
 }
 
 body{
@@ -297,6 +297,10 @@ document.addEventListener("keydown",e=>{
     if(e.key==="ArrowLeft") moveLeft();
     if(e.key==="ArrowRight") moveRight();
   }
+});
+
+document.addEventListener('gesturestart', function (e) {
+  e.preventDefault();
 });
 
 createGrid();
