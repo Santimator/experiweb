@@ -111,7 +111,7 @@ h1{
   </div>
 
   <div id="hint" class="hint">
-    (press two buttons simultaneously to restart the game)
+    (press A to restart the game)
   </div>
 </div>
 
@@ -124,8 +124,6 @@ let leds=[];
 let basketX, fallingX, fallingY, speed, score;
 let gameOver=false;
 let scrolling=false;
-let leftPressed=false;
-let rightPressed=false;
 
 function createGrid(){
   leds=[];
@@ -194,7 +192,6 @@ function endGame(){
 }
 
 function restartGame(){
-  if(!gameOver) return;
   scrolling=false;
   gameOver=false;
   hint.style.display="none";
@@ -203,13 +200,14 @@ function restartGame(){
   fallingY=null;
   speed=600;
   score=0;
-  draw();
+  clearGrid();
   spawn();
   setTimeout(step,speed);
 }
 
 function scrollScore(text){
   scrolling=true;
+
   const font={
     "0":["111","101","101","101","111"],
     "1":["010","110","010","010","111"],
@@ -254,26 +252,18 @@ function scrollScore(text){
   loop();
 }
 
-function checkRestart(){
-  if(leftPressed && rightPressed) restartGame();
-}
-
 function attachButton(el, side){
   el.addEventListener("touchstart",e=>{
     e.preventDefault();
-    if(side==="left") leftPressed=true;
-    else rightPressed=true;
-    if(!gameOver){
-      if(side==="left") moveLeft();
-      else moveRight();
-    }
-    checkRestart();
-  },{passive:false});
 
-  el.addEventListener("touchend",e=>{
-    e.preventDefault();
-    if(side==="left") leftPressed=false;
-    else rightPressed=false;
+    if(gameOver){
+      if(side==="left") restartGame();
+      return;
+    }
+
+    if(side==="left") moveLeft();
+    else moveRight();
+
   },{passive:false});
 }
 
@@ -281,13 +271,11 @@ attachButton(document.getElementById("btnA"),"left");
 attachButton(document.getElementById("btnB"),"right");
 
 document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"){leftPressed=true;moveLeft();checkRestart();}
-  if(e.key==="ArrowRight"){rightPressed=true;moveRight();checkRestart();}
-});
-
-document.addEventListener("keyup",e=>{
-  if(e.key==="ArrowLeft") leftPressed=false;
-  if(e.key==="ArrowRight") rightPressed=false;
+  if(gameOver && e.key==="ArrowLeft") restartGame();
+  if(!gameOver){
+    if(e.key==="ArrowLeft") moveLeft();
+    if(e.key==="ArrowRight") moveRight();
+  }
 });
 
 createGrid();
