@@ -1,124 +1,263 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fiesta Gatuna con Antonio - Web de Dani</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Micro:bit Falling Game</title>
 <style>
-    /* Reset rápido */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Comic Sans MS', cursive, sans-serif;
-    }
+  body {
+    background:#111;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+    font-family:monospace;
+  }
 
-    body {
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: linear-gradient(135deg, #ff69b4, #fff200);
-        animation: gradientMove 5s ease infinite alternate;
-        overflow: hidden;
-    }
+  .microbit {
+    background:#222;
+    padding:30px 20px 40px 20px;
+    border-radius:30px;
+    box-shadow:0 0 40px #000 inset;
+    text-align:center;
+  }
 
-    @keyframes gradientMove {
-        0% { background-position: 0% 50%; }
-        100% { background-position: 100% 50%; }
-    }
+  .led-grid {
+    display:grid;
+    grid-template-columns:repeat(5, 20px);
+    grid-gap:8px;
+    justify-content:center;
+    margin-bottom:30px;
+  }
 
-    .container {
-        text-align: center;
-        padding: 20px;
-        border: 5px dashed #ff1493;
-        border-radius: 30px;
-        background-color: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 0 50px rgba(0,0,0,0.2);
-        animation: bounce 2s infinite;
-    }
+  .led {
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:#330000;
+    transition:background 0.05s;
+  }
 
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-20px); }
-    }
+  .led.on {
+    background:red;
+    box-shadow:0 0 6px red;
+  }
 
-    h1 {
-        font-size: 3rem;
-        color: #ff1493;
-        text-shadow: 2px 2px #fff200;
-        margin-bottom: 20px;
-    }
+  .buttons {
+    display:flex;
+    justify-content:space-between;
+  }
 
-    img {
-        max-width: 100%;
-        height: auto;
-        border: 8px solid #fff200;
-        border-radius: 20px;
-        box-shadow: 0 0 20px #ff1493;
-        transition: transform 0.3s ease;
-    }
+  .btn {
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:#555;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    font-size:20px;
+  }
 
-    img:hover {
-        transform: rotate(15deg) scale(1.1);
-    }
-
-    p {
-        margin-top: 20px;
-        font-size: 1.5rem;
-        color: #fff;
-        text-shadow: 1px 1px #ff1493;
-    }
-
-    /* Confeti animado */
-    .confetti {
-        position: fixed;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        overflow: hidden;
-    }
-
-    .confetti div {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background-color: #ff1493;
-        opacity: 0.7;
-        animation: fall linear infinite;
-    }
-
-    @keyframes fall {
-        0% { transform: translateY(-10px) rotate(0deg); }
-        100% { transform: translateY(100vh) rotate(360deg); }
-    }
-
+  .btn:active {
+    background:#777;
+  }
 </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>¡Fiesta Gatuna!</h1>
-    <!-- Aquí sustituyes "gatitos.jpg" por tu imagen -->
-    <img src="cde61b68-5436-4815-82a8-cffe869b7f93.jpeg" alt="Antonio y gatitos ridículos">
-    <p>Antonio y sus compañeros de fiesta te saludan 🐱🎉</p>
+<div class="microbit">
+  <div id="grid" class="led-grid"></div>
+
+  <div class="buttons">
+    <div id="btnA" class="btn">A</div>
+    <div id="btnB" class="btn">B</div>
+  </div>
 </div>
 
-<div class="confetti">
-    <!-- Generamos 50 confetis -->
-    <script>
-        const confettiContainer = document.querySelector('.confetti');
-        for(let i=0; i<50; i++){
-            let div = document.createElement('div');
-            div.style.left = Math.random() * 100 + 'vw';
-            div.style.animationDuration = 2 + Math.random()*3 + 's';
-            div.style.width = div.style.height = (5 + Math.random()*10) + 'px';
-            div.style.backgroundColor = Math.random() > 0.5 ? '#ff1493' : '#fff200';
-            confettiContainer.appendChild(div);
-        }
-    </script>
-</div>
+<script>
+const size = 5;
+const grid = document.getElementById("grid");
+let leds = [];
+let basketX, fallingX, fallingY, speed, score, gameOver;
+let leftPressed = false;
+let rightPressed = false;
+
+function initGrid() {
+  grid.innerHTML = "";
+  leds = [];
+  for (let i = 0; i < size * size; i++) {
+    const led = document.createElement("div");
+    led.classList.add("led");
+    grid.appendChild(led);
+    leds.push(led);
+  }
+}
+
+function index(x, y) {
+  return y * size + x;
+}
+
+function clearGrid() {
+  leds.forEach(l => l.classList.remove("on"));
+}
+
+function draw() {
+  clearGrid();
+  if (!gameOver) {
+    leds[index(basketX, size - 1)].classList.add("on");
+    if (fallingX !== null) {
+      leds[index(fallingX, fallingY)].classList.add("on");
+    }
+  }
+}
+
+function spawn() {
+  fallingX = Math.floor(Math.random() * size);
+  fallingY = 0;
+}
+
+function step() {
+  if (gameOver) return;
+
+  if (fallingY === null) spawn();
+  else fallingY++;
+
+  if (fallingY === size - 1) {
+    if (fallingX === basketX) {
+      score++;
+      speed *= 0.93;
+      fallingX = null;
+      fallingY = null;
+    } else {
+      endGame();
+      return;
+    }
+  }
+
+  draw();
+  setTimeout(step, speed);
+}
+
+function moveLeft() {
+  if (basketX > 0 && !gameOver) basketX--;
+  draw();
+}
+
+function moveRight() {
+  if (basketX < size - 1 && !gameOver) basketX++;
+  draw();
+}
+
+function endGame() {
+  gameOver = true;
+  scrollScore(score.toString());
+}
+
+function restartGame() {
+  basketX = 2;
+  fallingX = null;
+  fallingY = null;
+  speed = 600;
+  score = 0;
+  gameOver = false;
+  draw();
+  spawn();
+  setTimeout(step, speed);
+}
+
+function scrollScore(text) {
+  const font = {
+    "0":["111","101","101","101","111"],
+    "1":["010","110","010","010","111"],
+    "2":["111","001","111","100","111"],
+    "3":["111","001","111","001","111"],
+    "4":["101","101","111","001","001"],
+    "5":["111","100","111","001","111"],
+    "6":["111","100","111","101","111"],
+    "7":["111","001","001","001","001"],
+    "8":["111","101","111","101","111"],
+    "9":["111","101","111","001","111"]
+  };
+
+  let columns = [];
+
+  text.split("").forEach(char => {
+    const pattern = font[char];
+    for (let col = 0; col < 3; col++) {
+      let column = [];
+      for (let row = 0; row < 5; row++) {
+        column.push(pattern[row][col] === "1");
+      }
+      columns.push(column);
+    }
+    columns.push([0,0,0,0,0]);
+  });
+
+  columns = columns.concat(Array(5).fill([0,0,0,0,0]));
+
+  let offset = 0;
+
+  function scroll() {
+    clearGrid();
+    for (let x = 0; x < 5; x++) {
+      let colData = columns[x + offset];
+      if (!colData) continue;
+      for (let y = 0; y < 5; y++) {
+        if (colData[y]) leds[index(x,y)].classList.add("on");
+      }
+    }
+    offset++;
+    if (offset < columns.length - 5) {
+      setTimeout(scroll, 120);
+    }
+  }
+
+  scroll();
+}
+
+function checkRestart() {
+  if (leftPressed && rightPressed) restartGame();
+}
+
+document.getElementById("btnA").addEventListener("pointerdown", () => {
+  leftPressed = true;
+  moveLeft();
+  checkRestart();
+});
+document.getElementById("btnA").addEventListener("pointerup", () => leftPressed = false);
+
+document.getElementById("btnB").addEventListener("pointerdown", () => {
+  rightPressed = true;
+  moveRight();
+  checkRestart();
+});
+document.getElementById("btnB").addEventListener("pointerup", () => rightPressed = false);
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") {
+    leftPressed = true;
+    moveLeft();
+    checkRestart();
+  }
+  if (e.key === "ArrowRight") {
+    rightPressed = true;
+    moveRight();
+    checkRestart();
+  }
+});
+
+document.addEventListener("keyup", e => {
+  if (e.key === "ArrowLeft") leftPressed = false;
+  if (e.key === "ArrowRight") rightPressed = false;
+});
+
+initGrid();
+restartGame();
+</script>
 
 </body>
 </html>
