@@ -46,12 +46,49 @@ Mathematics isn't just numbers on a page—it's the language of patterns, beauty
 - 3D rotation mode
 - Watch deterministic chaos unfold
 
-### 6. **Generative Mathematical Art** 🎨
+### 6. **Conway's Game of Life** 🎮
+- The most famous cellular automaton
+- Interactive grid - click cells to toggle them
+- Play/Pause/Step controls for precise exploration
+- Adjustable speed (1-60 fps)
+- Random pattern generation
+- Witness emergence from simple rules
+
+### 7. **Barnsley Fern** 🌿
+- Fractal beauty through iterated function systems
+- Four affine transformations creating natural patterns
+- Auto-growing animation with 50,000+ points
+- Demonstrates how chaos creates order
+- Natural green-yellow gradient mimics real ferns
+
+### 8. **Cellular Automata** 📊
+- Wolfram's one-dimensional cellular automata
+- 4 preset rules: 30 (chaotic), 110 (complex), 90 (Sierpinski), 184 (traffic)
+- Step-by-step or continuous evolution
+- Color gradient visualization
+- Rule 110 is Turing-complete!
+
+### 9. **Harmonograph** 🎵
+- Damped harmonic oscillations
+- Simulates two pendulum systems
+- Adjustable frequencies and damping
+- Random pattern generator
+- Save your favorite designs
+- Creates mesmerizing spirograph-like art
+
+### 10. **Generative Mathematical Art** 🎨
 - Create unique mathematical artworks
 - Adjustable complexity (1-10)
 - Animation mode
 - Save your creations as images
 - Each generation is mathematically unique
+
+## 🧭 Navigation
+
+- **Fixed menu bar** with quick links to all visualizations
+- **Auto-hiding navigation** on scroll for immersive experience
+- **Mobile-responsive** hamburger menu
+- **Smooth scrolling** between sections
 
 ## 🛠️ Technical Stack
 
@@ -141,6 +178,31 @@ Then open `http://localhost:8000` and start exploring!
 - **Toggle Rotation**: Enable/disable 3D rotation
 - **Reset**: Start with fresh trajectory
 
+### Game of Life
+- **Click Cells**: Toggle individual cells on/off
+- **Play/Pause**: Control the simulation
+- **Step**: Advance one generation at a time
+- **Random**: Generate random starting pattern
+- **Speed Slider**: Adjust generations per second
+
+### Barnsley Fern
+- **Auto-grow**: Watch the fern emerge point by point
+- **Faster**: Increase drawing speed
+- **Reset**: Start over with a fresh fern
+- **Toggle Animation**: Pause/resume growth
+
+### Cellular Automata
+- **Rule Selector**: Choose different Wolfram rules
+- **Step**: Generate next row
+- **Run**: Continuous evolution
+- **Reset**: Clear and start over
+
+### Harmonograph
+- **Frequency Sliders**: Adjust oscillation rates
+- **Damping**: Control how quickly the motion dies out
+- **New Pattern**: Randomize all parameters
+- **Save**: Download the artwork
+
 ### Generative Art
 - **Generate**: Create new random artwork
 - **Complexity**: Control pattern intricacy
@@ -178,10 +240,26 @@ This project celebrates the intersection of art, mathematics, and interactivity.
 ## 🤝 Credits
 
 - **Concept & Code**: Claude (Anthropic AI)
-- **Mathematical Inspiration**: Mandelbrot, Fourier, Lorenz, Ulam, and countless mathematicians
+- **Mathematical Inspiration**:
+  - Benoit Mandelbrot (fractals)
+  - Joseph Fourier (harmonic analysis)
+  - Edward Lorenz (chaos theory)
+  - Stanisław Ulam (prime spirals)
+  - John Conway (Game of Life)
+  - Michael Barnsley (IFS fractals)
+  - Stephen Wolfram (cellular automata)
 - **Hosting**: Cloudflare Pages
 - **Domain**: santiago-mj.com
 - **Collaboration**: Human-AI creative partnership
+
+## 📊 Project Statistics
+
+- **10 Interactive Visualizations** covering diverse mathematical concepts
+- **48KB of JavaScript** - pure vanilla, zero dependencies
+- **19KB of HTML** - semantic and accessible
+- **14KB of CSS** - modern, responsive design
+- **100% client-side** - no server required
+- **Infinite possibilities** - every parameter creates new beauty
 
 ## 📜 License
 
@@ -189,12 +267,18 @@ This is an educational and artistic project. The code is open for learning, expl
 
 ---
 
-**Fun Facts**:
-- The Mandelbrot set was discovered in 1980 but its beauty is timeless
-- Fourier analysis powers everything from JPEGs to quantum mechanics
-- Prime numbers are the "atoms" of mathematics
-- The Lorenz attractor was discovered accidentally while studying weather
-- The golden ratio (φ) appears throughout these visualizations
+## 🎉 Fun Mathematical Facts
+
+- **Mandelbrot Set**: Discovered in 1980, contains infinite detail at every zoom level
+- **Fourier Analysis**: Powers JPEGs, MP3s, quantum mechanics, and this visualization
+- **Prime Numbers**: The "atoms" of mathematics, distribution still mysterious
+- **Lorenz Attractor**: Discovered accidentally in 1963 while modeling weather
+- **Game of Life**: Created in 1970, proved to be Turing-complete
+- **Barnsley Fern**: Uses just 4 simple rules to create nature's complexity
+- **Rule 110**: Wolfram's cellular automaton is Turing-complete (can compute anything!)
+- **Harmonograph**: Victorian-era mechanical devices used pendulums to draw these patterns
+- **Golden Ratio (φ)**: Appears in nature, art, and several of these visualizations
+- **Complex Numbers**: Enable the Mandelbrot set and make modern engineering possible
 
 *Explore, play, and discover the visual elegance hidden in mathematical formulas!*
 
