@@ -1,30 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-<title>Save the Coconuts</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathematical Playground - Interactive Math Visualizations</title>
+    <meta name="description" content="Explore the beauty of mathematics through interactive visualizations, fractals, parametric equations, and mathematical art.">
+    <meta name="author" content="Claude (Anthropic AI)">
 
-<style>
-html, body {
-  margin:0;
-  padding:0;
-  height:100%;
-  background:#0f0f0f;
-  font-family:monospace;
-  color:white;
-  overflow:hidden;
-  touch-action:manipulation;
-}
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://santiago-mj.com/">
+    <meta property="og:title" content="Mathematical Playground - Explore Math Visually">
+    <meta property="og:description" content="Interactive mathematical visualizations: fractals, chaos theory, parametric curves, and more.">
 
-body{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-}
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://santiago-mj.com/">
+    <meta property="twitter:title" content="Mathematical Playground">
+    <meta property="twitter:description" content="Explore mathematics through beautiful, interactive visualizations.">
 
 h1{
   margin-bottom:20px;
@@ -101,15 +94,347 @@ h1{
 </style>
 </head>
 <body>
+    <!-- Animated Background -->
+    <canvas id="backgroundCanvas" class="background-canvas"></canvas>
 
-<h1>Save the Coconuts</h1>
+    <!-- Navigation Menu -->
+    <nav class="nav-menu" id="navMenu">
+        <button class="nav-toggle" id="navToggle">☰ Menu</button>
+        <div class="nav-links" id="navLinks">
+            <a href="#mandelbrot-section">🌀 Fractals</a>
+            <a href="#fourier-section">🌊 Fourier</a>
+            <a href="#parametric-section">∞ Curves</a>
+            <a href="#prime-section">🔢 Primes</a>
+            <a href="#chaos-section">🦋 Chaos</a>
+            <a href="#gameoflife-section">🎮 Life</a>
+            <a href="#barnsley-section">🌿 Fern</a>
+            <a href="#automata-section">📊 Automata</a>
+            <a href="#harmonograph-section">🎵 Harmonograph</a>
+            <a href="#art-section">🎨 Art</a>
+        </div>
+    </nav>
 
-<div class="microbit">
-  <div class="board">
-    <div id="btnA" class="btn">A</div>
+    <!-- Main Content -->
+    <div class="container">
+        <header class="hero">
+            <h1 class="title">
+                <span class="math-symbol">∫</span>
+                Mathematical Playground
+                <span class="math-symbol">∞</span>
+            </h1>
+            <p class="subtitle">Where equations come alive and numbers dance</p>
+            <blockquote class="hero-quote">
+                "Pure mathematics is, in its way, the poetry of logical ideas."
+                <cite>— Albert Einstein</cite>
+            </blockquote>
+            <div class="scroll-indicator">↓ Explore 10 Interactive Visualizations ↓</div>
+        </header>
 
-    <div class="led-container">
-      <div id="grid" class="led-grid"></div>
+        <main>
+            <!-- Mandelbrot Set Explorer -->
+            <section class="viz-section" id="mandelbrot-section">
+                <div class="viz-header">
+                    <h2>🌀 Fractal Explorer</h2>
+                    <p>Dive into the infinite complexity of the Mandelbrot set</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="mandelbrotCanvas"></canvas>
+                    <div class="controls">
+                        <button id="resetMandelbrot" class="control-btn">Reset View</button>
+                        <button id="toggleJulia" class="control-btn">Switch to Julia Set</button>
+                        <div class="info-display">
+                            <span id="zoomLevel">Zoom: 1x</span>
+                            <span class="hint">Click to zoom in | Right-click to zoom out</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fourier Series Drawing -->
+            <section class="viz-section" id="fourier-section">
+                <div class="viz-header">
+                    <h2>🌊 Fourier Series Magic</h2>
+                    <p>Watch circles dance to draw any shape using epicycles</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="fourierCanvas"></canvas>
+                    <div class="controls">
+                        <label>
+                            Number of Circles: <span id="epicycleCount">10</span>
+                            <input type="range" id="epicycleSlider" min="3" max="50" value="10">
+                        </label>
+                        <label>
+                            Speed: <span id="speedValue">1x</span>
+                            <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
+                        </label>
+                        <button id="changeShape" class="control-btn">Change Shape</button>
+                        <button id="resetFourier" class="control-btn">Reset</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Parametric Equations -->
+            <section class="viz-section" id="parametric-section">
+                <div class="viz-header">
+                    <h2>∞ Parametric Curves</h2>
+                    <p>Beautiful curves defined by elegant equations</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="parametricCanvas"></canvas>
+                    <div class="controls">
+                        <select id="curveSelector" class="control-select">
+                            <option value="lissajous">Lissajous Curve</option>
+                            <option value="rose">Rose Curve</option>
+                            <option value="spiral">Logarithmic Spiral</option>
+                            <option value="butterfly">Butterfly Curve</option>
+                            <option value="heart">Heart Curve</option>
+                            <option value="trefoil">Trefoil Knot</option>
+                        </select>
+                        <label>
+                            Parameter A: <span id="paramA">3</span>
+                            <input type="range" id="sliderA" min="1" max="10" step="0.1" value="3">
+                        </label>
+                        <label>
+                            Parameter B: <span id="paramB">5</span>
+                            <input type="range" id="sliderB" min="1" max="10" step="0.1" value="5">
+                        </label>
+                        <button id="animateParams" class="control-btn">Animate</button>
+                    </div>
+                    <div class="equation-display" id="equationDisplay"></div>
+                </div>
+            </section>
+
+            <!-- Prime Spiral -->
+            <section class="viz-section" id="prime-section">
+                <div class="viz-header">
+                    <h2>🔢 Prime Number Spiral</h2>
+                    <p>Discover patterns in the distribution of prime numbers</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="primeCanvas"></canvas>
+                    <div class="controls">
+                        <label>
+                            Range: <span id="primeRange">1000</span> numbers
+                            <input type="range" id="primeSlider" min="100" max="10000" step="100" value="1000">
+                        </label>
+                        <button id="animatePrimes" class="control-btn">Animate</button>
+                        <div class="info-display">
+                            <span id="primeCount">Primes found: 0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chaos Theory - Lorenz Attractor -->
+            <section class="viz-section" id="chaos-section">
+                <div class="viz-header">
+                    <h2>🦋 Chaos Theory</h2>
+                    <p>The butterfly effect in the Lorenz attractor</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="chaosCanvas"></canvas>
+                    <div class="controls">
+                        <label>
+                            σ (Sigma): <span id="sigmaValue">10</span>
+                            <input type="range" id="sigmaSlider" min="5" max="20" step="0.1" value="10">
+                        </label>
+                        <label>
+                            ρ (Rho): <span id="rhoValue">28</span>
+                            <input type="range" id="rhoSlider" min="10" max="40" step="0.1" value="28">
+                        </label>
+                        <label>
+                            β (Beta): <span id="betaValue">2.667</span>
+                            <input type="range" id="betaSlider" min="1" max="5" step="0.01" value="2.667">
+                        </label>
+                        <button id="resetChaos" class="control-btn">Reset</button>
+                        <button id="toggleRotation" class="control-btn">Toggle Rotation</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Conway's Game of Life -->
+            <section class="viz-section" id="gameoflife-section">
+                <div class="viz-header">
+                    <h2>🎮 Conway's Game of Life</h2>
+                    <p>Simple rules creating infinite complexity - the most famous cellular automaton</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="gameoflifeCanvas"></canvas>
+                    <div class="controls">
+                        <button id="golPlay" class="control-btn primary">Play</button>
+                        <button id="golPause" class="control-btn">Pause</button>
+                        <button id="golStep" class="control-btn">Step</button>
+                        <button id="golClear" class="control-btn">Clear</button>
+                        <button id="golRandom" class="control-btn">Random</button>
+                        <label>
+                            Speed: <span id="golSpeedValue">10</span> fps
+                            <input type="range" id="golSpeedSlider" min="1" max="60" value="10">
+                        </label>
+                        <div class="info-display">
+                            <span id="golGeneration">Generation: 0</span>
+                            <span class="hint">Click cells to toggle them</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Barnsley Fern -->
+            <section class="viz-section" id="barnsley-section">
+                <div class="viz-header">
+                    <h2>🌿 Barnsley Fern</h2>
+                    <p>Nature's fractal - a fern created by simple probabilistic rules</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="barnsleyCanvas"></canvas>
+                    <div class="controls">
+                        <button id="barnsleyReset" class="control-btn">Reset</button>
+                        <button id="barnsleyFaster" class="control-btn">Faster</button>
+                        <label>
+                            <input type="checkbox" id="barnsleyAnimate" checked> Auto-grow
+                        </label>
+                        <div class="info-display">
+                            <span id="barnsleyPoints">Points: 0</span>
+                            <span class="hint">Watch chaos create order</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cellular Automata (Rule 30/110) -->
+            <section class="viz-section" id="automata-section">
+                <div class="viz-header">
+                    <h2>📊 Cellular Automata</h2>
+                    <p>Wolfram's rules creating complexity from simplicity</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="automataCanvas"></canvas>
+                    <div class="controls">
+                        <select id="ruleSelector" class="control-select">
+                            <option value="30">Rule 30 (Chaotic)</option>
+                            <option value="110">Rule 110 (Complex)</option>
+                            <option value="90">Rule 90 (Sierpinski)</option>
+                            <option value="184">Rule 184 (Traffic)</option>
+                        </select>
+                        <button id="automataReset" class="control-btn">Reset</button>
+                        <button id="automataStep" class="control-btn">Step</button>
+                        <button id="automataRun" class="control-btn primary">Run</button>
+                        <div class="info-display">
+                            <span id="automataGen">Row: 0</span>
+                            <span class="hint">One simple rule, infinite patterns</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Harmonograph -->
+            <section class="viz-section" id="harmonograph-section">
+                <div class="viz-header">
+                    <h2>🎵 Harmonograph</h2>
+                    <p>Damped harmonic oscillations creating mesmerizing patterns</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="harmonographCanvas"></canvas>
+                    <div class="controls">
+                        <label>
+                            Frequency 1: <span id="freq1Value">2</span>
+                            <input type="range" id="freq1Slider" min="1" max="10" step="0.1" value="2">
+                        </label>
+                        <label>
+                            Frequency 2: <span id="freq2Value">3</span>
+                            <input type="range" id="freq2Slider" min="1" max="10" step="0.1" value="3">
+                        </label>
+                        <label>
+                            Damping: <span id="dampValue">0.998</span>
+                            <input type="range" id="dampSlider" min="0.99" max="1" step="0.001" value="0.998">
+                        </label>
+                        <button id="harmonographReset" class="control-btn">New Pattern</button>
+                        <button id="harmonographSave" class="control-btn">Save</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mathematical Art Generator -->
+            <section class="viz-section" id="art-section">
+                <div class="viz-header">
+                    <h2>🎨 Generative Mathematical Art</h2>
+                    <p>Create unique patterns using mathematical functions</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="artCanvas"></canvas>
+                    <div class="controls">
+                        <button id="generateArt" class="control-btn primary">Generate New Art</button>
+                        <label>
+                            Complexity: <span id="complexityValue">5</span>
+                            <input type="range" id="complexitySlider" min="1" max="10" value="5">
+                        </label>
+                        <label>
+                            <input type="checkbox" id="animateArt"> Animate
+                        </label>
+                        <button id="saveArt" class="control-btn">Save Image</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mathematical Facts -->
+            <section class="facts-section">
+                <h2>✨ Mathematical Beauty</h2>
+                <div class="facts-grid">
+                    <div class="fact-card">
+                        <div class="fact-icon">φ</div>
+                        <h3>Golden Ratio</h3>
+                        <p class="fact-value">1.618033988...</p>
+                        <p>The divine proportion found throughout nature, art, and architecture</p>
+                    </div>
+                    <div class="fact-card">
+                        <div class="fact-icon">π</div>
+                        <h3>Pi</h3>
+                        <p class="fact-value">3.141592653...</p>
+                        <p>The ratio of a circle's circumference to its diameter, transcendental and infinite</p>
+                    </div>
+                    <div class="fact-card">
+                        <div class="fact-icon">e</div>
+                        <h3>Euler's Number</h3>
+                        <p class="fact-value">2.718281828...</p>
+                        <p>The base of natural logarithms, fundamental to calculus and growth</p>
+                    </div>
+                    <div class="fact-card">
+                        <div class="fact-icon">i</div>
+                        <h3>Imaginary Unit</h3>
+                        <p class="fact-value">√(-1)</p>
+                        <p>Opens the door to complex numbers and powers modern engineering</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Closing -->
+            <section class="closing">
+                <h2>The Beauty of Mathematics</h2>
+                <p>Mathematics isn't just numbers and equations—it's a language that describes the patterns underlying reality. From the spiral of galaxies to the structure of DNA, from the chaos of weather to the order of cellular life, mathematical relationships create the beauty we see around us.</p>
+
+                <p>This playground features <strong>10 interactive visualizations</strong> spanning fractals, chaos theory, cellular automata, harmonic motion, and more. Each one demonstrates how simple rules and elegant equations can create infinite complexity and stunning visual beauty.</p>
+
+                <div class="quote-grid">
+                    <blockquote class="math-quote">
+                        "Mathematics is the music of reason."
+                        <cite>— James Joseph Sylvester</cite>
+                    </blockquote>
+                    <blockquote class="math-quote">
+                        "In mathematics, the art of asking questions is more valuable than solving problems."
+                        <cite>— Georg Cantor</cite>
+                    </blockquote>
+                    <blockquote class="math-quote">
+                        "Mathematics reveals its secrets only to those who approach it with pure love, for its own beauty."
+                        <cite>— Archimedes</cite>
+                    </blockquote>
+                </div>
+
+                <p style="margin-top: 2rem;">Every visualization here is interactive—change parameters, explore patterns, and watch as mathematics comes alive before your eyes. The code is pure vanilla JavaScript with no dependencies, proving that beauty and complexity don't require complexity in implementation.</p>
+
+                <p class="meta">Created with HTML5 Canvas, vanilla JavaScript, and mathematical passion<br>
+                10 visualizations • 0 dependencies • ∞ possibilities<br>
+                <a href="https://github.com/Santimator/experiweb" target="_blank">View Source on GitHub</a></p>
+            </section>
+        </main>
     </div>
 
     <div id="btnB" class="btn">B</div>
