@@ -38,12 +38,77 @@ body {
     pointer-events: none;
 }
 
+/* Navigation Menu */
+.nav-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(10, 14, 39, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    transition: transform 0.3s ease;
+}
+
+.nav-menu.hidden {
+    transform: translateY(-100%);
+}
+
+.nav-toggle {
+    display: none;
+    background: var(--accent-1);
+    color: var(--bg-primary);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-toggle:hover {
+    background: var(--accent-3);
+}
+
+.nav-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.nav-links a:hover {
+    color: var(--accent-1);
+    background: var(--bg-card);
+    border-color: var(--accent-1);
+}
+
+.nav-links a:active {
+    transform: scale(0.95);
+}
+
 .container {
     position: relative;
     z-index: 1;
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
+    padding-top: 4rem; /* Space for fixed nav */
 }
 
 /* Hero Section */
@@ -90,12 +155,32 @@ body {
     font-style: italic;
 }
 
+.hero-quote {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: rgba(26, 31, 58, 0.5);
+    border-left: 3px solid var(--accent-1);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.hero-quote cite {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: normal;
+}
+
 .scroll-indicator {
-    position: absolute;
-    bottom: 2rem;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--accent-1);
     animation: bounce 2s ease-in-out infinite;
+    margin-top: 2rem;
 }
 
 /* Visualization Sections */
@@ -417,6 +502,24 @@ input[type="checkbox"] {
     font-style: normal;
 }
 
+.quote-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 3rem 0;
+}
+
+.quote-grid .math-quote {
+    margin: 0;
+    font-size: 1rem;
+    padding: 1.5rem;
+}
+
+.quote-grid .math-quote cite {
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+}
+
 .meta {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -478,11 +581,42 @@ input[type="checkbox"] {
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
+        padding-top: 4rem;
+    }
+
+    .nav-toggle {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .nav-links.active {
+        display: flex;
+    }
+
+    .nav-links a {
+        text-align: center;
+        padding: 0.75rem;
     }
 
     .hero {
         min-height: 60vh;
         padding: 2rem 1rem;
+    }
+
+    .hero-quote {
+        font-size: 1rem;
+        padding: 1rem;
+    }
+
+    .quote-grid {
+        grid-template-columns: 1fr;
     }
 
     .viz-container {
@@ -515,6 +649,10 @@ input[type="checkbox"] {
     #parametricCanvas,
     #primeCanvas,
     #chaosCanvas,
+    #gameoflifeCanvas,
+    #barnsleyCanvas,
+    #automataCanvas,
+    #harmonographCanvas,
     #artCanvas {
         aspect-ratio: 1 / 1;
     }

@@ -28,6 +28,23 @@
     <!-- Animated Background -->
     <canvas id="backgroundCanvas" class="background-canvas"></canvas>
 
+    <!-- Navigation Menu -->
+    <nav class="nav-menu" id="navMenu">
+        <button class="nav-toggle" id="navToggle">☰ Menu</button>
+        <div class="nav-links" id="navLinks">
+            <a href="#mandelbrot-section">🌀 Fractals</a>
+            <a href="#fourier-section">🌊 Fourier</a>
+            <a href="#parametric-section">∞ Curves</a>
+            <a href="#prime-section">🔢 Primes</a>
+            <a href="#chaos-section">🦋 Chaos</a>
+            <a href="#gameoflife-section">🎮 Life</a>
+            <a href="#barnsley-section">🌿 Fern</a>
+            <a href="#automata-section">📊 Automata</a>
+            <a href="#harmonograph-section">🎵 Harmonograph</a>
+            <a href="#art-section">🎨 Art</a>
+        </div>
+    </nav>
+
     <!-- Main Content -->
     <div class="container">
         <header class="hero">
@@ -37,7 +54,11 @@
                 <span class="math-symbol">∞</span>
             </h1>
             <p class="subtitle">Where equations come alive and numbers dance</p>
-            <div class="scroll-indicator">↓ Explore Below ↓</div>
+            <blockquote class="hero-quote">
+                "Pure mathematics is, in its way, the poetry of logical ideas."
+                <cite>— Albert Einstein</cite>
+            </blockquote>
+            <div class="scroll-indicator">↓ Explore 10 Interactive Visualizations ↓</div>
         </header>
 
         <main>
@@ -162,6 +183,107 @@
                 </div>
             </section>
 
+            <!-- Conway's Game of Life -->
+            <section class="viz-section" id="gameoflife-section">
+                <div class="viz-header">
+                    <h2>🎮 Conway's Game of Life</h2>
+                    <p>Simple rules creating infinite complexity - the most famous cellular automaton</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="gameoflifeCanvas"></canvas>
+                    <div class="controls">
+                        <button id="golPlay" class="control-btn primary">Play</button>
+                        <button id="golPause" class="control-btn">Pause</button>
+                        <button id="golStep" class="control-btn">Step</button>
+                        <button id="golClear" class="control-btn">Clear</button>
+                        <button id="golRandom" class="control-btn">Random</button>
+                        <label>
+                            Speed: <span id="golSpeedValue">10</span> fps
+                            <input type="range" id="golSpeedSlider" min="1" max="60" value="10">
+                        </label>
+                        <div class="info-display">
+                            <span id="golGeneration">Generation: 0</span>
+                            <span class="hint">Click cells to toggle them</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Barnsley Fern -->
+            <section class="viz-section" id="barnsley-section">
+                <div class="viz-header">
+                    <h2>🌿 Barnsley Fern</h2>
+                    <p>Nature's fractal - a fern created by simple probabilistic rules</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="barnsleyCanvas"></canvas>
+                    <div class="controls">
+                        <button id="barnsleyReset" class="control-btn">Reset</button>
+                        <button id="barnsleyFaster" class="control-btn">Faster</button>
+                        <label>
+                            <input type="checkbox" id="barnsleyAnimate" checked> Auto-grow
+                        </label>
+                        <div class="info-display">
+                            <span id="barnsleyPoints">Points: 0</span>
+                            <span class="hint">Watch chaos create order</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cellular Automata (Rule 30/110) -->
+            <section class="viz-section" id="automata-section">
+                <div class="viz-header">
+                    <h2>📊 Cellular Automata</h2>
+                    <p>Wolfram's rules creating complexity from simplicity</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="automataCanvas"></canvas>
+                    <div class="controls">
+                        <select id="ruleSelector" class="control-select">
+                            <option value="30">Rule 30 (Chaotic)</option>
+                            <option value="110">Rule 110 (Complex)</option>
+                            <option value="90">Rule 90 (Sierpinski)</option>
+                            <option value="184">Rule 184 (Traffic)</option>
+                        </select>
+                        <button id="automataReset" class="control-btn">Reset</button>
+                        <button id="automataStep" class="control-btn">Step</button>
+                        <button id="automataRun" class="control-btn primary">Run</button>
+                        <div class="info-display">
+                            <span id="automataGen">Row: 0</span>
+                            <span class="hint">One simple rule, infinite patterns</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Harmonograph -->
+            <section class="viz-section" id="harmonograph-section">
+                <div class="viz-header">
+                    <h2>🎵 Harmonograph</h2>
+                    <p>Damped harmonic oscillations creating mesmerizing patterns</p>
+                </div>
+                <div class="viz-container">
+                    <canvas id="harmonographCanvas"></canvas>
+                    <div class="controls">
+                        <label>
+                            Frequency 1: <span id="freq1Value">2</span>
+                            <input type="range" id="freq1Slider" min="1" max="10" step="0.1" value="2">
+                        </label>
+                        <label>
+                            Frequency 2: <span id="freq2Value">3</span>
+                            <input type="range" id="freq2Slider" min="1" max="10" step="0.1" value="3">
+                        </label>
+                        <label>
+                            Damping: <span id="dampValue">0.998</span>
+                            <input type="range" id="dampSlider" min="0.99" max="1" step="0.001" value="0.998">
+                        </label>
+                        <button id="harmonographReset" class="control-btn">New Pattern</button>
+                        <button id="harmonographSave" class="control-btn">Save</button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Mathematical Art Generator -->
             <section class="viz-section" id="art-section">
                 <div class="viz-header">
@@ -218,13 +340,30 @@
             <!-- Closing -->
             <section class="closing">
                 <h2>The Beauty of Mathematics</h2>
-                <p>Mathematics isn't just numbers and equations—it's a language that describes the patterns underlying reality. From the spiral of galaxies to the structure of DNA, mathematical relationships create the beauty we see around us.</p>
-                <p>This playground is an invitation to explore, play, and discover the visual elegance hidden in mathematical formulas. Each visualization is interactive—change parameters, zoom in, and watch as simple equations create infinite complexity.</p>
-                <blockquote class="math-quote">
-                    "Mathematics is the music of reason." <br>
-                    <cite>— James Joseph Sylvester</cite>
-                </blockquote>
-                <p class="meta">Created with Canvas API, vanilla JavaScript, and mathematical passion • <a href="https://github.com/Santimator/experiweb" target="_blank">View Source</a></p>
+                <p>Mathematics isn't just numbers and equations—it's a language that describes the patterns underlying reality. From the spiral of galaxies to the structure of DNA, from the chaos of weather to the order of cellular life, mathematical relationships create the beauty we see around us.</p>
+
+                <p>This playground features <strong>10 interactive visualizations</strong> spanning fractals, chaos theory, cellular automata, harmonic motion, and more. Each one demonstrates how simple rules and elegant equations can create infinite complexity and stunning visual beauty.</p>
+
+                <div class="quote-grid">
+                    <blockquote class="math-quote">
+                        "Mathematics is the music of reason."
+                        <cite>— James Joseph Sylvester</cite>
+                    </blockquote>
+                    <blockquote class="math-quote">
+                        "In mathematics, the art of asking questions is more valuable than solving problems."
+                        <cite>— Georg Cantor</cite>
+                    </blockquote>
+                    <blockquote class="math-quote">
+                        "Mathematics reveals its secrets only to those who approach it with pure love, for its own beauty."
+                        <cite>— Archimedes</cite>
+                    </blockquote>
+                </div>
+
+                <p style="margin-top: 2rem;">Every visualization here is interactive—change parameters, explore patterns, and watch as mathematics comes alive before your eyes. The code is pure vanilla JavaScript with no dependencies, proving that beauty and complexity don't require complexity in implementation.</p>
+
+                <p class="meta">Created with HTML5 Canvas, vanilla JavaScript, and mathematical passion<br>
+                10 visualizations • 0 dependencies • ∞ possibilities<br>
+                <a href="https://github.com/Santimator/experiweb" target="_blank">View Source on GitHub</a></p>
             </section>
         </main>
     </div>

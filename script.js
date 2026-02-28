@@ -854,9 +854,495 @@ class GenerativeArt {
 }
 
 // ========================================
+// 8. CONWAY'S GAME OF LIFE
+// ========================================
+class GameOfLife {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.cellSize = 8;
+        this.cols = 0;
+        this.rows = 0;
+        this.grid = [];
+        this.running = false;
+        this.generation = 0;
+        this.speed = 10; // fps
+
+        this.resize();
+        this.clear();
+        this.setupEventListeners();
+    }
+
+    resize() {
+        const rect = this.canvas.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+        this.cols = Math.floor(this.canvas.width / this.cellSize);
+        this.rows = Math.floor(this.canvas.height / this.cellSize);
+        this.clear();
+    }
+
+    setupEventListeners() {
+        this.canvas.addEventListener('click', (e) => this.handleClick(e));
+    }
+
+    handleClick(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = Math.floor((e.clientX - rect.left) / this.cellSize);
+        const y = Math.floor((e.clientY - rect.top) / this.cellSize);
+        if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
+            this.grid[y][x] = !this.grid[y][x];
+            this.draw();
+        }
+    }
+
+    clear() {
+        this.grid = Array(this.rows).fill(null).map(() => Array(this.cols).fill(false));
+        this.generation = 0;
+        this.draw();
+    }
+
+    randomize() {
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                this.grid[y][x] = Math.random() < 0.3;
+            }
+        }
+        this.generation = 0;
+        this.draw();
+    }
+
+    countNeighbors(x, y) {
+        let count = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                const nx = (x + dx + this.cols) % this.cols;
+                const ny = (y + dy + this.rows) % this.rows;
+                if (this.grid[ny][nx]) count++;
+            }
+        }
+        return count;
+    }
+
+    step() {
+        const newGrid = Array(this.rows).fill(null).map(() => Array(this.cols).fill(false));
+
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                const neighbors = this.countNeighbors(x, y);
+                const alive = this.grid[y][x];
+
+                if (alive && (neighbors === 2 || neighbors === 3)) {
+                    newGrid[y][x] = true;
+                } else if (!alive && neighbors === 3) {
+                    newGrid[y][x] = true;
+                }
+            }
+        }
+
+        this.grid = newGrid;
+        this.generation++;
+        this.draw();
+    }
+
+    draw() {
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                if (this.grid[y][x]) {
+                    const hue = (x + y) % 360;
+                    this.ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                    this.ctx.fillRect(
+                        x * this.cellSize + 1,
+                        y * this.cellSize + 1,
+                        this.cellSize - 2,
+                        this.cellSize - 2
+                    );
+                }
+            }
+        }
+
+        // Grid lines
+        this.ctx.strokeStyle = 'rgba(50, 50, 50, 0.3)';
+        this.ctx.lineWidth = 1;
+        for (let x = 0; x <= this.cols; x++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x * this.cellSize, 0);
+            this.ctx.lineTo(x * this.cellSize, this.canvas.height);
+            this.ctx.stroke();
+        }
+        for (let y = 0; y <= this.rows; y++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y * this.cellSize);
+            this.ctx.lineTo(this.canvas.width, y * this.cellSize);
+            this.ctx.stroke();
+        }
+    }
+
+    play() {
+        if (this.running) return;
+        this.running = true;
+        this.animate();
+    }
+
+    pause() {
+        this.running = false;
+    }
+
+    animate() {
+        if (!this.running) return;
+        this.step();
+        document.getElementById('golGeneration').textContent = `Generation: ${this.generation}`;
+        setTimeout(() => this.animate(), 1000 / this.speed);
+    }
+
+    setSpeed(speed) {
+        this.speed = speed;
+    }
+}
+
+// ========================================
+// 9. BARNSLEY FERN
+// ========================================
+class BarnsleyFern {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.x = 0;
+        this.y = 0;
+        this.points = [];
+        this.maxPoints = 50000;
+        this.animating = true;
+        this.batchSize = 100;
+
+        this.resize();
+        this.reset();
+        this.animate();
+    }
+
+    resize() {
+        const rect = this.canvas.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+    }
+
+    reset() {
+        this.x = 0;
+        this.y = 0;
+        this.points = [];
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    iterate() {
+        const r = Math.random();
+        let newX, newY;
+
+        if (r < 0.01) {
+            // Stem
+            newX = 0;
+            newY = 0.16 * this.y;
+        } else if (r < 0.86) {
+            // Successively smaller leaflets
+            newX = 0.85 * this.x + 0.04 * this.y;
+            newY = -0.04 * this.x + 0.85 * this.y + 1.6;
+        } else if (r < 0.93) {
+            // Largest left-hand leaflet
+            newX = 0.2 * this.x - 0.26 * this.y;
+            newY = 0.23 * this.x + 0.22 * this.y + 1.6;
+        } else {
+            // Largest right-hand leaflet
+            newX = -0.15 * this.x + 0.28 * this.y;
+            newY = 0.26 * this.x + 0.24 * this.y + 0.44;
+        }
+
+        this.x = newX;
+        this.y = newY;
+        this.points.push({ x: newX, y: newY });
+
+        if (this.points.length > this.maxPoints) {
+            this.points.shift();
+        }
+    }
+
+    draw() {
+        const scale = Math.min(this.canvas.width, this.canvas.height) / 12;
+        const offsetX = this.canvas.width / 2;
+        const offsetY = this.canvas.height - 50;
+
+        for (let i = Math.max(0, this.points.length - this.batchSize); i < this.points.length; i++) {
+            const point = this.points[i];
+            const px = offsetX + point.x * scale;
+            const py = offsetY - point.y * scale;
+
+            const hue = 120 + (point.y / 11) * 60; // Green to yellow
+            this.ctx.fillStyle = `hsla(${hue}, 80%, 40%, 0.8)`;
+            this.ctx.fillRect(px, py, 2, 2);
+        }
+    }
+
+    animate() {
+        if (!this.animating) return;
+
+        for (let i = 0; i < this.batchSize; i++) {
+            this.iterate();
+        }
+
+        this.draw();
+        document.getElementById('barnsleyPoints').textContent = `Points: ${this.points.length}`;
+
+        requestAnimationFrame(() => this.animate());
+    }
+
+    faster() {
+        this.batchSize = Math.min(this.batchSize * 2, 1000);
+    }
+
+    toggleAnimation() {
+        this.animating = !this.animating;
+        if (this.animating) this.animate();
+    }
+}
+
+// ========================================
+// 10. CELLULAR AUTOMATA
+// ========================================
+class CellularAutomata {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.cellSize = 4;
+        this.cols = 0;
+        this.currentRow = 0;
+        this.cells = [];
+        this.rule = 30;
+        this.running = false;
+
+        this.resize();
+        this.reset();
+    }
+
+    resize() {
+        const rect = this.canvas.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+        this.cols = Math.floor(this.canvas.width / this.cellSize);
+        this.reset();
+    }
+
+    reset() {
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.cells = Array(this.cols).fill(0);
+        this.cells[Math.floor(this.cols / 2)] = 1;
+        this.currentRow = 0;
+        this.drawRow();
+    }
+
+    applyRule(left, center, right) {
+        const index = (left << 2) | (center << 1) | right;
+        return (this.rule >> index) & 1;
+    }
+
+    step() {
+        const newCells = Array(this.cols).fill(0);
+
+        for (let i = 0; i < this.cols; i++) {
+            const left = this.cells[(i - 1 + this.cols) % this.cols];
+            const center = this.cells[i];
+            const right = this.cells[(i + 1) % this.cols];
+            newCells[i] = this.applyRule(left, center, right);
+        }
+
+        this.cells = newCells;
+        this.currentRow++;
+
+        if (this.currentRow * this.cellSize < this.canvas.height) {
+            this.drawRow();
+        } else {
+            this.running = false;
+        }
+    }
+
+    drawRow() {
+        for (let i = 0; i < this.cols; i++) {
+            if (this.cells[i] === 1) {
+                const hue = (this.currentRow / (this.canvas.height / this.cellSize)) * 360;
+                this.ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                this.ctx.fillRect(
+                    i * this.cellSize,
+                    this.currentRow * this.cellSize,
+                    this.cellSize,
+                    this.cellSize
+                );
+            }
+        }
+    }
+
+    setRule(rule) {
+        this.rule = rule;
+        this.reset();
+    }
+
+    run() {
+        if (this.running) {
+            this.running = false;
+            return;
+        }
+
+        this.running = true;
+        const runLoop = () => {
+            if (!this.running) return;
+            this.step();
+            document.getElementById('automataGen').textContent = `Row: ${this.currentRow}`;
+            if (this.currentRow * this.cellSize < this.canvas.height) {
+                setTimeout(runLoop, 10);
+            } else {
+                this.running = false;
+            }
+        };
+        runLoop();
+    }
+}
+
+// ========================================
+// 11. HARMONOGRAPH
+// ========================================
+class Harmonograph {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.freq1 = 2;
+        this.freq2 = 3;
+        this.freq3 = 1.5;
+        this.freq4 = 2.5;
+        this.damping = 0.998;
+        this.phase1 = 0;
+        this.phase2 = Math.PI / 2;
+        this.phase3 = 0;
+        this.phase4 = Math.PI / 3;
+
+        this.resize();
+        this.draw();
+    }
+
+    resize() {
+        const rect = this.canvas.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+    }
+
+    randomize() {
+        this.freq1 = 1 + Math.random() * 4;
+        this.freq2 = 1 + Math.random() * 4;
+        this.freq3 = 1 + Math.random() * 4;
+        this.freq4 = 1 + Math.random() * 4;
+        this.phase1 = Math.random() * Math.PI * 2;
+        this.phase2 = Math.random() * Math.PI * 2;
+        this.phase3 = Math.random() * Math.PI * 2;
+        this.phase4 = Math.random() * Math.PI * 2;
+        this.draw();
+    }
+
+    draw() {
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const scale = Math.min(this.canvas.width, this.canvas.height) / 3;
+
+        this.ctx.beginPath();
+        let firstPoint = true;
+
+        for (let t = 0; t < 100; t += 0.01) {
+            const decay = Math.pow(this.damping, t);
+
+            const x1 = Math.sin(t * this.freq1 + this.phase1) * decay;
+            const x2 = Math.sin(t * this.freq2 + this.phase2) * decay;
+            const y1 = Math.sin(t * this.freq3 + this.phase3) * decay;
+            const y2 = Math.sin(t * this.freq4 + this.phase4) * decay;
+
+            const x = centerX + (x1 + x2) * scale / 2;
+            const y = centerY + (y1 + y2) * scale / 2;
+
+            if (firstPoint) {
+                this.ctx.moveTo(x, y);
+                firstPoint = false;
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+
+            // Color gradient based on time
+            const hue = (t / 100) * 360;
+            this.ctx.strokeStyle = `hsla(${hue}, 80%, 60%, 0.3)`;
+            this.ctx.lineWidth = 1.5;
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+        }
+
+        this.ctx.stroke();
+    }
+
+    setFrequencies(f1, f2) {
+        this.freq1 = f1;
+        this.freq2 = f2;
+        this.draw();
+    }
+
+    setDamping(d) {
+        this.damping = d;
+        this.draw();
+    }
+
+    save() {
+        const link = document.createElement('a');
+        link.download = 'harmonograph.png';
+        link.href = this.canvas.toDataURL();
+        link.click();
+    }
+}
+
+// ========================================
 // INITIALIZATION
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Navigation menu
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+
+    navToggle.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+    });
+
+    // Close menu when link is clicked
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+        });
+    });
+
+    // Hide nav on scroll down, show on scroll up
+    let lastScroll = 0;
+    const navMenu = document.getElementById('navMenu');
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        if (currentScroll <= 0) {
+            navMenu.classList.remove('hidden');
+            return;
+        }
+        if (currentScroll > lastScroll && currentScroll > 100) {
+            navMenu.classList.add('hidden');
+        } else {
+            navMenu.classList.remove('hidden');
+        }
+        lastScroll = currentScroll;
+    });
+
     // Background animation
     const bgCanvas = document.getElementById('backgroundCanvas');
     const bgAnim = new BackgroundAnimation(bgCanvas);
@@ -973,6 +1459,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('saveArt').addEventListener('click', () => art.save());
 
+    // Game of Life
+    const golCanvas = document.getElementById('gameoflifeCanvas');
+    const gol = new GameOfLife(golCanvas);
+
+    document.getElementById('golPlay').addEventListener('click', () => gol.play());
+    document.getElementById('golPause').addEventListener('click', () => gol.pause());
+    document.getElementById('golStep').addEventListener('click', () => {
+        gol.step();
+        document.getElementById('golGeneration').textContent = `Generation: ${gol.generation}`;
+    });
+    document.getElementById('golClear').addEventListener('click', () => {
+        gol.clear();
+        document.getElementById('golGeneration').textContent = 'Generation: 0';
+    });
+    document.getElementById('golRandom').addEventListener('click', () => gol.randomize());
+    document.getElementById('golSpeedSlider').addEventListener('input', (e) => {
+        document.getElementById('golSpeedValue').textContent = e.target.value;
+        gol.setSpeed(parseInt(e.target.value));
+    });
+
+    // Barnsley Fern
+    const barnsleyCanvas = document.getElementById('barnsleyCanvas');
+    const barnsley = new BarnsleyFern(barnsleyCanvas);
+
+    document.getElementById('barnsleyReset').addEventListener('click', () => barnsley.reset());
+    document.getElementById('barnsleyFaster').addEventListener('click', () => barnsley.faster());
+    document.getElementById('barnsleyAnimate').addEventListener('change', (e) => {
+        barnsley.animating = e.target.checked;
+        if (barnsley.animating) barnsley.animate();
+    });
+
+    // Cellular Automata
+    const automataCanvas = document.getElementById('automataCanvas');
+    const automata = new CellularAutomata(automataCanvas);
+
+    document.getElementById('ruleSelector').addEventListener('change', (e) => {
+        automata.setRule(parseInt(e.target.value));
+        document.getElementById('automataGen').textContent = 'Row: 0';
+    });
+    document.getElementById('automataReset').addEventListener('click', () => {
+        automata.reset();
+        document.getElementById('automataGen').textContent = 'Row: 0';
+    });
+    document.getElementById('automataStep').addEventListener('click', () => {
+        automata.step();
+        document.getElementById('automataGen').textContent = `Row: ${automata.currentRow}`;
+    });
+    document.getElementById('automataRun').addEventListener('click', () => {
+        automata.run();
+        document.getElementById('automataRun').textContent = automata.running ? 'Stop' : 'Run';
+    });
+
+    // Harmonograph
+    const harmonographCanvas = document.getElementById('harmonographCanvas');
+    const harmonograph = new Harmonograph(harmonographCanvas);
+
+    document.getElementById('freq1Slider').addEventListener('input', (e) => {
+        document.getElementById('freq1Value').textContent = e.target.value;
+        harmonograph.freq1 = parseFloat(e.target.value);
+        harmonograph.draw();
+    });
+    document.getElementById('freq2Slider').addEventListener('input', (e) => {
+        document.getElementById('freq2Value').textContent = e.target.value;
+        harmonograph.freq2 = parseFloat(e.target.value);
+        harmonograph.draw();
+    });
+    document.getElementById('dampSlider').addEventListener('input', (e) => {
+        document.getElementById('dampValue').textContent = e.target.value;
+        harmonograph.setDamping(parseFloat(e.target.value));
+    });
+    document.getElementById('harmonographReset').addEventListener('click', () => harmonograph.randomize());
+    document.getElementById('harmonographSave').addEventListener('click', () => harmonograph.save());
+
     // Handle window resize for all canvases
     window.addEventListener('resize', () => {
         fractal.resize();
@@ -980,12 +1539,18 @@ document.addEventListener('DOMContentLoaded', () => {
         parametric.resize();
         primes.resize();
         chaos.resize();
+        gol.resize();
+        barnsley.resize();
+        automata.resize();
+        harmonograph.resize();
         art.resize();
 
         // Redraw static visualizations
         fractal.render();
         parametric.draw();
         primes.draw();
+        automata.reset();
+        harmonograph.draw();
         art.generate();
     });
 });
