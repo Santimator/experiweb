@@ -26,7 +26,7 @@ class GameOfLife {
         this.lastTime = 0;
         this.fps = 0;
         this.frameCount = 0;
-        this.fpsTime = 0;
+        this.fpsTime = performance.now();
         
         this.initCanvas();
         this.setupEventListeners();
@@ -496,6 +496,11 @@ let lastUpdateTime = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        console.error('Canvas element not found!');
+        return;
+    }
+
     game = new GameOfLife(canvas);
     
     // Control buttons
@@ -558,25 +563,27 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Start with a glider
     game.placePattern(patterns.glider, 20, 20);
+
+    // Start the game loop
+    gameLoop(performance.now());
 });
 
 // ===== GAME LOOP =====
 
 function gameLoop(currentTime) {
+    if (!game) return; // Safety check
+
     animationFrameId = requestAnimationFrame(gameLoop);
-    
+
     game.updateFPS(currentTime);
-    
+
     if (!game.running) return;
-    
+
     const interval = 1000 / game.speed;
     const elapsed = currentTime - lastUpdateTime;
-    
+
     if (elapsed >= interval) {
         game.nextGeneration();
         lastUpdateTime = currentTime - (elapsed % interval);
     }
 }
-
-// Start the loop
-gameLoop(performance.now());
