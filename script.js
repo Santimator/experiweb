@@ -34,23 +34,24 @@ class GameOfLife {
     
     initCanvas() {
         // Set canvas to optimal size for screen
-        const maxWidth = Math.min(window.innerWidth - 100, 1200);
-        const maxHeight = 600;
-        
+        const isMobile = window.innerWidth < 768;
+        const maxWidth = isMobile ? window.innerWidth - 40 : Math.min(window.innerWidth - 100, 1200);
+        const maxHeight = isMobile ? 400 : 600;
+
         this.canvas.width = maxWidth;
         this.canvas.height = maxHeight;
-        
+
         this.cols = Math.floor(maxWidth / this.cellSize);
         this.rows = Math.floor(maxHeight / this.cellSize);
-        
+
         // Adjust canvas to exact grid size
         this.canvas.width = this.cols * this.cellSize;
         this.canvas.height = this.rows * this.cellSize;
-        
+
         // Initialize grids
         this.grid = this.createEmptyGrid();
         this.nextGrid = this.createEmptyGrid();
-        
+
         this.render();
     }
     
@@ -65,9 +66,10 @@ class GameOfLife {
         this.canvas.addEventListener('mouseleave', () => this.handleMouseUp());
         
         // Touch support
-        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
-        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         this.canvas.addEventListener('touchend', () => this.handleMouseUp());
+        this.canvas.addEventListener('touchcancel', () => this.handleMouseUp());
         
         window.addEventListener('resize', () => this.handleResize());
     }
@@ -97,22 +99,35 @@ class GameOfLife {
     
     handleTouchStart(e) {
         e.preventDefault();
+        this.isDrawing = true;
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.canvas.dispatchEvent(mouseEvent);
+        const rect = this.canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const col = Math.floor(x / this.cellSize);
+        const row = Math.floor(y / this.cellSize);
+
+        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+            this.drawMode = !this.grid[row][col];
+            this.toggleCell(row, col);
+        }
     }
-    
+
     handleTouchMove(e) {
         e.preventDefault();
+        if (!this.isDrawing) return;
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.canvas.dispatchEvent(mouseEvent);
+        const rect = this.canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const col = Math.floor(x / this.cellSize);
+        const row = Math.floor(y / this.cellSize);
+
+        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+            this.grid[row][col] = this.drawMode ? 1 : 0;
+            this.render();
+            this.updateStats();
+        }
     }
     
     handleResize() {
@@ -265,7 +280,7 @@ class GameOfLife {
     randomize() {
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col] = Math.random() > 0.7 ? 1 : 0;
+                this.grid[row][col] = Math.random() > 0.5 ? 1 : 0;
             }
         }
         this.generation = 0;

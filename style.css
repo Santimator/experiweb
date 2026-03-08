@@ -75,6 +75,10 @@ body {
     cursor: crosshair;
     background: var(--cell-dead);
     image-rendering: pixelated;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .stats {
@@ -367,14 +371,45 @@ input[type="checkbox"] {
 
     .btn {
         width: 100%;
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+
+    .pattern-btn {
+        padding: 0.8rem 1.2rem;
+        font-size: 1rem;
+        min-height: 44px;
+        touch-action: manipulation;
     }
 
     label {
         width: 100%;
+        min-height: 44px;
     }
 
     input[type="range"] {
         width: 100%;
+        height: 8px;
+        min-height: 44px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        min-width: 44px;
+        min-height: 44px;
     }
 
     .pattern-grid {
@@ -384,5 +419,12 @@ input[type="checkbox"] {
     .stats {
         flex-direction: column;
         gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    #gameCanvas {
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
     }
 }
