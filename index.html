@@ -8,31 +8,20 @@
     <meta name="theme-color" content="#1a0a00">
     <title>Carrom Board</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
     <div id="game-container">
-        <div id="scoreboard">
-            <div class="player-score active" id="player1-score">
-                <span class="player-label">Player 1</span>
-                <div class="score-pieces" id="p1-pieces"></div>
-                <span class="score-value" id="p1-value">0</span>
-            </div>
-            <div id="turn-indicator">
-                <span id="turn-text">Player 1</span>
-            </div>
-            <div class="player-score" id="player2-score">
-                <span class="player-label">Player 2</span>
-                <div class="score-pieces" id="p2-pieces"></div>
-                <span class="score-value" id="p2-value">0</span>
-            </div>
-        </div>
+        <div id="scoreboard"></div>
         <canvas id="carromCanvas"></canvas>
         <div id="controls">
             <button id="btn-new-game">New Game</button>
-            <button id="btn-mode">2 Players</button>
+            <button id="btn-players">2 Players</button>
+            <button id="btn-variant">Normal</button>
+            <button id="btn-rules">Rules</button>
         </div>
     </div>
+
     <div id="overlay">
         <div id="overlay-content">
             <h2 id="overlay-title">Carrom</h2>
@@ -40,6 +29,57 @@
             <button id="overlay-btn">Play</button>
         </div>
     </div>
-    <script src="script.js?v=2"></script>
+
+    <div id="rules-panel" class="hidden">
+        <div id="rules-content">
+            <button id="rules-close">&times;</button>
+            <h2>Carrom Rules</h2>
+
+            <h3>Objective</h3>
+            <p>Pocket all of your assigned pieces before your opponent. In 3-4 player mode, every piece you pocket scores a point.</p>
+
+            <h3>Setup</h3>
+            <p>19 pieces are arranged at the center: 9 white, 9 black, and 1 red queen. Each player shoots from their side of the board using the striker.</p>
+
+            <h3>How to Play</h3>
+            <ul>
+                <li><b>Place</b> &ndash; Drag to position the striker along your baseline.</li>
+                <li><b>Shoot</b> &ndash; Pull back from the striker and release. The farther you pull, the harder the shot.</li>
+            </ul>
+
+            <h3>Turns</h3>
+            <ul>
+                <li>If you pocket one of your own pieces, you get another turn.</li>
+                <li>If you miss (pocket nothing), the turn passes to the next player.</li>
+            </ul>
+
+            <h3>The Queen</h3>
+            <ul>
+                <li>Any player can pocket the queen at any time.</li>
+                <li>After pocketing the queen, you must <b>cover</b> it by pocketing one of your own pieces on the very next shot.</li>
+                <li>If you cover the queen successfully you earn <b>3 bonus points</b>.</li>
+                <li>If you fail to cover it, the queen returns to the center.</li>
+            </ul>
+
+            <h3>Fouls</h3>
+            <ul>
+                <li>If the striker is pocketed, you lose <b>1 point</b> and one of your pocketed pieces returns to the board.</li>
+            </ul>
+
+            <h3>Winning</h3>
+            <p><b>2 players:</b> The game ends when all pieces of one color are pocketed. The player with the higher score wins.</p>
+            <p><b>3-4 players:</b> The game ends when all 18 pieces are pocketed. The player with the most points wins.</p>
+
+            <div class="rule-divider"></div>
+
+            <h3>Flow Variant</h3>
+            <div class="variant-note">
+                <p>In <b>Flow</b> mode, when a player scores and earns another turn, the striker stays where it stopped instead of resetting to the baseline. This lets you chain shots from favorable positions.</p>
+                <p>When the turn passes to the next player (after a miss or foul), the new player starts normally from their baseline.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=3"></script>
 </body>
 </html>
