@@ -2,173 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game of Life - Emergent Complexity</title>
-    <meta name="description" content="Explore Conway's Game of Life - watch simple rules create infinite complexity through emergent patterns and behaviors.">
-    <meta name="author" content="Santiago MJ">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://santiago-mj.com/">
-    <meta property="og:title" content="Game of Life - Emergent Complexity">
-    <meta property="og:description" content="Interactive Conway's Game of Life with classic patterns: gliders, spaceships, oscillators, and more.">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://santiago-mj.com/">
-    <meta property="twitter:title" content="Game of Life">
-    <meta property="twitter:description" content="Watch emergent complexity arise from simple rules.">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-
-    <!-- Stylesheet -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a0a00">
+    <title>Carrom Board</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>Conway's Game of Life</h1>
-            <p class="subtitle">Simple rules, infinite complexity</p>
-        </header>
-
-        <!-- Main Canvas -->
-        <div class="canvas-container">
-            <canvas id="gameCanvas"></canvas>
-            <div class="stats">
-                <span id="generation">Generation: 0</span>
-                <span id="population">Population: 0</span>
-                <span id="fps">FPS: 0</span>
+    <div id="game-container">
+        <div id="scoreboard">
+            <div class="player-score active" id="player1-score">
+                <span class="player-label">Player 1</span>
+                <div class="score-pieces" id="p1-pieces"></div>
+                <span class="score-value" id="p1-value">0</span>
+            </div>
+            <div id="turn-indicator">
+                <span id="turn-text">Player 1</span>
+            </div>
+            <div class="player-score" id="player2-score">
+                <span class="player-label">Player 2</span>
+                <div class="score-pieces" id="p2-pieces"></div>
+                <span class="score-value" id="p2-value">0</span>
             </div>
         </div>
-
-        <!-- Controls -->
-        <div class="controls">
-            <div class="control-group">
-                <button id="playBtn" class="btn btn-primary">▶ Play</button>
-                <button id="pauseBtn" class="btn">⏸ Pause</button>
-                <button id="stepBtn" class="btn">⏭ Step</button>
-                <button id="clearBtn" class="btn">🗑 Clear</button>
-                <button id="randomBtn" class="btn">🎲 Random</button>
-            </div>
-
-            <div class="control-group">
-                <label>
-                    Speed: <span id="speedValue">10</span> gen/sec
-                    <input type="range" id="speedSlider" min="1" max="60" value="10">
-                </label>
-                <label>
-                    Zoom: <span id="zoomValue">8</span>px
-                    <input type="range" id="zoomSlider" min="2" max="20" value="8">
-                </label>
-            </div>
-
-            <div class="control-group">
-                <label>
-                    <input type="checkbox" id="gridToggle" checked> Show Grid
-                </label>
-                <label>
-                    <input type="checkbox" id="wrapToggle"> Wrap Edges
-                </label>
-            </div>
+        <canvas id="carromCanvas"></canvas>
+        <div id="controls">
+            <button id="btn-new-game">New Game</button>
+            <button id="btn-mode">2 Players</button>
         </div>
-
-        <!-- Patterns Library -->
-        <div class="patterns">
-            <h2>Classic Patterns</h2>
-            <div class="pattern-grid">
-                <!-- Still Lifes -->
-                <div class="pattern-category">
-                    <h3>Still Lifes</h3>
-                    <button class="pattern-btn" data-pattern="block">Block</button>
-                    <button class="pattern-btn" data-pattern="beehive">Beehive</button>
-                    <button class="pattern-btn" data-pattern="loaf">Loaf</button>
-                    <button class="pattern-btn" data-pattern="boat">Boat</button>
-                </div>
-
-                <!-- Oscillators -->
-                <div class="pattern-category">
-                    <h3>Oscillators</h3>
-                    <button class="pattern-btn" data-pattern="blinker">Blinker (P2)</button>
-                    <button class="pattern-btn" data-pattern="toad">Toad (P2)</button>
-                    <button class="pattern-btn" data-pattern="beacon">Beacon (P2)</button>
-                    <button class="pattern-btn" data-pattern="pulsar">Pulsar (P3)</button>
-                    <button class="pattern-btn" data-pattern="pentadecathlon">Pentadecathlon (P15)</button>
-                </div>
-
-                <!-- Spaceships -->
-                <div class="pattern-category">
-                    <h3>Spaceships</h3>
-                    <button class="pattern-btn" data-pattern="glider">Glider</button>
-                    <button class="pattern-btn" data-pattern="lwss">LWSS</button>
-                    <button class="pattern-btn" data-pattern="mwss">MWSS</button>
-                    <button class="pattern-btn" data-pattern="hwss">HWSS</button>
-                </div>
-
-                <!-- Guns & Breeders -->
-                <div class="pattern-category">
-                    <h3>Guns</h3>
-                    <button class="pattern-btn" data-pattern="gosperGliderGun">Gosper Glider Gun</button>
-                    <button class="pattern-btn" data-pattern="simkinGliderGun">Simkin Glider Gun</button>
-                </div>
-
-                <!-- Methuselahs -->
-                <div class="pattern-category">
-                    <h3>Methuselahs</h3>
-                    <button class="pattern-btn" data-pattern="rpentomino">R-pentomino</button>
-                    <button class="pattern-btn" data-pattern="acorn">Acorn</button>
-                    <button class="pattern-btn" data-pattern="diehard">Diehard</button>
-                </div>
-
-                <!-- Interesting -->
-                <div class="pattern-category">
-                    <h3>Interesting</h3>
-                    <button class="pattern-btn" data-pattern="infiniteGrowth">Infinite Growth</button>
-                    <button class="pattern-btn" data-pattern="pufferTrain">Puffer Train</button>
-                    <button class="pattern-btn" data-pattern="gliderCollision">Glider Collision</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Info -->
-        <div class="info">
-            <h2>The Rules</h2>
-            <div class="rules">
-                <div class="rule">
-                    <span class="rule-icon">💀</span>
-                    <strong>Death:</strong> A live cell with fewer than 2 or more than 3 neighbors dies
-                </div>
-                <div class="rule">
-                    <span class="rule-icon">🌱</span>
-                    <strong>Birth:</strong> A dead cell with exactly 3 neighbors becomes alive
-                </div>
-                <div class="rule">
-                    <span class="rule-icon">♾️</span>
-                    <strong>Survival:</strong> A live cell with 2 or 3 neighbors survives
-                </div>
-            </div>
-
-            <p class="description">
-                Conway's Game of Life is a cellular automaton devised by mathematician John Conway in 1970.
-                Despite its simple rules, it produces remarkably complex emergent behaviors. Click on the grid
-                to draw your own patterns, or select from the classic patterns above to see them in action.
-            </p>
-
-            <p class="hint">
-                💡 <strong>Tip:</strong> Click and drag on the canvas to draw cells. Try the R-pentomino or Acorn
-                to see chaotic evolution, or the Gosper Glider Gun to watch endless gliders being created!
-            </p>
-        </div>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p>Conway's Game of Life • Built with HTML5 Canvas & JavaScript</p>
-            <p><a href="https://github.com/Santimator/experiweb" target="_blank">View Source on GitHub</a></p>
-        </footer>
     </div>
-
-    <!-- JavaScript -->
+    <div id="overlay">
+        <div id="overlay-content">
+            <h2 id="overlay-title">Carrom</h2>
+            <p id="overlay-message">Flick the striker to pocket your pieces!</p>
+            <button id="overlay-btn">Play</button>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
