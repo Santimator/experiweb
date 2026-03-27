@@ -91,7 +91,10 @@
             newGame();
         });
 
-        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+        document.addEventListener('touchmove', e => {
+            if (e.target.closest('#rules-content')) return;
+            e.preventDefault();
+        }, { passive: false });
         window.addEventListener('orientationchange', () => setTimeout(resize, 100));
     }
 
@@ -687,8 +690,31 @@
         ctx.clearRect(0, 0, s, s);
         drawBoard();
         drawPockets();
+        drawPullLine();
         drawCoins();
         drawStriker();
+    }
+
+    function drawPullLine() {
+        if (phase !== 'aim' || !aimStart || !aimCurrent) return;
+        const dx = striker.x - aimCurrent.x;
+        const dy = striker.y - aimCurrent.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 5) return;
+
+        // Subtle line from striker to finger
+        ctx.strokeStyle = 'rgba(255, 200, 50, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(striker.x, striker.y);
+        ctx.lineTo(aimCurrent.x, aimCurrent.y);
+        ctx.stroke();
+
+        // Small dot at finger
+        ctx.fillStyle = 'rgba(255, 200, 50, 0.3)';
+        ctx.beginPath();
+        ctx.arc(aimCurrent.x, aimCurrent.y, 5, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     function drawBoard() {

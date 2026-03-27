@@ -259,10 +259,12 @@ body {
     height: 100%;
     background: rgba(0, 0, 0, 0.9);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     z-index: 2000;
     overflow-y: auto;
+    touch-action: pan-y;
+    padding: 20px 0;
 }
 
 #rules-panel.hidden {
@@ -277,11 +279,11 @@ body {
     border: 1px solid rgba(255, 204, 0, 0.2);
     max-width: 400px;
     width: 90%;
-    max-height: 85vh;
-    overflow-y: auto;
+    flex-shrink: 0;
     color: var(--text);
     line-height: 1.6;
     font-size: 14px;
+    touch-action: pan-y;
 }
 
 #rules-content h2 {
