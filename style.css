@@ -262,14 +262,11 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 2000;
-    transition: opacity 0.3s ease;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 #rules-panel.hidden {
-    opacity: 0;
-    pointer-events: none;
+    display: none;
 }
 
 #rules-content {
@@ -282,7 +279,6 @@ body {
     width: 90%;
     max-height: 85vh;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
     color: var(--text);
     line-height: 1.6;
     font-size: 14px;
