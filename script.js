@@ -88,23 +88,29 @@
             newGame();
         });
 
-        // Prevent iOS bouncing
-        document.addEventListener('touchmove', e => {
-            if (e.target === canvas) e.preventDefault();
-        }, { passive: false });
+        // Prevent iOS bouncing on the whole page
+        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+        // Also handle orientation change on iOS
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resize, 100);
+        });
     }
 
     function resize() {
-        const container = document.getElementById('game-container');
-        const scoreboard = document.getElementById('scoreboard');
-        const controls = document.getElementById('controls');
-        const availW = container.clientWidth - 16;
-        const availH = container.clientHeight - scoreboard.offsetHeight - controls.offsetHeight - 32;
-        const size = Math.min(availW, availH, 600);
+        // Use window dimensions directly - more reliable on iOS Safari
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+
+        // Reserve space for scoreboard (~60px) and controls (~50px) and gaps
+        const reservedH = 130;
+        const availW = winW - 16;
+        const availH = winH - reservedH;
+        const size = Math.max(200, Math.min(availW, availH, 600));
 
         const dpr = window.devicePixelRatio || 1;
-        canvas.width = size * dpr;
-        canvas.height = size * dpr;
+        canvas.width = Math.round(size * dpr);
+        canvas.height = Math.round(size * dpr);
         canvas.style.width = size + 'px';
         canvas.style.height = size + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -657,8 +663,12 @@
     }
 
     // ===== DRAWING =====
+    function canvasSize() {
+        return boardSize / 0.92; // inverse of boardSize = size * 0.92
+    }
+
     function draw() {
-        const size = canvas.style.width ? parseInt(canvas.style.width) : canvas.width;
+        const size = canvasSize();
         ctx.clearRect(0, 0, size, size);
 
         drawBoard();
@@ -669,7 +679,7 @@
     }
 
     function drawBoard() {
-        const size = parseInt(canvas.style.width);
+        const size = canvasSize();
         // Outer background
         ctx.fillStyle = '#2a1a0a';
         ctx.fillRect(0, 0, size, size);
