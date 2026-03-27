@@ -91,14 +91,7 @@
             newGame();
         });
 
-        // Only prevent default touch on canvas to avoid breaking buttons
-        canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
-        document.body.addEventListener('touchmove', e => {
-            // Allow scrolling in rules panel, block everywhere else
-            if (e.target.closest('#rules-content')) return;
-            if (e.target.closest('#overlay-content')) return;
-            e.preventDefault();
-        }, { passive: false });
+        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
         window.addEventListener('orientationchange', () => setTimeout(resize, 100));
     }
 
