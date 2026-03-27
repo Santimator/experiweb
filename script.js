@@ -1,582 +1,977 @@
-// ===== GAME OF LIFE ENGINE =====
+// ===== CARROM BOARD GAME =====
 
-class GameOfLife {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d', { alpha: false });
-        this.cellSize = 8;
-        this.cols = 0;
-        this.rows = 0;
-        this.generation = 0;
-        this.population = 0;
-        this.running = false;
-        this.showGrid = true;
-        this.wrapEdges = false;
-        this.speed = 10; // generations per second
-        
-        // Double buffering for performance
-        this.grid = [];
-        this.nextGrid = [];
-        
-        // Mouse interaction
-        this.isDrawing = false;
-        this.drawMode = true; // true = draw, false = erase
-        
-        // FPS tracking
-        this.lastTime = 0;
-        this.fps = 0;
-        this.frameCount = 0;
-        this.fpsTime = 0;
-        
-        this.initCanvas();
-        this.setupEventListeners();
+(() => {
+    'use strict';
+
+    // ===== CONSTANTS =====
+    const FRICTION = 0.985;
+    const WALL_BOUNCE = 0.6;
+    const COIN_BOUNCE = 0.9;
+    const POCKET_RADIUS_FACTOR = 1.8;
+    const MIN_SPEED = 0.15;
+    const MAX_POWER = 22;
+    const STRIKER_MASS = 2;
+    const COIN_MASS = 1;
+
+    const WHITE_COUNT = 9;
+    const BLACK_COUNT = 9;
+
+    const COLORS = {
+        board: '#c8a45c',
+        boardBorder: '#5a3a1a',
+        innerBorder: '#8b6914',
+        lines: '#a07830',
+        pocket: '#2a1a0a',
+        pocketRim: '#4a2a0a',
+        white: '#f5f5f0',
+        whiteBorder: '#c0c0b0',
+        black: '#1a1a1a',
+        blackBorder: '#444',
+        queen: '#cc2020',
+        queenBorder: '#881010',
+        striker: '#e8d8b0',
+        strikerBorder: '#907040',
+        aimLine: 'rgba(255, 200, 50, 0.5)',
+        aimDot: 'rgba(255, 200, 50, 0.8)',
+        powerLow: '#44cc44',
+        powerMid: '#cccc44',
+        powerHigh: '#cc4444',
+    };
+
+    // ===== GAME STATE =====
+    let canvas, ctx;
+    let boardSize, boardX, boardY, cellUnit;
+    let coins = [];
+    let striker = null;
+    let pockets = [];
+    let currentPlayer = 1; // 1 or 2
+    let scores = [0, 0];
+    let playerPocketed = [[], []]; // track what each player pocketed this turn
+    let queenCovered = [false, false];
+    let queenPocketedBy = -1;
+    let gameOver = false;
+    let twoPlayerMode = true;
+    let aiThinking = false;
+
+    // Interaction state
+    let phase = 'place'; // 'place', 'aim', 'moving', 'gameover'
+    let strikerBaseY = 0;
+    let strikerPlaceZone = { minX: 0, maxX: 0, y: 0 };
+    let aimStart = null;
+    let aimCurrent = null;
+    let isDragging = false;
+
+    // Animation
+    let animFrame = null;
+
+    // ===== INITIALIZATION =====
+    function init() {
+        canvas = document.getElementById('carromCanvas');
+        ctx = canvas.getContext('2d');
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Touch/mouse events
+        canvas.addEventListener('pointerdown', onPointerDown);
+        canvas.addEventListener('pointermove', onPointerMove);
+        canvas.addEventListener('pointerup', onPointerUp);
+        canvas.addEventListener('pointercancel', onPointerUp);
+
+        // Prevent context menu
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Buttons
+        document.getElementById('btn-new-game').addEventListener('click', newGame);
+        document.getElementById('btn-mode').addEventListener('click', toggleMode);
+        document.getElementById('overlay-btn').addEventListener('click', () => {
+            document.getElementById('overlay').classList.add('hidden');
+            newGame();
+        });
+
+        // Prevent iOS bouncing
+        document.addEventListener('touchmove', e => {
+            if (e.target === canvas) e.preventDefault();
+        }, { passive: false });
     }
-    
-    initCanvas() {
-        // Set canvas to optimal size for screen
-        const isMobile = window.innerWidth < 768;
-        const maxWidth = isMobile ? window.innerWidth - 40 : Math.min(window.innerWidth - 100, 1200);
-        const maxHeight = isMobile ? 400 : 600;
 
-        this.canvas.width = maxWidth;
-        this.canvas.height = maxHeight;
+    function resize() {
+        const container = document.getElementById('game-container');
+        const scoreboard = document.getElementById('scoreboard');
+        const controls = document.getElementById('controls');
+        const availW = container.clientWidth - 16;
+        const availH = container.clientHeight - scoreboard.offsetHeight - controls.offsetHeight - 32;
+        const size = Math.min(availW, availH, 600);
 
-        this.cols = Math.floor(maxWidth / this.cellSize);
-        this.rows = Math.floor(maxHeight / this.cellSize);
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // Adjust canvas to exact grid size
-        this.canvas.width = this.cols * this.cellSize;
-        this.canvas.height = this.rows * this.cellSize;
+        boardSize = size * 0.92;
+        boardX = (size - boardSize) / 2;
+        boardY = (size - boardSize) / 2;
+        cellUnit = boardSize / 30;
 
-        // Initialize grids
-        this.grid = this.createEmptyGrid();
-        this.nextGrid = this.createEmptyGrid();
+        recalcPockets();
+        recalcStrikerZone();
 
-        this.render();
-    }
-    
-    createEmptyGrid() {
-        return Array(this.rows).fill(null).map(() => Array(this.cols).fill(0));
-    }
-    
-    setupEventListeners() {
-        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
-        this.canvas.addEventListener('mouseleave', () => this.handleMouseUp());
-        
-        // Touch support
-        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
-        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-        this.canvas.addEventListener('touchend', () => this.handleMouseUp());
-        this.canvas.addEventListener('touchcancel', () => this.handleMouseUp());
-        
-        window.addEventListener('resize', () => this.handleResize());
-    }
-    
-    handleMouseDown(e) {
-        this.isDrawing = true;
-        const { row, col } = this.getCellFromMouse(e);
-        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            this.drawMode = !this.grid[row][col];
-            this.toggleCell(row, col);
+        if (coins.length > 0) {
+            draw();
         }
     }
-    
-    handleMouseMove(e) {
-        if (!this.isDrawing) return;
-        const { row, col } = this.getCellFromMouse(e);
-        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            this.grid[row][col] = this.drawMode ? 1 : 0;
-            this.render();
-            this.updateStats();
+
+    function recalcPockets() {
+        const pr = cellUnit * POCKET_RADIUS_FACTOR;
+        const inset = cellUnit * 1.2;
+        pockets = [
+            { x: boardX + inset, y: boardY + inset, r: pr },
+            { x: boardX + boardSize - inset, y: boardY + inset, r: pr },
+            { x: boardX + inset, y: boardY + boardSize - inset, r: pr },
+            { x: boardX + boardSize - inset, y: boardY + boardSize - inset, r: pr },
+        ];
+    }
+
+    function recalcStrikerZone() {
+        const lineOffset = boardSize * 0.22;
+        if (currentPlayer === 1) {
+            strikerBaseY = boardY + boardSize - lineOffset;
+        } else {
+            strikerBaseY = boardY + lineOffset;
+        }
+        const margin = boardSize * 0.22;
+        strikerPlaceZone = {
+            minX: boardX + margin,
+            maxX: boardX + boardSize - margin,
+            y: strikerBaseY,
+        };
+    }
+
+    // ===== NEW GAME =====
+    function newGame() {
+        coins = [];
+        scores = [0, 0];
+        playerPocketed = [[], []];
+        queenCovered = [false, false];
+        queenPocketedBy = -1;
+        currentPlayer = 1;
+        gameOver = false;
+        phase = 'place';
+
+        recalcStrikerZone();
+        createCoins();
+        placeStriker();
+        updateUI();
+        draw();
+    }
+
+    function createCoins() {
+        const cx = boardX + boardSize / 2;
+        const cy = boardY + boardSize / 2;
+        const coinR = cellUnit * 0.72;
+        const gap = coinR * 2.3;
+
+        // Queen at center
+        coins.push(makeCoin(cx, cy, coinR, 'queen'));
+
+        // Inner ring: 6 coins alternating
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * Math.PI) / 3;
+            const x = cx + Math.cos(angle) * gap;
+            const y = cy + Math.sin(angle) * gap;
+            coins.push(makeCoin(x, y, coinR, i % 2 === 0 ? 'white' : 'black'));
+        }
+
+        // Outer ring offset: 12 coins
+        for (let i = 0; i < 12; i++) {
+            const angle = (i * Math.PI) / 6 + Math.PI / 12;
+            const x = cx + Math.cos(angle) * gap * 1.85;
+            const y = cy + Math.sin(angle) * gap * 1.85;
+            coins.push(makeCoin(x, y, coinR, i % 2 === 0 ? 'white' : 'black'));
         }
     }
-    
-    handleMouseUp() {
-        this.isDrawing = false;
+
+    function makeCoin(x, y, r, type) {
+        return { x, y, r, vx: 0, vy: 0, type, pocketed: false, mass: COIN_MASS };
     }
-    
-    handleTouchStart(e) {
+
+    function placeStriker() {
+        const sr = cellUnit * 0.95;
+        striker = {
+            x: strikerPlaceZone.minX + (strikerPlaceZone.maxX - strikerPlaceZone.minX) / 2,
+            y: strikerPlaceZone.y,
+            r: sr,
+            vx: 0,
+            vy: 0,
+            type: 'striker',
+            pocketed: false,
+            mass: STRIKER_MASS,
+        };
+    }
+
+    // ===== INPUT HANDLING =====
+    function getCanvasPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        };
+    }
+
+    function distTo(pos, obj) {
+        return Math.sqrt((pos.x - obj.x) ** 2 + (pos.y - obj.y) ** 2);
+    }
+
+    function onPointerDown(e) {
+        if (gameOver || aiThinking || phase === 'moving') return;
         e.preventDefault();
-        this.isDrawing = true;
-        const touch = e.touches[0];
-        const rect = this.canvas.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        const col = Math.floor(x / this.cellSize);
-        const row = Math.floor(y / this.cellSize);
+        canvas.setPointerCapture(e.pointerId);
+        const pos = getCanvasPos(e);
 
-        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            this.drawMode = !this.grid[row][col];
-            this.toggleCell(row, col);
+        if (phase === 'place') {
+            // Tap anywhere on the board to start moving striker
+            isDragging = true;
+            // Snap striker to finger x position
+            striker.x = Math.max(
+                strikerPlaceZone.minX,
+                Math.min(strikerPlaceZone.maxX, pos.x)
+            );
+            draw();
+        } else if (phase === 'aim') {
+            // Start slingshot: pull back from striker
+            aimStart = { x: pos.x, y: pos.y };
+            aimCurrent = { x: pos.x, y: pos.y };
+            isDragging = true;
         }
     }
 
-    handleTouchMove(e) {
+    function onPointerMove(e) {
+        if (!isDragging || gameOver || aiThinking || phase === 'moving') return;
         e.preventDefault();
-        if (!this.isDrawing) return;
-        const touch = e.touches[0];
-        const rect = this.canvas.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        const col = Math.floor(x / this.cellSize);
-        const row = Math.floor(y / this.cellSize);
+        const pos = getCanvasPos(e);
 
-        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            this.grid[row][col] = this.drawMode ? 1 : 0;
-            this.render();
-            this.updateStats();
+        if (phase === 'place') {
+            striker.x = Math.max(
+                strikerPlaceZone.minX,
+                Math.min(strikerPlaceZone.maxX, pos.x)
+            );
+            striker.y = strikerPlaceZone.y;
+            draw();
+        } else if (phase === 'aim' && aimStart) {
+            aimCurrent = { x: pos.x, y: pos.y };
+            draw();
         }
     }
-    
-    handleResize() {
-        // Debounce resize
-        clearTimeout(this.resizeTimeout);
-        this.resizeTimeout = setTimeout(() => this.initCanvas(), 300);
+
+    function onPointerUp(e) {
+        if (!isDragging || gameOver || aiThinking) return;
+        e.preventDefault();
+
+        if (phase === 'place') {
+            // Transition to aim phase
+            phase = 'aim';
+            isDragging = false;
+            draw();
+            return;
+        }
+
+        if (phase === 'aim' && aimStart && aimCurrent) {
+            // Pull-back is from striker: direction is opposite of drag
+            const dx = striker.x - aimCurrent.x;
+            const dy = striker.y - aimCurrent.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist > 10) {
+                const power = Math.min(dist / 8, MAX_POWER);
+                const angle = Math.atan2(dy, dx);
+                striker.vx = Math.cos(angle) * power;
+                striker.vy = Math.sin(angle) * power;
+                phase = 'moving';
+                playerPocketed = [[], []];
+                startSimulation();
+            } else {
+                // Tap without drag: go back to place phase
+                phase = 'place';
+            }
+
+            aimStart = null;
+            aimCurrent = null;
+        }
+
+        isDragging = false;
+        draw();
     }
-    
-    getCellFromMouse(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const col = Math.floor(x / this.cellSize);
-        const row = Math.floor(y / this.cellSize);
-        return { row, col };
+
+    // ===== PHYSICS SIMULATION =====
+    function startSimulation() {
+        if (animFrame) cancelAnimationFrame(animFrame);
+        simulate();
     }
-    
-    toggleCell(row, col) {
-        this.grid[row][col] = this.grid[row][col] ? 0 : 1;
-        this.render();
-        this.updateStats();
+
+    function simulate() {
+        let moving = false;
+
+        // Update all pieces
+        const allPieces = [...coins.filter(c => !c.pocketed), striker && !striker.pocketed ? striker : null].filter(Boolean);
+
+        for (const piece of allPieces) {
+            piece.x += piece.vx;
+            piece.y += piece.vy;
+            piece.vx *= FRICTION;
+            piece.vy *= FRICTION;
+
+            if (Math.abs(piece.vx) < MIN_SPEED && Math.abs(piece.vy) < MIN_SPEED) {
+                piece.vx = 0;
+                piece.vy = 0;
+            } else {
+                moving = true;
+            }
+
+            // Wall collisions
+            wallCollision(piece);
+        }
+
+        // Piece-to-piece collisions
+        for (let i = 0; i < allPieces.length; i++) {
+            for (let j = i + 1; j < allPieces.length; j++) {
+                pieceCollision(allPieces[i], allPieces[j]);
+            }
+        }
+
+        // Check pockets
+        checkPockets();
+
+        draw();
+
+        if (moving) {
+            animFrame = requestAnimationFrame(simulate);
+        } else {
+            endTurn();
+        }
     }
-    
-    // Core Game of Life logic
-    countNeighbors(row, col) {
-        let count = 0;
-        
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
-                if (i === 0 && j === 0) continue;
-                
-                let newRow = row + i;
-                let newCol = col + j;
-                
-                if (this.wrapEdges) {
-                    newRow = (newRow + this.rows) % this.rows;
-                    newCol = (newCol + this.cols) % this.cols;
-                } else {
-                    if (newRow < 0 || newRow >= this.rows || newCol < 0 || newCol >= this.cols) {
-                        continue;
+
+    function wallCollision(piece) {
+        const minX = boardX + cellUnit * 1.0 + piece.r;
+        const maxX = boardX + boardSize - cellUnit * 1.0 - piece.r;
+        const minY = boardY + cellUnit * 1.0 + piece.r;
+        const maxY = boardY + boardSize - cellUnit * 1.0 - piece.r;
+
+        if (piece.x < minX) {
+            piece.x = minX;
+            piece.vx = -piece.vx * WALL_BOUNCE;
+        }
+        if (piece.x > maxX) {
+            piece.x = maxX;
+            piece.vx = -piece.vx * WALL_BOUNCE;
+        }
+        if (piece.y < minY) {
+            piece.y = minY;
+            piece.vy = -piece.vy * WALL_BOUNCE;
+        }
+        if (piece.y > maxY) {
+            piece.y = maxY;
+            piece.vy = -piece.vy * WALL_BOUNCE;
+        }
+    }
+
+    function pieceCollision(a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = a.r + b.r;
+
+        if (dist < minDist && dist > 0) {
+            // Separate overlapping pieces
+            const overlap = minDist - dist;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            const totalMass = a.mass + b.mass;
+
+            a.x -= nx * overlap * (b.mass / totalMass);
+            a.y -= ny * overlap * (b.mass / totalMass);
+            b.x += nx * overlap * (a.mass / totalMass);
+            b.y += ny * overlap * (a.mass / totalMass);
+
+            // Elastic collision
+            const dvx = a.vx - b.vx;
+            const dvy = a.vy - b.vy;
+            const dvDotN = dvx * nx + dvy * ny;
+
+            if (dvDotN > 0) {
+                const impulse = (2 * dvDotN) / totalMass * COIN_BOUNCE;
+
+                a.vx -= impulse * b.mass * nx;
+                a.vy -= impulse * b.mass * ny;
+                b.vx += impulse * a.mass * nx;
+                b.vy += impulse * a.mass * ny;
+            }
+        }
+    }
+
+    function checkPockets() {
+        const allPieces = [...coins, striker];
+        for (const piece of allPieces) {
+            if (piece.pocketed) continue;
+            for (const pocket of pockets) {
+                const dx = piece.x - pocket.x;
+                const dy = piece.y - pocket.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < pocket.r) {
+                    piece.pocketed = true;
+                    piece.vx = 0;
+                    piece.vy = 0;
+
+                    if (piece.type !== 'striker') {
+                        playerPocketed[currentPlayer - 1].push(piece.type);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    // ===== TURN LOGIC =====
+    function endTurn() {
+        phase = 'place';
+
+        const myPocketed = playerPocketed[currentPlayer - 1];
+        const strikerPocketed = striker.pocketed;
+        const myColor = currentPlayer === 1 ? 'white' : 'black';
+        const oppColor = currentPlayer === 1 ? 'black' : 'white';
+
+        let pocketedOwn = myPocketed.filter(t => t === myColor).length;
+        let pocketedOpp = myPocketed.filter(t => t === oppColor).length;
+        let pocketedQueen = myPocketed.includes('queen');
+
+        // Score own pieces
+        scores[currentPlayer - 1] += pocketedOwn;
+
+        // Opponent pieces go to opponent's score
+        scores[2 - currentPlayer] += pocketedOpp;
+
+        // Queen handling
+        if (pocketedQueen) {
+            queenPocketedBy = currentPlayer - 1;
+        }
+
+        // Cover queen: if queen was pocketed previously and player pockets own piece
+        if (queenPocketedBy === currentPlayer - 1 && pocketedOwn > 0 && !pocketedQueen) {
+            scores[currentPlayer - 1] += 3; // Queen bonus
+            queenCovered[currentPlayer - 1] = true;
+            queenPocketedBy = -1;
+        }
+
+        // If queen pocketed but not covered next turn, it comes back
+        // (simplified: we just track it)
+
+        // Striker pocketed: penalty - lose a point and return one piece
+        if (strikerPocketed) {
+            scores[currentPlayer - 1] = Math.max(0, scores[currentPlayer - 1] - 1);
+            returnRandomPiece(currentPlayer - 1);
+        }
+
+        // Check game over
+        const whiteLeft = coins.filter(c => c.type === 'white' && !c.pocketed).length;
+        const blackLeft = coins.filter(c => c.type === 'black' && !c.pocketed).length;
+
+        if (whiteLeft === 0 || blackLeft === 0) {
+            gameOver = true;
+            phase = 'gameover';
+            showGameOver();
+            return;
+        }
+
+        // Queen not covered - return it after one turn
+        if (queenPocketedBy >= 0 && pocketedOwn === 0 && !pocketedQueen) {
+            // Return queen to center
+            const queenCoin = coins.find(c => c.type === 'queen' && c.pocketed);
+            if (queenCoin) {
+                queenCoin.pocketed = false;
+                queenCoin.x = boardX + boardSize / 2;
+                queenCoin.y = boardY + boardSize / 2;
+                queenCoin.vx = 0;
+                queenCoin.vy = 0;
+            }
+            queenPocketedBy = -1;
+        }
+
+        // Switch player if nothing pocketed or striker was pocketed
+        if (pocketedOwn === 0 || strikerPocketed) {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+        }
+
+        recalcStrikerZone();
+        placeStriker();
+        // Push striker away from any coins
+        resolveStrikerOverlaps();
+        updateUI();
+        draw();
+
+        // AI turn
+        if (!twoPlayerMode && currentPlayer === 2) {
+            aiTurn();
+        }
+    }
+
+    function returnRandomPiece(playerIdx) {
+        const myColor = playerIdx === 0 ? 'white' : 'black';
+        const pocketed = coins.filter(c => c.type === myColor && c.pocketed);
+        if (pocketed.length > 0) {
+            const piece = pocketed[0];
+            piece.pocketed = false;
+            piece.x = boardX + boardSize / 2;
+            piece.y = boardY + boardSize / 2;
+            piece.vx = 0;
+            piece.vy = 0;
+        }
+    }
+
+    function resolveStrikerOverlaps() {
+        for (let iter = 0; iter < 10; iter++) {
+            let resolved = true;
+            for (const coin of coins) {
+                if (coin.pocketed) continue;
+                const dx = striker.x - coin.x;
+                const dy = striker.y - coin.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const minDist = striker.r + coin.r + 1;
+                if (dist < minDist && dist > 0) {
+                    const push = (minDist - dist) / 2;
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    striker.x += nx * push;
+                    coin.x -= nx * push;
+                    resolved = false;
+                }
+            }
+            if (resolved) break;
+        }
+    }
+
+    // ===== AI =====
+    function aiTurn() {
+        aiThinking = true;
+        setTimeout(() => {
+            // Find best target (closest black piece to a pocket)
+            const targetColor = 'black';
+            let bestAngle = Math.random() * Math.PI * 2;
+            let bestPower = 8 + Math.random() * 8;
+
+            const targets = coins.filter(c => c.type === targetColor && !c.pocketed);
+            if (targets.length > 0) {
+                const target = targets[Math.floor(Math.random() * targets.length)];
+
+                // Find closest pocket to target
+                let closestPocket = pockets[0];
+                let closestDist = Infinity;
+                for (const p of pockets) {
+                    const d = Math.sqrt((target.x - p.x) ** 2 + (target.y - p.y) ** 2);
+                    if (d < closestDist) {
+                        closestDist = d;
+                        closestPocket = p;
                     }
                 }
-                
-                count += this.grid[newRow][newCol];
-            }
-        }
-        
-        return count;
-    }
-    
-    nextGeneration() {
-        // Apply Game of Life rules
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const neighbors = this.countNeighbors(row, col);
-                const cell = this.grid[row][col];
-                
-                if (cell === 1) {
-                    // Cell is alive
-                    this.nextGrid[row][col] = (neighbors === 2 || neighbors === 3) ? 1 : 0;
-                } else {
-                    // Cell is dead
-                    this.nextGrid[row][col] = (neighbors === 3) ? 1 : 0;
-                }
-            }
-        }
-        
-        // Swap grids
-        [this.grid, this.nextGrid] = [this.nextGrid, this.grid];
-        this.generation++;
-        this.render();
-        this.updateStats();
-    }
-    
-    render() {
-        const ctx = this.ctx;
-        
-        // Clear canvas
-        ctx.fillStyle = '#1a1f3a';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Draw cells
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.grid[row][col]) {
-                    ctx.fillStyle = '#00ff88';
-                    ctx.fillRect(
-                        col * this.cellSize,
-                        row * this.cellSize,
-                        this.cellSize,
-                        this.cellSize
-                    );
-                }
-            }
-        }
-        
-        // Draw grid lines
-        if (this.showGrid) {
-            ctx.strokeStyle = '#2a3050';
-            ctx.lineWidth = 0.5;
-            
-            for (let i = 0; i <= this.cols; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * this.cellSize, 0);
-                ctx.lineTo(i * this.cellSize, this.canvas.height);
-                ctx.stroke();
-            }
-            
-            for (let i = 0; i <= this.rows; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, i * this.cellSize);
-                ctx.lineTo(this.canvas.width, i * this.cellSize);
-                ctx.stroke();
-            }
-        }
-    }
-    
-    updateStats() {
-        // Count population
-        this.population = 0;
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.population += this.grid[row][col];
-            }
-        }
-        
-        document.getElementById('generation').textContent = `Generation: ${this.generation}`;
-        document.getElementById('population').textContent = `Population: ${this.population}`;
-    }
-    
-    updateFPS(currentTime) {
-        this.frameCount++;
-        const elapsed = currentTime - this.fpsTime;
-        
-        if (elapsed >= 1000) {
-            this.fps = Math.round(this.frameCount / (elapsed / 1000));
-            document.getElementById('fps').textContent = `FPS: ${this.fps}`;
-            this.frameCount = 0;
-            this.fpsTime = currentTime;
-        }
-    }
-    
-    clear() {
-        this.grid = this.createEmptyGrid();
-        this.generation = 0;
-        this.render();
-        this.updateStats();
-    }
-    
-    randomize() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col] = Math.random() > 0.5 ? 1 : 0;
-            }
-        }
-        this.generation = 0;
-        this.render();
-        this.updateStats();
-    }
-    
-    setCellSize(size) {
-        this.cellSize = parseInt(size);
-        this.initCanvas();
-    }
-    
-    placePattern(pattern, centerX = null, centerY = null) {
-        const startCol = centerX !== null ? centerX : Math.floor(this.cols / 2) - Math.floor(pattern[0].length / 2);
-        const startRow = centerY !== null ? centerY : Math.floor(this.rows / 2) - Math.floor(pattern.length / 2);
-        
-        for (let row = 0; row < pattern.length; row++) {
-            for (let col = 0; col < pattern[row].length; col++) {
-                const gridRow = startRow + row;
-                const gridCol = startCol + col;
-                
-                if (gridRow >= 0 && gridRow < this.rows && gridCol >= 0 && gridCol < this.cols) {
-                    this.grid[gridRow][gridCol] = pattern[row][col];
-                }
-            }
-        }
-        
-        this.render();
-        this.updateStats();
-    }
-}
 
-// ===== PATTERN LIBRARY =====
+                // Aim striker at target from opposite side of pocket
+                const pToT_x = target.x - closestPocket.x;
+                const pToT_y = target.y - closestPocket.y;
+                const pToT_d = Math.sqrt(pToT_x * pToT_x + pToT_y * pToT_y);
+                const aimX = target.x + (pToT_x / pToT_d) * target.r * 2;
+                const aimY = target.y + (pToT_y / pToT_d) * target.r * 2;
 
-const patterns = {
-    // Still Lifes
-    block: [
-        [1, 1],
-        [1, 1]
-    ],
-    
-    beehive: [
-        [0, 1, 1, 0],
-        [1, 0, 0, 1],
-        [0, 1, 1, 0]
-    ],
-    
-    loaf: [
-        [0, 1, 1, 0],
-        [1, 0, 0, 1],
-        [0, 1, 0, 1],
-        [0, 0, 1, 0]
-    ],
-    
-    boat: [
-        [1, 1, 0],
-        [1, 0, 1],
-        [0, 1, 0]
-    ],
-    
-    // Oscillators
-    blinker: [
-        [1, 1, 1]
-    ],
-    
-    toad: [
-        [0, 1, 1, 1],
-        [1, 1, 1, 0]
-    ],
-    
-    beacon: [
-        [1, 1, 0, 0],
-        [1, 1, 0, 0],
-        [0, 0, 1, 1],
-        [0, 0, 1, 1]
-    ],
-    
-    pulsar: [
-        [0,0,1,1,1,0,0,0,1,1,1,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [1,0,0,0,0,1,0,1,0,0,0,0,1],
-        [1,0,0,0,0,1,0,1,0,0,0,0,1],
-        [1,0,0,0,0,1,0,1,0,0,0,0,1],
-        [0,0,1,1,1,0,0,0,1,1,1,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,1,1,1,0,0,0,1,1,1,0,0],
-        [1,0,0,0,0,1,0,1,0,0,0,0,1],
-        [1,0,0,0,0,1,0,1,0,0,0,0,1],
-        [1,0,0,0,0,1,0,1,0,0,0,0,1],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,1,1,1,0,0,0,1,1,1,0,0]
-    ],
-    
-    pentadecathlon: [
-        [0,0,1,0,0,0,0,1,0,0],
-        [1,1,0,1,1,1,1,0,1,1],
-        [0,0,1,0,0,0,0,1,0,0]
-    ],
-    
-    // Spaceships
-    glider: [
-        [0, 1, 0],
-        [0, 0, 1],
-        [1, 1, 1]
-    ],
-    
-    lwss: [
-        [0,1,0,0,1],
-        [1,0,0,0,0],
-        [1,0,0,0,1],
-        [1,1,1,1,0]
-    ],
-    
-    mwss: [
-        [0,0,1,0,0,0],
-        [0,0,0,0,1,0],
-        [1,0,0,0,0,1],
-        [0,1,1,1,1,1]
-    ],
-    
-    hwss: [
-        [0,0,1,1,0,0,0],
-        [0,0,0,0,0,1,0],
-        [1,0,0,0,0,0,1],
-        [0,1,1,1,1,1,1]
-    ],
-    
-    // Guns
-    gosperGliderGun: [
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-        [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-        [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    ],
-    
-    simkinGliderGun: [
-        [1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0]
-    ],
-    
-    // Methuselahs
-    rpentomino: [
-        [0, 1, 1],
-        [1, 1, 0],
-        [0, 1, 0]
-    ],
-    
-    acorn: [
-        [0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0, 0],
-        [1, 1, 0, 0, 1, 1, 1]
-    ],
-    
-    diehard: [
-        [0, 0, 0, 0, 0, 0, 1, 0],
-        [1, 1, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 1, 1, 1]
-    ],
-    
-    // Interesting patterns
-    infiniteGrowth: [
-        [1,1,1,0,1],
-        [1,0,0,0,0],
-        [0,0,0,1,1],
-        [0,1,1,0,1],
-        [1,0,1,0,1]
-    ],
-    
-    pufferTrain: [
-        [0,0,0,1,0,0,0],
-        [0,0,0,0,1,0,0],
-        [0,0,1,0,1,0,0],
-        [0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0],
-        [1,0,0,1,0,0,1],
-        [1,1,1,1,1,1,1],
-        [1,0,1,1,1,0,1],
-        [0,0,0,0,0,0,0],
-        [0,0,0,1,0,0,0],
-        [0,0,1,0,1,0,0]
-    ],
-    
-    gliderCollision: [
-        [1,0,1,0,0,0,0,0,0,0,0,0,1],
-        [0,1,1,0,0,0,0,0,0,0,0,0,1,1],
-        [0,1,0,0,0,0,0,0,0,0,0,1,0,1],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    ]
-};
+                bestAngle = Math.atan2(aimY - striker.y, aimX - striker.x);
+                bestPower = 10 + Math.random() * 6;
 
-// ===== INITIALIZATION =====
-
-let game;
-let animationFrameId;
-let lastUpdateTime = 0;
-
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    game = new GameOfLife(canvas);
-    
-    // Control buttons
-    document.getElementById('playBtn').addEventListener('click', () => {
-        game.running = true;
-        if (!animationFrameId) {
-            gameLoop(performance.now());
-        }
-    });
-    
-    document.getElementById('pauseBtn').addEventListener('click', () => {
-        game.running = false;
-    });
-    
-    document.getElementById('stepBtn').addEventListener('click', () => {
-        game.nextGeneration();
-    });
-    
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        game.clear();
-    });
-    
-    document.getElementById('randomBtn').addEventListener('click', () => {
-        game.randomize();
-    });
-    
-    // Speed slider
-    document.getElementById('speedSlider').addEventListener('input', (e) => {
-        game.speed = parseInt(e.target.value);
-        document.getElementById('speedValue').textContent = game.speed;
-    });
-    
-    // Zoom slider
-    document.getElementById('zoomSlider').addEventListener('input', (e) => {
-        game.setCellSize(e.target.value);
-        document.getElementById('zoomValue').textContent = e.target.value;
-    });
-    
-    // Grid toggle
-    document.getElementById('gridToggle').addEventListener('change', (e) => {
-        game.showGrid = e.target.checked;
-        game.render();
-    });
-    
-    // Wrap toggle
-    document.getElementById('wrapToggle').addEventListener('change', (e) => {
-        game.wrapEdges = e.target.checked;
-    });
-    
-    // Pattern buttons
-    document.querySelectorAll('.pattern-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const patternName = btn.getAttribute('data-pattern');
-            if (patterns[patternName]) {
-                game.clear();
-                game.placePattern(patterns[patternName]);
+                // Add some inaccuracy
+                bestAngle += (Math.random() - 0.5) * 0.15;
             }
-        });
-    });
-    
-    // Start with a glider
-    game.placePattern(patterns.glider, 20, 20);
-});
 
-// ===== GAME LOOP =====
+            // Randomly position striker
+            striker.x = strikerPlaceZone.minX + Math.random() * (strikerPlaceZone.maxX - strikerPlaceZone.minX);
+            striker.y = strikerPlaceZone.y;
+            resolveStrikerOverlaps();
 
-function gameLoop(currentTime) {
-    animationFrameId = requestAnimationFrame(gameLoop);
-    
-    game.updateFPS(currentTime);
-    
-    if (!game.running) return;
-    
-    const interval = 1000 / game.speed;
-    const elapsed = currentTime - lastUpdateTime;
-    
-    if (elapsed >= interval) {
-        game.nextGeneration();
-        lastUpdateTime = currentTime - (elapsed % interval);
+            striker.vx = Math.cos(bestAngle) * bestPower;
+            striker.vy = Math.sin(bestAngle) * bestPower;
+            phase = 'moving';
+            playerPocketed = [[], []];
+            aiThinking = false;
+            startSimulation();
+        }, 600);
     }
-}
 
-// Start the loop
-gameLoop(performance.now());
+    // ===== GAME OVER =====
+    function showGameOver() {
+        const overlay = document.getElementById('overlay');
+        const title = document.getElementById('overlay-title');
+        const msg = document.getElementById('overlay-message');
+        const btn = document.getElementById('overlay-btn');
+
+        let winner;
+        if (scores[0] > scores[1]) winner = 'Player 1';
+        else if (scores[1] > scores[0]) winner = 'Player 2';
+        else winner = null;
+
+        title.textContent = winner ? `${winner} Wins!` : 'Draw!';
+        msg.textContent = `Score: ${scores[0]} - ${scores[1]}`;
+        btn.textContent = 'Play Again';
+        overlay.classList.remove('hidden');
+    }
+
+    // ===== UI =====
+    function updateUI() {
+        document.getElementById('p1-value').textContent = scores[0];
+        document.getElementById('p2-value').textContent = scores[1];
+        document.getElementById('turn-text').textContent = `Player ${currentPlayer}`;
+
+        const p1el = document.getElementById('player1-score');
+        const p2el = document.getElementById('player2-score');
+        p1el.classList.toggle('active', currentPlayer === 1);
+        p2el.classList.toggle('active', currentPlayer === 2);
+
+        // Score pieces indicators
+        updateScorePieces('p1-pieces', 'white');
+        updateScorePieces('p2-pieces', 'black');
+
+        // Mode button
+        document.getElementById('btn-mode').textContent = twoPlayerMode ? '2 Players' : '1 Player';
+    }
+
+    function updateScorePieces(containerId, color) {
+        const container = document.getElementById(containerId);
+        const total = color === 'white' ? WHITE_COUNT : BLACK_COUNT;
+        const pocketed = coins.filter(c => c.type === color && c.pocketed).length;
+        container.innerHTML = '';
+        for (let i = 0; i < total; i++) {
+            const dot = document.createElement('span');
+            dot.className = `score-piece ${color}${i < pocketed ? ' pocketed' : ''}`;
+            container.appendChild(dot);
+        }
+    }
+
+    function toggleMode() {
+        twoPlayerMode = !twoPlayerMode;
+        updateUI();
+        newGame();
+    }
+
+    // ===== DRAWING =====
+    function draw() {
+        const size = canvas.style.width ? parseInt(canvas.style.width) : canvas.width;
+        ctx.clearRect(0, 0, size, size);
+
+        drawBoard();
+        drawPockets();
+        drawCoins();
+        drawStriker();
+        drawAimGuide();
+    }
+
+    function drawBoard() {
+        const size = parseInt(canvas.style.width);
+        // Outer background
+        ctx.fillStyle = '#2a1a0a';
+        ctx.fillRect(0, 0, size, size);
+
+        // Board border
+        ctx.fillStyle = COLORS.boardBorder;
+        roundRect(boardX - 4, boardY - 4, boardSize + 8, boardSize + 8, 8, true);
+
+        // Board surface
+        ctx.fillStyle = COLORS.board;
+        roundRect(boardX, boardY, boardSize, boardSize, 4, true);
+
+        // Inner border lines
+        const inner = cellUnit * 2;
+        ctx.strokeStyle = COLORS.innerBorder;
+        ctx.lineWidth = 2;
+        roundRect(boardX + inner, boardY + inner, boardSize - inner * 2, boardSize - inner * 2, 2, false, true);
+
+        // Center circle
+        const cx = boardX + boardSize / 2;
+        const cy = boardY + boardSize / 2;
+
+        ctx.strokeStyle = COLORS.lines;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, cellUnit * 2.5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Small center circle
+        ctx.beginPath();
+        ctx.arc(cx, cy, cellUnit * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = COLORS.lines;
+        ctx.fill();
+
+        // Baseline circles at ends
+        const baseR = cellUnit * 0.4;
+        const lineOffset = boardSize * 0.22;
+
+        // Striker lines (baselines)
+        ctx.strokeStyle = COLORS.lines;
+        ctx.lineWidth = 1.5;
+
+        // Bottom baseline (Player 1)
+        const by1 = boardY + boardSize - lineOffset;
+        ctx.beginPath();
+        ctx.moveTo(boardX + inner + cellUnit, by1);
+        ctx.lineTo(boardX + boardSize - inner - cellUnit, by1);
+        ctx.stroke();
+
+        // Baseline circles
+        ctx.beginPath();
+        ctx.arc(boardX + inner + cellUnit, by1, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(boardX + boardSize - inner - cellUnit, by1, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Top baseline (Player 2)
+        const by2 = boardY + lineOffset;
+        ctx.beginPath();
+        ctx.moveTo(boardX + inner + cellUnit, by2);
+        ctx.lineTo(boardX + boardSize - inner - cellUnit, by2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(boardX + inner + cellUnit, by2, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(boardX + boardSize - inner - cellUnit, by2, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Left baseline
+        const lx1 = boardX + lineOffset;
+        ctx.beginPath();
+        ctx.moveTo(lx1, boardY + inner + cellUnit);
+        ctx.lineTo(lx1, boardY + boardSize - inner - cellUnit);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(lx1, boardY + inner + cellUnit, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(lx1, boardY + boardSize - inner - cellUnit, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Right baseline
+        const rx1 = boardX + boardSize - lineOffset;
+        ctx.beginPath();
+        ctx.moveTo(rx1, boardY + inner + cellUnit);
+        ctx.lineTo(rx1, boardY + boardSize - inner - cellUnit);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(rx1, boardY + inner + cellUnit, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(rx1, boardY + boardSize - inner - cellUnit, baseR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Diagonal lines to pockets (arrows)
+        ctx.strokeStyle = COLORS.lines;
+        ctx.lineWidth = 1;
+        const arrowLen = cellUnit * 3;
+        const corners = [
+            [boardX + inner, boardY + inner, 1, 1],
+            [boardX + boardSize - inner, boardY + inner, -1, 1],
+            [boardX + inner, boardY + boardSize - inner, 1, -1],
+            [boardX + boardSize - inner, boardY + boardSize - inner, -1, -1],
+        ];
+        for (const [cx2, cy2, dx, dy] of corners) {
+            const norm = Math.sqrt(2);
+            ctx.beginPath();
+            ctx.moveTo(cx2 + dx * cellUnit * 1.5 / norm, cy2 + dy * cellUnit * 1.5 / norm);
+            ctx.lineTo(cx2 + dx * arrowLen / norm, cy2 + dy * arrowLen / norm);
+            ctx.stroke();
+        }
+    }
+
+    function roundRect(x, y, w, h, r, fill, stroke) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        if (fill) ctx.fill();
+        if (stroke) ctx.stroke();
+    }
+
+    function drawPockets() {
+        for (const p of pockets) {
+            // Pocket shadow
+            ctx.fillStyle = COLORS.pocketRim;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r + 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pocket hole
+            ctx.fillStyle = COLORS.pocket;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function drawCoins() {
+        for (const coin of coins) {
+            if (coin.pocketed) continue;
+            drawPiece(coin);
+        }
+    }
+
+    function drawPiece(piece) {
+        const { x, y, r, type } = piece;
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.arc(x + 1, y + 1, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main body
+        let color, borderColor;
+        if (type === 'white') { color = COLORS.white; borderColor = COLORS.whiteBorder; }
+        else if (type === 'black') { color = COLORS.black; borderColor = COLORS.blackBorder; }
+        else if (type === 'queen') { color = COLORS.queen; borderColor = COLORS.queenBorder; }
+        else { color = COLORS.striker; borderColor = COLORS.strikerBorder; }
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Inner ring detail
+        if (type !== 'striker') {
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.arc(x, y, r * 0.6, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Striker cross mark
+        if (type === 'striker') {
+            ctx.strokeStyle = COLORS.strikerBorder;
+            ctx.lineWidth = 1;
+            const cr = r * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x - cr, y);
+            ctx.lineTo(x + cr, y);
+            ctx.moveTo(x, y - cr);
+            ctx.lineTo(x, y + cr);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(x, y, r * 0.35, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    function drawStriker() {
+        if (!striker || striker.pocketed) return;
+        drawPiece(striker);
+
+        // During placement, show zone highlight
+        if (phase === 'place' || (phase === 'aim' && !aimStart)) {
+            ctx.strokeStyle = 'rgba(255, 200, 50, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(strikerPlaceZone.minX, strikerPlaceZone.y);
+            ctx.lineTo(strikerPlaceZone.maxX, strikerPlaceZone.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Glow around striker
+            ctx.strokeStyle = 'rgba(255, 200, 50, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(striker.x, striker.y, striker.r + 3, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    function drawAimGuide() {
+        if (phase !== 'aim' || !aimStart || !aimCurrent) return;
+
+        // Pull-back vector: from aimCurrent to striker (shoot direction)
+        const dx = striker.x - aimCurrent.x;
+        const dy = striker.y - aimCurrent.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 5) return;
+
+        const power = Math.min(dist / 8, MAX_POWER);
+        const angle = Math.atan2(dy, dx);
+        const powerPct = power / MAX_POWER;
+
+        // Power color
+        let powerColor;
+        if (powerPct < 0.4) powerColor = COLORS.powerLow;
+        else if (powerPct < 0.7) powerColor = COLORS.powerMid;
+        else powerColor = COLORS.powerHigh;
+
+        // Aim line (direction striker will go - forward from striker)
+        const lineLen = cellUnit * 3 + power * cellUnit * 0.8;
+        const endX = striker.x + Math.cos(angle) * lineLen;
+        const endY = striker.y + Math.sin(angle) * lineLen;
+
+        // Dotted aim line
+        ctx.strokeStyle = COLORS.aimLine;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(striker.x, striker.y);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Aim dot at end
+        ctx.fillStyle = COLORS.aimDot;
+        ctx.beginPath();
+        ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pull-back line (from striker to finger)
+        ctx.strokeStyle = powerColor;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(striker.x, striker.y);
+        ctx.lineTo(aimCurrent.x, aimCurrent.y);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Power arc around striker
+        ctx.strokeStyle = powerColor;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(striker.x, striker.y, striker.r + 6, angle - Math.PI * powerPct, angle + Math.PI * powerPct);
+        ctx.stroke();
+
+        // Pull-back circle at finger position
+        ctx.strokeStyle = powerColor;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        ctx.arc(aimCurrent.x, aimCurrent.y, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+
+    // ===== START =====
+    init();
+    newGame();
+})();
