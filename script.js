@@ -546,6 +546,15 @@
         }
         if (queenPocketedBy === currentPlayer && scoredOwn > 0) {
             scores[currentPlayer] += 3;
+            const q = coins.find(c => c.type === 'queen' && c.pocketed);
+            if (q) {
+                const pos = findOpenPositionNearCenter(q.r, q);
+                q.x = pos.x;
+                q.y = pos.y;
+                q.vx = 0;
+                q.vy = 0;
+                q.pocketed = false;
+            }
             queenPocketedBy = -1;
         }
 
