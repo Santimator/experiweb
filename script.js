@@ -502,19 +502,26 @@
         const strikerFouled = striker.pocketed;
         const myColor = getPlayerColor(currentPlayer);
 
-        // Flow rebound rule: return pieces that went in without a rebound
+        // Flow rebound rule: only the game-winning piece needs a rebound
         if (flowMode) {
-            for (let i = turnPocketed.length - 1; i >= 0; i--) {
-                const piece = turnPocketed[i];
-                if (!piece.hitWall && !piece.strikerRebounded) {
-                    // No rebound — return to center
-                    const pos = findOpenPositionNearCenter(piece.r, piece);
-                    piece.x = pos.x;
-                    piece.y = pos.y;
-                    piece.vx = 0;
-                    piece.vy = 0;
-                    piece.pocketed = false;
-                    turnPocketed.splice(i, 1);
+            const whiteRemain = coins.filter(c => c.type === 'white' && !c.pocketed).length;
+            const blackRemain = coins.filter(c => c.type === 'black' && !c.pocketed).length;
+            const wouldEndGame = (numPlayers === 2 && (whiteRemain === 0 || blackRemain === 0))
+                || (numPlayers > 2 && whiteRemain === 0 && blackRemain === 0);
+
+            if (wouldEndGame) {
+                for (let i = turnPocketed.length - 1; i >= 0; i--) {
+                    const piece = turnPocketed[i];
+                    if (piece.type !== 'queen' && !piece.hitWall && !piece.strikerRebounded) {
+                        // No rebound on winning piece — return to center
+                        const pos = findOpenPositionNearCenter(piece.r, piece);
+                        piece.x = pos.x;
+                        piece.y = pos.y;
+                        piece.vx = 0;
+                        piece.vy = 0;
+                        piece.pocketed = false;
+                        turnPocketed.splice(i, 1);
+                    }
                 }
             }
         }
@@ -537,7 +544,7 @@
         if (pocketedQueen) {
             queenPocketedBy = currentPlayer;
         }
-        if (queenPocketedBy === currentPlayer && scoredOwn > 0 && !pocketedQueen) {
+        if (queenPocketedBy === currentPlayer && scoredOwn > 0) {
             scores[currentPlayer] += 3;
             queenPocketedBy = -1;
         }
@@ -564,7 +571,7 @@
         }
 
         // Queen not covered after a turn
-        if (queenPocketedBy >= 0 && scoredOwn === 0 && !pocketedQueen) {
+        if (queenPocketedBy === currentPlayer && scoredOwn === 0 && !pocketedQueen) {
             const q = coins.find(c => c.type === 'queen' && c.pocketed);
             if (q) {
                 const pos = findOpenPositionNearCenter(q.r, q);
@@ -578,8 +585,8 @@
         }
 
         // Determine if player continues or turn passes
-        const scored = scoredOwn > 0;
-        const continueTurn = scored && !strikerFouled;
+        const pocketedAnything = scoredOwn > 0 || pocketedQueen;
+        const continueTurn = pocketedAnything && !strikerFouled;
 
         if (continueTurn && flowMode && !striker.pocketed) {
             // Flow mode: keep striker where it stopped, go straight to aim
