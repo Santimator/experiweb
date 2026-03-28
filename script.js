@@ -264,6 +264,48 @@
             striker.x = z.fixed;
             striker.y = Math.max(z.min, Math.min(z.max, pos.y));
         }
+        slideStrikerAroundCoins(pos);
+    }
+
+    function slideStrikerAroundCoins(desiredPos) {
+        const z = strikerPlaceZone;
+        for (let iter = 0; iter < 5; iter++) {
+            let pushed = false;
+            for (const coin of coins) {
+                if (coin.pocketed) continue;
+                const dx = striker.x - coin.x;
+                const dy = striker.y - coin.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const need = striker.r + coin.r + 1;
+                if (dist < need) {
+                    // Compute how far along the baseline axis we need to slide
+                    const crossDist = z.axis === 'h' ? Math.abs(dy) : Math.abs(dx);
+                    if (crossDist >= need) continue; // not actually blocking on this axis
+                    const axisGap = Math.sqrt(need * need - crossDist * crossDist);
+                    const coinAxis = z.axis === 'h' ? coin.x : coin.y;
+                    const desired = z.axis === 'h' ? desiredPos.x : desiredPos.y;
+
+                    // Two exit positions: just before or just after the coin
+                    const exitA = coinAxis - axisGap;
+                    const exitB = coinAxis + axisGap;
+
+                    // Pick the exit closest to where the user is dragging
+                    let best;
+                    const dA = Math.abs(desired - exitA);
+                    const dB = Math.abs(desired - exitB);
+                    if (dA <= dB) {
+                        best = Math.max(z.min, Math.min(z.max, exitA));
+                    } else {
+                        best = Math.max(z.min, Math.min(z.max, exitB));
+                    }
+
+                    if (z.axis === 'h') striker.x = best;
+                    else striker.y = best;
+                    pushed = true;
+                }
+            }
+            if (!pushed) break;
+        }
     }
 
     function onPointerDown(e) {
@@ -466,11 +508,12 @@
                 const piece = turnPocketed[i];
                 if (!piece.hitWall && !piece.strikerRebounded) {
                     // No rebound — return to center
-                    piece.pocketed = false;
-                    piece.x = boardX + boardSize / 2;
-                    piece.y = boardY + boardSize / 2;
+                    const pos = findOpenPositionNearCenter(piece.r, piece);
+                    piece.x = pos.x;
+                    piece.y = pos.y;
                     piece.vx = 0;
                     piece.vy = 0;
+                    piece.pocketed = false;
                     turnPocketed.splice(i, 1);
                 }
             }
@@ -524,11 +567,12 @@
         if (queenPocketedBy >= 0 && scoredOwn === 0 && !pocketedQueen) {
             const q = coins.find(c => c.type === 'queen' && c.pocketed);
             if (q) {
-                q.pocketed = false;
-                q.x = boardX + boardSize / 2;
-                q.y = boardY + boardSize / 2;
+                const pos = findOpenPositionNearCenter(q.r, q);
+                q.x = pos.x;
+                q.y = pos.y;
                 q.vx = 0;
                 q.vy = 0;
+                q.pocketed = false;
             }
             queenPocketedBy = -1;
         }
@@ -544,7 +588,7 @@
             striker.vy = 0;
             // Ensure striker is within board bounds
             ensureStrikerInBounds();
-            resolveStrikerOverlaps();
+            resolveStrikerOverlaps(false);
         } else {
             if (!continueTurn) {
                 currentPlayer = (currentPlayer + 1) % numPlayers;
@@ -552,7 +596,7 @@
             phase = 'place';
             recalcStrikerZone();
             placeStriker();
-            resolveStrikerOverlaps();
+            resolveStrikerOverlaps(true);
         }
 
         updateUI();
@@ -580,15 +624,17 @@
         }
         if (candidates.length > 0) {
             const piece = candidates[0];
-            piece.pocketed = false;
-            piece.x = boardX + boardSize / 2;
-            piece.y = boardY + boardSize / 2;
+            const pos = findOpenPositionNearCenter(piece.r, piece);
+            piece.x = pos.x;
+            piece.y = pos.y;
             piece.vx = 0;
             piece.vy = 0;
+            piece.pocketed = false;
         }
     }
 
-    function resolveStrikerOverlaps() {
+    function resolveStrikerOverlaps(constrainToBaseline) {
+        const z = strikerPlaceZone;
         for (let iter = 0; iter < 10; iter++) {
             let ok = true;
             for (const coin of coins) {
@@ -598,16 +644,59 @@
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 const need = striker.r + coin.r + 1;
                 if (dist < need && dist > 0) {
-                    const push = (need - dist) / 2;
+                    const push = need - dist;
                     const nx = dx / dist;
                     const ny = dy / dist;
-                    striker.x += nx * push;
-                    coin.x -= nx * push;
+                    if (constrainToBaseline && z) {
+                        if (z.axis === 'h') {
+                            striker.x += nx * push;
+                            striker.x = Math.max(z.min, Math.min(z.max, striker.x));
+                        } else {
+                            striker.y += ny * push;
+                            striker.y = Math.max(z.min, Math.min(z.max, striker.y));
+                        }
+                    } else {
+                        striker.x += nx * push;
+                        striker.y += ny * push;
+                    }
                     ok = false;
                 }
             }
             if (ok) break;
         }
+    }
+
+    function overlapsAnyPiece(x, y, r, exclude) {
+        for (const c of coins) {
+            if (c.pocketed || c === exclude) continue;
+            const dx = x - c.x;
+            const dy = y - c.y;
+            if (dx * dx + dy * dy < (r + c.r + 1) ** 2) return true;
+        }
+        if (striker && !striker.pocketed) {
+            const dx = x - striker.x;
+            const dy = y - striker.y;
+            if (dx * dx + dy * dy < (r + striker.r + 1) ** 2) return true;
+        }
+        return false;
+    }
+
+    function findOpenPositionNearCenter(r, exclude) {
+        const cx = boardX + boardSize / 2;
+        const cy = boardY + boardSize / 2;
+        if (!overlapsAnyPiece(cx, cy, r, exclude)) return { x: cx, y: cy };
+        const step = r * 0.6;
+        for (let ring = 1; ring <= 12; ring++) {
+            const dist = step * ring;
+            const count = Math.max(6, ring * 6);
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                const tx = cx + Math.cos(angle) * dist;
+                const ty = cy + Math.sin(angle) * dist;
+                if (!overlapsAnyPiece(tx, ty, r, exclude)) return { x: tx, y: ty };
+            }
+        }
+        return { x: cx, y: cy };
     }
 
     // ===== AI =====
@@ -624,7 +713,7 @@
                 striker.x = z.fixed;
                 striker.y = z.min + Math.random() * (z.max - z.min);
             }
-            resolveStrikerOverlaps();
+            resolveStrikerOverlaps(true);
 
             // Pick a target: AI is always player 1 (0-indexed) playing black in 2P
             const targetColor = 'black';
