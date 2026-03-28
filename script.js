@@ -55,6 +55,8 @@
     let queenPocketedBy = -1;
     let gameOver = false;
     let flowMode = false;
+    let aiEnabled = false;
+    let aiThinking = false;
 
     // Interaction state
     let phase = 'place'; // 'place', 'aim', 'moving', 'gameover'
@@ -199,6 +201,7 @@
         queenPocketedBy = -1;
         currentPlayer = 0;
         gameOver = false;
+        aiThinking = false;
         phase = 'place';
 
         createCoins();
@@ -264,7 +267,7 @@
     }
 
     function onPointerDown(e) {
-        if (gameOver || phase === 'moving') return;
+        if (gameOver || aiThinking || phase === 'moving') return;
         e.preventDefault();
         canvas.setPointerCapture(e.pointerId);
         const pos = getCanvasPos(e);
@@ -281,7 +284,7 @@
     }
 
     function onPointerMove(e) {
-        if (!isDragging || gameOver || phase === 'moving') return;
+        if (!isDragging || gameOver || aiThinking || phase === 'moving') return;
         e.preventDefault();
         const pos = getCanvasPos(e);
 
@@ -295,7 +298,7 @@
     }
 
     function onPointerUp(e) {
-        if (!isDragging || gameOver) return;
+        if (!isDragging || gameOver || aiThinking) return;
         e.preventDefault();
 
         if (phase === 'place') {
@@ -526,6 +529,11 @@
 
         updateUI();
         draw();
+
+        // Trigger AI if it's the AI's turn
+        if (aiEnabled && numPlayers === 2 && currentPlayer === 1 && !gameOver) {
+            aiTurn();
+        }
     }
 
     function ensureStrikerInBounds() {
@@ -574,6 +582,63 @@
         }
     }
 
+    // ===== AI =====
+    function aiTurn() {
+        aiThinking = true;
+        setTimeout(() => {
+            const z = strikerPlaceZone;
+
+            // Position striker randomly along its baseline
+            if (z.axis === 'h') {
+                striker.x = z.min + Math.random() * (z.max - z.min);
+                striker.y = z.fixed;
+            } else {
+                striker.x = z.fixed;
+                striker.y = z.min + Math.random() * (z.max - z.min);
+            }
+            resolveStrikerOverlaps();
+
+            // Pick a target: AI is always player 1 (0-indexed) playing black in 2P
+            const targetColor = 'black';
+            let bestAngle = Math.random() * Math.PI * 2;
+            let bestPower = 8 + Math.random() * 8;
+
+            const targets = coins.filter(c => c.type === targetColor && !c.pocketed);
+            if (targets.length > 0) {
+                const target = targets[Math.floor(Math.random() * targets.length)];
+
+                // Find closest pocket to this target
+                let closestPocket = pockets[0];
+                let closestDist = Infinity;
+                for (const p of pockets) {
+                    const d = Math.sqrt((target.x - p.x) ** 2 + (target.y - p.y) ** 2);
+                    if (d < closestDist) {
+                        closestDist = d;
+                        closestPocket = p;
+                    }
+                }
+
+                // Aim: hit target from opposite side of pocket
+                const dx = target.x - closestPocket.x;
+                const dy = target.y - closestPocket.y;
+                const dd = Math.sqrt(dx * dx + dy * dy);
+                const aimX = target.x + (dx / dd) * target.r * 2;
+                const aimY = target.y + (dy / dd) * target.r * 2;
+
+                bestAngle = Math.atan2(aimY - striker.y, aimX - striker.x);
+                bestPower = 10 + Math.random() * 6;
+                bestAngle += (Math.random() - 0.5) * 0.15;
+            }
+
+            striker.vx = Math.cos(bestAngle) * bestPower;
+            striker.vy = Math.sin(bestAngle) * bestPower;
+            phase = 'moving';
+            turnPocketed = [];
+            aiThinking = false;
+            startSimulation();
+        }, 600);
+    }
+
     // ===== GAME OVER =====
     function showGameOver() {
         const overlay = document.getElementById('overlay');
@@ -610,9 +675,13 @@
 
             const label = document.createElement('span');
             label.className = 'player-label';
-            label.textContent = `P${i + 1}`;
-            if (numPlayers === 2) {
-                label.textContent += i === 0 ? ' (W)' : ' (B)';
+            if (aiEnabled && i === 1) {
+                label.textContent = 'AI (B)';
+            } else {
+                label.textContent = `P${i + 1}`;
+                if (numPlayers === 2) {
+                    label.textContent += i === 0 ? ' (W)' : ' (B)';
+                }
             }
 
             const pieces = document.createElement('div');
@@ -651,7 +720,7 @@
             }
         }
 
-        document.getElementById('btn-players').textContent = `${numPlayers} Players`;
+        document.getElementById('btn-players').textContent = aiEnabled ? 'vs AI' : `${numPlayers} Players`;
         const varBtn = document.getElementById('btn-variant');
         varBtn.textContent = flowMode ? 'Flow' : 'Normal';
         varBtn.classList.toggle('flow', flowMode);
@@ -671,7 +740,17 @@
     }
 
     function cyclePlayers() {
-        numPlayers = numPlayers >= 4 ? 2 : numPlayers + 1;
+        // Cycle: 2P → vs AI → 3P → 4P → 2P
+        if (numPlayers === 2 && !aiEnabled) {
+            aiEnabled = true; // 2P vs AI
+        } else if (numPlayers === 2 && aiEnabled) {
+            aiEnabled = false;
+            numPlayers = 3;
+        } else if (numPlayers === 3) {
+            numPlayers = 4;
+        } else {
+            numPlayers = 2;
+        }
         newGame();
     }
 
