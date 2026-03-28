@@ -236,7 +236,7 @@
     }
 
     function makeCoin(x, y, r, type) {
-        return { x, y, r, vx: 0, vy: 0, type, pocketed: false, mass: COIN_MASS };
+        return { x, y, r, vx: 0, vy: 0, type, pocketed: false, mass: COIN_MASS, hitWall: false, strikerRebounded: false };
     }
 
     function placeStriker() {
@@ -244,7 +244,7 @@
         striker = {
             x: 0, y: 0, r: sr,
             vx: 0, vy: 0,
-            type: 'striker', pocketed: false, mass: STRIKER_MASS,
+            type: 'striker', pocketed: false, mass: STRIKER_MASS, hitWall: false,
         };
         positionStrikerOnZone();
     }
@@ -320,6 +320,7 @@
                 striker.vy = Math.sin(angle) * power;
                 phase = 'moving';
                 turnPocketed = [];
+                resetReboundFlags();
                 startSimulation();
             } else {
                 phase = 'place';
@@ -332,6 +333,11 @@
     }
 
     // ===== PHYSICS =====
+    function resetReboundFlags() {
+        striker.hitWall = false;
+        coins.forEach(c => { c.hitWall = false; c.strikerRebounded = false; });
+    }
+
     function startSimulation() {
         if (animFrame) cancelAnimationFrame(animFrame);
         simulate();
@@ -379,10 +385,10 @@
         const minY = boardY + pad + p.r;
         const maxY = boardY + boardSize - pad - p.r;
 
-        if (p.x < minX) { p.x = minX; p.vx = -p.vx * WALL_BOUNCE; }
-        if (p.x > maxX) { p.x = maxX; p.vx = -p.vx * WALL_BOUNCE; }
-        if (p.y < minY) { p.y = minY; p.vy = -p.vy * WALL_BOUNCE; }
-        if (p.y > maxY) { p.y = maxY; p.vy = -p.vy * WALL_BOUNCE; }
+        if (p.x < minX) { p.x = minX; p.vx = -p.vx * WALL_BOUNCE; p.hitWall = true; }
+        if (p.x > maxX) { p.x = maxX; p.vx = -p.vx * WALL_BOUNCE; p.hitWall = true; }
+        if (p.y < minY) { p.y = minY; p.vy = -p.vy * WALL_BOUNCE; p.hitWall = true; }
+        if (p.y > maxY) { p.y = maxY; p.vy = -p.vy * WALL_BOUNCE; p.hitWall = true; }
     }
 
     function pieceCollision(a, b) {
@@ -413,6 +419,14 @@
                 b.vx += impulse * a.mass * nx;
                 b.vy += impulse * a.mass * ny;
             }
+
+            // Track if striker (which already hit a wall) hits a coin
+            if (a.type === 'striker' && b.type !== 'striker' && a.hitWall) {
+                b.strikerRebounded = true;
+            }
+            if (b.type === 'striker' && a.type !== 'striker' && b.hitWall) {
+                a.strikerRebounded = true;
+            }
         }
     }
 
@@ -428,7 +442,7 @@
                     piece.vx = 0;
                     piece.vy = 0;
                     if (piece.type !== 'striker') {
-                        turnPocketed.push(piece.type);
+                        turnPocketed.push(piece);
                     }
                     break;
                 }
@@ -446,19 +460,33 @@
         const strikerFouled = striker.pocketed;
         const myColor = getPlayerColor(currentPlayer);
 
+        // Flow rebound rule: return pieces that went in without a rebound
+        if (flowMode) {
+            for (let i = turnPocketed.length - 1; i >= 0; i--) {
+                const piece = turnPocketed[i];
+                if (!piece.hitWall && !piece.strikerRebounded) {
+                    // No rebound — return to center
+                    piece.pocketed = false;
+                    piece.x = boardX + boardSize / 2;
+                    piece.y = boardY + boardSize / 2;
+                    piece.vx = 0;
+                    piece.vy = 0;
+                    turnPocketed.splice(i, 1);
+                }
+            }
+        }
+
         let scoredOwn = 0;
-        let scoredAny = turnPocketed.length;
-        let pocketedQueen = turnPocketed.includes('queen');
+        let pocketedQueen = turnPocketed.some(p => p.type === 'queen');
 
         if (numPlayers === 2) {
             const oppColor = currentPlayer === 0 ? 'black' : 'white';
-            scoredOwn = turnPocketed.filter(t => t === myColor).length;
-            const scoredOpp = turnPocketed.filter(t => t === oppColor).length;
+            scoredOwn = turnPocketed.filter(p => p.type === myColor).length;
+            const scoredOpp = turnPocketed.filter(p => p.type === oppColor).length;
             scores[currentPlayer] += scoredOwn;
             scores[1 - currentPlayer] += scoredOpp;
         } else {
-            // 3-4 player: all non-queen pieces score for the current player
-            scoredOwn = turnPocketed.filter(t => t !== 'queen').length;
+            scoredOwn = turnPocketed.filter(p => p.type !== 'queen').length;
             scores[currentPlayer] += scoredOwn;
         }
 
@@ -634,6 +662,7 @@
             striker.vy = Math.sin(bestAngle) * bestPower;
             phase = 'moving';
             turnPocketed = [];
+            resetReboundFlags();
             aiThinking = false;
             startSimulation();
         }, 600);
