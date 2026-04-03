@@ -38,8 +38,8 @@
         blackBorder: '#444',
         queen: '#cc2020',
         queenBorder: '#881010',
-        striker: '#e8d8b0',
-        strikerBorder: '#907040',
+        striker: '#4CAF50',
+        strikerBorder: '#2E7D32',
     };
 
     // ===== GAME STATE =====
@@ -390,9 +390,30 @@
         const allPieces = [...coins.filter(c => !c.pocketed)];
         if (striker && !striker.pocketed) allPieces.push(striker);
 
+        // Adaptive substepping: ensure no piece moves more than minR per substep
+        const minR = Math.min(...allPieces.map(p => p.r));
+        let maxSpeed = 0;
         for (const p of allPieces) {
-            p.x += p.vx;
-            p.y += p.vy;
+            const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+            if (spd > maxSpeed) maxSpeed = spd;
+        }
+        const substeps = Math.max(1, Math.ceil(maxSpeed / minR));
+
+        for (let step = 0; step < substeps; step++) {
+            for (const p of allPieces) {
+                p.x += p.vx / substeps;
+                p.y += p.vy / substeps;
+                wallCollision(p);
+            }
+            for (let i = 0; i < allPieces.length; i++) {
+                for (let j = i + 1; j < allPieces.length; j++) {
+                    pieceCollision(allPieces[i], allPieces[j]);
+                }
+            }
+        }
+
+        // Apply friction and speed threshold once per frame (not per substep)
+        for (const p of allPieces) {
             p.vx *= FRICTION;
             p.vy *= FRICTION;
             if (Math.abs(p.vx) < MIN_SPEED && Math.abs(p.vy) < MIN_SPEED) {
@@ -400,13 +421,6 @@
                 p.vy = 0;
             } else {
                 moving = true;
-            }
-            wallCollision(p);
-        }
-
-        for (let i = 0; i < allPieces.length; i++) {
-            for (let j = i + 1; j < allPieces.length; j++) {
-                pieceCollision(allPieces[i], allPieces[j]);
             }
         }
 
