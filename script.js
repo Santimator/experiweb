@@ -578,6 +578,20 @@
             returnRandomPiece(currentPlayer);
         }
 
+        // Queen pocketed during a foul — return it to center
+        if (strikerFouled && pocketedQueen) {
+            const q = coins.find(c => c.type === 'queen' && c.pocketed);
+            if (q) {
+                const pos = findOpenPositionNearCenter(q.r, q);
+                q.x = pos.x;
+                q.y = pos.y;
+                q.vx = 0;
+                q.vy = 0;
+                q.pocketed = false;
+            }
+            queenPocketedBy = -1;
+        }
+
         // Check game over
         const whiteLeft = coins.filter(c => c.type === 'white' && !c.pocketed).length;
         const blackLeft = coins.filter(c => c.type === 'black' && !c.pocketed).length;
