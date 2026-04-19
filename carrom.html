@@ -8,22 +8,20 @@
     <meta name="theme-color" content="#1a0a00">
     <title>Carrom</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
     <div id="game-container">
         <div id="scoreboard"></div>
         <canvas id="carromCanvas"></canvas>
         <div id="controls">
-            <div class="controls-row">
-                <button id="btn-new-game">New Game</button>
-                <button id="btn-players">2 Players</button>
-                <button id="btn-variant">Normal</button>
-            </div>
-            <div class="controls-row">
-                <a href="index.html" id="btn-lobby">← Games</a>
-                <button id="btn-rules">Rules</button>
-            </div>
+            <button id="btn-new-game">New Game</button>
+            <button id="btn-players">2 Players</button>
+            <button id="btn-variant">Normal</button>
+            <div class="controls-break"></div>
+            <a href="index.html" id="btn-lobby">← Games</a>
+            <button id="btn-rules">Rules</button>
+            <button id="btn-history">History</button>
         </div>
     </div>
 
@@ -86,6 +84,33 @@
         </div>
     </div>
 
+    <div id="history-panel" class="hidden">
+        <div id="history-content">
+            <button id="history-close">&times;</button>
+            <h2>History of Carrom</h2>
+
+            <h3>Origins</h3>
+            <p>Carrom likely originated on the <b>Indian subcontinent</b> in the 18th or 19th century. One popular tradition credits its invention to Indian maharajas, though its exact origins remain debated. The name may derive from the Tamil word <b>karam</b>.</p>
+
+            <h3>Spread</h3>
+            <p>The game spread throughout <b>South Asia</b> — India, Pakistan, Bangladesh, Sri Lanka, and Nepal — becoming a beloved pastime in homes, tea houses, and clubs. Indian emigrants carried it around the world, making it popular in the Middle East, Southeast Asia, and diaspora communities in Europe and North America.</p>
+
+            <h3>Mechanics</h3>
+            <p>Carrom blends elements of <b>billiards</b> (the flicking mechanic and rebound physics) with a pocket-based board structure. It requires no electricity, is inexpensive to produce, and scales from casual family play to serious competition.</p>
+
+            <h3>Organized Competition</h3>
+            <p>The <b>International Carrom Federation (ICF)</b> was founded in 1988 in Chennai, India. Today it oversees world championships and national federations across dozens of countries, with professional-level play reaching remarkable precision and power.</p>
+        </div>
+    </div>
+
     <script src="carrom.js"></script>
+    <script>
+        document.getElementById('btn-history').addEventListener('click', function() {
+            document.getElementById('history-panel').classList.remove('hidden');
+        });
+        document.getElementById('history-close').addEventListener('click', function() {
+            document.getElementById('history-panel').classList.add('hidden');
+        });
+    </script>
 </body>
 </html>
