@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <div id="overlay">
+    <div id="overlay" class="hidden">
         <div id="overlay-content">
             <h2 id="overlay-title">Carrom</h2>
             <p id="overlay-message">Drag to place the striker, then pull back and release to shoot!</p>
@@ -111,6 +111,12 @@
         document.getElementById('history-close').addEventListener('click', function() {
             document.getElementById('history-panel').classList.add('hidden');
         });
+        document.getElementById('history-panel').addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+        }, { passive: false });
+        document.getElementById('history-content').addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+        }, { passive: false });
     </script>
 </body>
 </html>
