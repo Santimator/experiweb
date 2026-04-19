@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a0a00">
+    <title>Go</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css?v=13">
+</head>
+<body>
+    <div id="game-container">
+        <div id="scoreboard"></div>
+        <canvas id="goCanvas"></canvas>
+        <div id="controls">
+            <a href="index.html" id="btn-lobby">← Games</a>
+            <button id="btn-new-game">New Game</button>
+            <button id="btn-players">2 Players</button>
+            <button id="btn-pass">Pass</button>
+            <button id="btn-rules">Rules</button>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <div id="overlay-content">
+            <h2 id="overlay-title">Go</h2>
+            <p id="overlay-message">Click an intersection to place a stone. Black plays first.</p>
+            <button id="overlay-btn">Play</button>
+        </div>
+    </div>
+
+    <div id="rules-panel" class="hidden">
+        <div id="rules-content">
+            <button id="rules-close">&times;</button>
+            <h2>Go Rules</h2>
+
+            <h3>Objective</h3>
+            <p>Surround more territory than your opponent by the end of the game. Capture enemy stones by surrounding them completely.</p>
+
+            <h3>The Board</h3>
+            <p>Go is played on a 19&times;19 grid. Stones are placed on the intersections, not inside the squares.</p>
+
+            <h3>How to Play</h3>
+            <ul>
+                <li><b>Tap</b> an empty intersection to place your stone.</li>
+                <li>Black always plays first.</li>
+                <li>Players alternate turns.</li>
+            </ul>
+
+            <h3>Capture</h3>
+            <ul>
+                <li>A stone (or connected group of same-color stones) is captured when all of its adjacent intersections are occupied by the opponent.</li>
+                <li>Captured stones are removed from the board and counted as prisoners.</li>
+            </ul>
+
+            <h3>Ko Rule</h3>
+            <p>You cannot place a stone that recreates the exact board position from the previous move. This prevents infinite loops.</p>
+
+            <h3>Suicide Rule</h3>
+            <p>You cannot place a stone in a position where it would have no liberties, unless doing so captures enemy stones.</p>
+
+            <h3>Passing</h3>
+            <p>Instead of placing a stone, a player may <b>Pass</b>. When both players pass consecutively, the game ends.</p>
+
+            <h3>Scoring</h3>
+            <p>Territory (empty intersections surrounded by your stones) + prisoners captured. Black gives White <b>6.5 komi</b> points to compensate for moving first. Highest score wins.</p>
+        </div>
+    </div>
+
+    <script src="go.js"></script>
+</body>
+</html>

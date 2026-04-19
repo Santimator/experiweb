@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a0a00">
+    <title>Carrom</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css?v=13">
+</head>
+<body>
+    <div id="game-container">
+        <div id="scoreboard"></div>
+        <canvas id="carromCanvas"></canvas>
+        <div id="controls">
+            <a href="index.html" id="btn-lobby">← Games</a>
+            <button id="btn-new-game">New Game</button>
+            <button id="btn-players">2 Players</button>
+            <button id="btn-variant">Normal</button>
+            <button id="btn-rules">Rules</button>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <div id="overlay-content">
+            <h2 id="overlay-title">Carrom</h2>
+            <p id="overlay-message">Drag to place the striker, then pull back and release to shoot!</p>
+            <button id="overlay-btn">Play</button>
+        </div>
+    </div>
+
+    <div id="rules-panel" class="hidden">
+        <div id="rules-content">
+            <button id="rules-close">&times;</button>
+            <h2>Carrom Rules</h2>
+
+            <h3>Objective</h3>
+            <p>Pocket all of your assigned pieces before your opponent. In 3-4 player mode, every piece you pocket scores a point.</p>
+
+            <h3>Setup</h3>
+            <p>19 pieces are arranged at the center: 9 white, 9 black, and 1 red queen. Each player shoots from their side of the board using the striker.</p>
+
+            <h3>How to Play</h3>
+            <ul>
+                <li><b>Place</b> &ndash; Drag to position the striker along your baseline.</li>
+                <li><b>Shoot</b> &ndash; Pull back from the striker and release. The farther you pull, the harder the shot.</li>
+            </ul>
+
+            <h3>Turns</h3>
+            <ul>
+                <li>If you pocket one of your own pieces, you get another turn.</li>
+                <li>If you miss (pocket nothing), the turn passes to the next player.</li>
+            </ul>
+
+            <h3>The Queen</h3>
+            <ul>
+                <li>Any player can pocket the queen at any time.</li>
+                <li>After pocketing the queen, you must <b>cover</b> it by pocketing one of your own pieces on the very next shot.</li>
+                <li>If you cover the queen successfully you earn <b>3 bonus points</b>.</li>
+                <li>If you fail to cover it, the queen returns to the center.</li>
+            </ul>
+
+            <h3>Fouls</h3>
+            <ul>
+                <li>If the striker is pocketed, you lose <b>1 point</b> and one of your pocketed pieces returns to the board.</li>
+            </ul>
+
+            <h3>Winning</h3>
+            <p><b>2 players:</b> The game ends when all pieces of one color are pocketed. The player with the higher score wins.</p>
+            <p><b>3-4 players:</b> The game ends when all 18 pieces are pocketed. The player with the most points wins.</p>
+
+            <div class="rule-divider"></div>
+
+            <h3>Flow Variant</h3>
+            <div class="variant-note">
+                <p>In <b>Flow</b> mode, when a player scores and earns another turn, the striker stays where it stopped instead of resetting to the baseline. This lets you chain shots from favorable positions.</p>
+                <p>When the turn passes to the next player (after a miss or foul), the new player starts normally from their baseline.</p>
+                <p><b>Rebound rule:</b> In Flow mode, the final piece that would win the game must involve a rebound &mdash; either the striker bounced off a wall before hitting the piece, or the piece bounced off a wall before entering the pocket. If the winning piece goes in without any rebound, it returns to the center and the game continues.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="carrom.js"></script>
+</body>
+</html>

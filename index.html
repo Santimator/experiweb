@@ -6,81 +6,66 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a0a00">
-    <title>Carrom Board</title>
+    <title>Games</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
-    <div id="game-container">
-        <div id="scoreboard"></div>
-        <canvas id="carromCanvas"></canvas>
-        <div id="controls">
-            <button id="btn-new-game">New Game</button>
-            <button id="btn-players">2 Players</button>
-            <button id="btn-variant">Normal</button>
-            <button id="btn-rules">Rules</button>
-        </div>
-    </div>
-
-    <div id="overlay">
-        <div id="overlay-content">
-            <h2 id="overlay-title">Carrom</h2>
-            <p id="overlay-message">Drag to place the striker, then pull back and release to shoot!</p>
-            <button id="overlay-btn">Play</button>
-        </div>
-    </div>
-
-    <div id="rules-panel" class="hidden">
-        <div id="rules-content">
-            <button id="rules-close">&times;</button>
-            <h2>Carrom Rules</h2>
-
-            <h3>Objective</h3>
-            <p>Pocket all of your assigned pieces before your opponent. In 3-4 player mode, every piece you pocket scores a point.</p>
-
-            <h3>Setup</h3>
-            <p>19 pieces are arranged at the center: 9 white, 9 black, and 1 red queen. Each player shoots from their side of the board using the striker.</p>
-
-            <h3>How to Play</h3>
-            <ul>
-                <li><b>Place</b> &ndash; Drag to position the striker along your baseline.</li>
-                <li><b>Shoot</b> &ndash; Pull back from the striker and release. The farther you pull, the harder the shot.</li>
-            </ul>
-
-            <h3>Turns</h3>
-            <ul>
-                <li>If you pocket one of your own pieces, you get another turn.</li>
-                <li>If you miss (pocket nothing), the turn passes to the next player.</li>
-            </ul>
-
-            <h3>The Queen</h3>
-            <ul>
-                <li>Any player can pocket the queen at any time.</li>
-                <li>After pocketing the queen, you must <b>cover</b> it by pocketing one of your own pieces on the very next shot.</li>
-                <li>If you cover the queen successfully you earn <b>3 bonus points</b>.</li>
-                <li>If you fail to cover it, the queen returns to the center.</li>
-            </ul>
-
-            <h3>Fouls</h3>
-            <ul>
-                <li>If the striker is pocketed, you lose <b>1 point</b> and one of your pocketed pieces returns to the board.</li>
-            </ul>
-
-            <h3>Winning</h3>
-            <p><b>2 players:</b> The game ends when all pieces of one color are pocketed. The player with the higher score wins.</p>
-            <p><b>3-4 players:</b> The game ends when all 18 pieces are pocketed. The player with the most points wins.</p>
-
-            <div class="rule-divider"></div>
-
-            <h3>Flow Variant</h3>
-            <div class="variant-note">
-                <p>In <b>Flow</b> mode, when a player scores and earns another turn, the striker stays where it stopped instead of resetting to the baseline. This lets you chain shots from favorable positions.</p>
-                <p>When the turn passes to the next player (after a miss or foul), the new player starts normally from their baseline.</p>
-                <p><b>Rebound rule:</b> In Flow mode, the final piece that would win the game must involve a rebound &mdash; either the striker bounced off a wall before hitting the piece, or the piece bounced off a wall before entering the pocket. If the winning piece goes in without any rebound, it returns to the center and the game continues.</p>
+    <div id="lobby">
+        <div class="lobby-card" id="card-carrom">
+            <div class="lobby-icon">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Carrom board: square with corner pockets and center circle -->
+                    <rect x="4" y="4" width="72" height="72" rx="4" stroke="#e8c060" stroke-width="2.5" fill="rgba(200,164,92,0.15)"/>
+                    <rect x="12" y="12" width="56" height="56" rx="2" stroke="#e8c060" stroke-width="1" stroke-opacity="0.4" fill="none"/>
+                    <!-- Corner pockets -->
+                    <circle cx="12" cy="12" r="5" fill="#1a0a00" stroke="#e8c060" stroke-width="1.5"/>
+                    <circle cx="68" cy="12" r="5" fill="#1a0a00" stroke="#e8c060" stroke-width="1.5"/>
+                    <circle cx="12" cy="68" r="5" fill="#1a0a00" stroke="#e8c060" stroke-width="1.5"/>
+                    <circle cx="68" cy="68" r="5" fill="#1a0a00" stroke="#e8c060" stroke-width="1.5"/>
+                    <!-- Center cluster -->
+                    <circle cx="40" cy="40" r="10" stroke="#e8c060" stroke-width="1.5" stroke-opacity="0.5" fill="none"/>
+                    <circle cx="40" cy="40" r="3.5" fill="#cc2020"/>
+                    <circle cx="33" cy="37" r="2.5" fill="#f0f0f0"/>
+                    <circle cx="47" cy="37" r="2.5" fill="#f0f0f0"/>
+                    <circle cx="33" cy="43" r="2.5" fill="#333" stroke="#666" stroke-width="0.5"/>
+                    <circle cx="47" cy="43" r="2.5" fill="#333" stroke="#666" stroke-width="0.5"/>
+                </svg>
             </div>
+            <h2>Carrom</h2>
+            <p>Classic South Asian board game</p>
+            <a href="carrom.html" class="lobby-btn">Play</a>
+        </div>
+
+        <div class="lobby-card" id="card-go">
+            <div class="lobby-icon">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Go board: grid lines -->
+                    <rect x="4" y="4" width="72" height="72" rx="4" fill="rgba(200,164,92,0.15)" stroke="#e8c060" stroke-width="2.5"/>
+                    <!-- Grid lines (5x5 simplified) -->
+                    <line x1="18" y1="18" x2="62" y2="18" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="18" y1="29" x2="62" y2="29" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="18" y1="40" x2="62" y2="40" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="18" y1="51" x2="62" y2="51" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="18" y1="62" x2="62" y2="62" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="18" y1="18" x2="18" y2="62" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="29" y1="18" x2="29" y2="62" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="40" y1="18" x2="40" y2="62" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="51" y1="18" x2="51" y2="62" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <line x1="62" y1="18" x2="62" y2="62" stroke="#e8c060" stroke-width="1" stroke-opacity="0.5"/>
+                    <!-- Star point -->
+                    <circle cx="40" cy="40" r="2" fill="#e8c060" opacity="0.6"/>
+                    <!-- Sample stones -->
+                    <circle cx="29" cy="29" r="5" fill="#111" stroke="#444" stroke-width="0.5"/>
+                    <circle cx="51" cy="29" r="5" fill="#f0f0f0" stroke="#bbb" stroke-width="0.5"/>
+                    <circle cx="40" cy="51" r="5" fill="#111" stroke="#444" stroke-width="0.5"/>
+                    <circle cx="51" cy="51" r="5" fill="#f0f0f0" stroke="#bbb" stroke-width="0.5"/>
+                </svg>
+            </div>
+            <h2>Go</h2>
+            <p>Ancient strategy board game</p>
+            <a href="go.html" class="lobby-btn">Play</a>
         </div>
     </div>
-
-    <script src="script.js?v=12"></script>
 </body>
 </html>
