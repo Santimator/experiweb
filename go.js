@@ -55,6 +55,11 @@
 
         canvas.addEventListener('pointerdown', onBoardClick);
 
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.closest('#rules-content') || e.target.closest('#history-content')) return;
+            e.preventDefault();
+        }, { passive: false });
+
         window.addEventListener('resize', onResize);
         onResize();
     }
@@ -363,7 +368,7 @@
 
         ctx.fillStyle = '#c8a45c';
         ctx.beginPath();
-        ctx.roundRect(0, 0, size, size, 4);
+        ctx.rect(0, 0, size, size);
         ctx.fill();
 
         const grad = ctx.createLinearGradient(0, 0, size, size);
@@ -372,7 +377,7 @@
         grad.addColorStop(1, 'rgba(180,120,40,0.12)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.roundRect(0, 0, size, size, 4);
+        ctx.rect(0, 0, size, size);
         ctx.fill();
 
         ctx.strokeStyle = 'rgba(80, 50, 10, 0.7)';
