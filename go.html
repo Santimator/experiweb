@@ -8,22 +8,21 @@
     <meta name="theme-color" content="#1a0a00">
     <title>Go</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
     <div id="game-container">
         <div id="scoreboard"></div>
         <canvas id="goCanvas"></canvas>
         <div id="controls">
-            <div class="controls-row">
-                <button id="btn-new-game">New Game</button>
-                <button id="btn-players">2 Players</button>
-                <button id="btn-pass">Pass</button>
-            </div>
-            <div class="controls-row">
-                <a href="index.html" id="btn-lobby">← Games</a>
-                <button id="btn-rules">Rules</button>
-            </div>
+            <button id="btn-new-game">New Game</button>
+            <button id="btn-players">2 Players</button>
+            <button id="btn-size">19×19</button>
+            <button id="btn-pass">Pass</button>
+            <div class="controls-break"></div>
+            <a href="index.html" id="btn-lobby">← Games</a>
+            <button id="btn-rules">Rules</button>
+            <button id="btn-history">History</button>
         </div>
     </div>
 
@@ -69,7 +68,26 @@
             <p>Instead of placing a stone, a player may <b>Pass</b>. When both players pass consecutively, the game ends.</p>
 
             <h3>Scoring</h3>
-            <p>Territory (empty intersections surrounded by your stones) + prisoners captured. Black gives White <b>6.5 komi</b> points to compensate for moving first. Highest score wins.</p>
+            <p>Territory (empty intersections surrounded by your stones) + prisoners captured. White receives <b>6.5 komi</b> points to compensate for Black moving first. Highest score wins.</p>
+        </div>
+    </div>
+
+    <div id="history-panel" class="hidden">
+        <div id="history-content">
+            <button id="history-close">&times;</button>
+            <h2>History of Go</h2>
+
+            <h3>Origins</h3>
+            <p>Go is one of the <b>oldest board games still played</b>, with origins in ancient China roughly <b>2,500–4,000 years ago</b>. The earliest written reference dates to around 548 BCE. In Chinese it is called <b>围棋</b> (Wéiqí), meaning "encirclement chess."</p>
+
+            <h3>Spread Across Asia</h3>
+            <p>Go reached <b>Korea</b> around the 5th–7th century CE, where it is called <b>바둑</b> (Baduk), and <b>Japan</b> in the 7th century, where it is called <b>囲碁</b> (Igo). Japan developed a formal system of professional players, schools, and rankings during the Edo period (1603–1868), which remains the foundation of modern competitive Go.</p>
+
+            <h3>Philosophy &amp; Culture</h3>
+            <p>Go was traditionally one of the four arts cultivated by Chinese scholars alongside calligraphy, painting, and music. It became deeply embedded in East Asian culture as a pursuit of strategic thinking, patience, and intuition. Its simple rules generate near-infinite complexity — the number of possible Go games vastly exceeds the number of atoms in the observable universe.</p>
+
+            <h3>Go and Artificial Intelligence</h3>
+            <p>For decades, Go was considered the grand challenge of game AI, believed to be too complex for computers to master. In <b>2016</b>, DeepMind's <b>AlphaGo</b> defeated world champion Lee Sedol 4–1 — a landmark moment in AI history. Subsequent versions became so dominant that top human professionals acknowledged machines had surpassed them.</p>
         </div>
     </div>
 
