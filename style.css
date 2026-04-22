@@ -581,3 +581,18 @@ body {
     -webkit-tap-highlight-color: transparent;
     -webkit-appearance: none;
 }
+
+/* ===== PASS BADGE (Go scoreboard) ===== */
+.pass-badge {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--active-glow);
+    background: rgba(30, 90, 30, 0.5);
+    border: 1px solid rgba(60, 160, 60, 0.45);
+    border-radius: 5px;
+    padding: 2px 6px;
+    align-self: center;
+    white-space: nowrap;
+}

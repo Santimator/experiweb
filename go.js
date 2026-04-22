@@ -24,6 +24,8 @@
     let gameOver;
     let aiEnabled;
     let aiThinking;
+    let lastMove;   // { row, col } of last placed stone, null after pass/new game
+    let passed;     // { 1: bool, 2: bool } — whether each player has passed since last placement
 
     // Canvas layout (computed in computeLayout)
     let cellSize, boardOffsetX, boardOffsetY;
@@ -94,6 +96,8 @@
         consecutivePasses = 0;
         gameOver = false;
         aiThinking = false;
+        lastMove = null;
+        passed = { 1: false, 2: false };
 
         document.getElementById('overlay').classList.add('hidden');
         updateUI();
@@ -116,6 +120,8 @@
 
     function doPass() {
         if (gameOver || aiThinking) return;
+        passed[currentPlayer] = true;
+        lastMove = null;
         consecutivePasses++;
         if (consecutivePasses >= 2) {
             endGame();
@@ -169,6 +175,8 @@
         board = testBoard;
         captures[player] += captured;
         consecutivePasses = 0;
+        lastMove = { row, col };
+        passed[player] = false;
 
         updateUI();
         draw();
@@ -336,6 +344,7 @@
         const whiteLabel = (currentPlayer === 2 && !gameOver) ? '○ White ▸' : '○ White';
 
         sb.innerHTML = `
+            ${passed[1] && !gameOver ? '<div class="pass-badge">Passed</div>' : ''}
             <div class="player-score${currentPlayer === 1 && !gameOver ? ' active' : ''}">
                 <div class="player-label">${blackLabel}</div>
                 <div class="score-value">${captures[1]}</div>
@@ -345,6 +354,7 @@
                 <div class="player-label">${whiteLabel}</div>
                 <div class="score-value">${captures[2]}</div>
             </div>
+            ${passed[2] && !gameOver ? '<div class="pass-badge">Passed</div>' : ''}
         `;
     }
 
@@ -440,6 +450,13 @@
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
+
+                if (lastMove && lastMove.row === r && lastMove.col === c) {
+                    ctx.fillStyle = isBlack ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.5)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, stoneR * 0.28, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
         }
     }
