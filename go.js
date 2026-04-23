@@ -7,6 +7,13 @@
     const KOMI = 6.5;
     const AI_DELAY_MS = 500;
 
+    const SCORE_BASE        = 10;
+    const SCORE_CAPTURE     = 30;
+    const SCORE_SAVE_ATARI  = 25;
+    const SCORE_ATARI_ENEMY = 20;
+    const SCORE_CONNECT     =  5;
+    const SCORE_EYE_FILL    =  1;
+
     const STAR_POINTS_BY_SIZE = {
         9:  [[2,2],[2,6],[4,4],[6,2],[6,6]],
         13: [[3,3],[3,9],[6,6],[9,3],[9,9]],
@@ -196,22 +203,95 @@
         aiThinking = false;
         if (gameOver) return;
 
-        const legal = [];
+        const scored = [];
+        let totalWeight = 0;
         for (let r = 0; r < boardSize; r++) {
             for (let c = 0; c < boardSize; c++) {
                 if (board[r][c] === 0 && isLegalMove(r, c, 2)) {
-                    legal.push([r, c]);
+                    const w = scoreMove(r, c, 2);
+                    scored.push([r, c, w]);
+                    totalWeight += w;
                 }
             }
         }
 
-        if (legal.length === 0) {
+        if (scored.length === 0) {
             doPass();
             return;
         }
 
-        const [r, c] = legal[Math.floor(Math.random() * legal.length)];
+        let pick = Math.random() * totalWeight;
+        for (const [r, c, w] of scored) {
+            pick -= w;
+            if (pick <= 0) {
+                placeStone(r, c, 2);
+                return;
+            }
+        }
+        const [r, c] = scored[scored.length - 1];
         placeStone(r, c, 2);
+    }
+
+    function isOwnEye(row, col, player) {
+        const ns = neighbors(row, col);
+        if (!ns.every(([nr, nc]) => board[nr][nc] === player)) return false;
+        const diags = [];
+        if (row > 0 && col > 0)                         diags.push(board[row-1][col-1]);
+        if (row > 0 && col < boardSize - 1)             diags.push(board[row-1][col+1]);
+        if (row < boardSize - 1 && col > 0)             diags.push(board[row+1][col-1]);
+        if (row < boardSize - 1 && col < boardSize - 1) diags.push(board[row+1][col+1]);
+        const badDiags = diags.filter(v => v !== player).length;
+        return ns.length === 4 ? badDiags <= 1 : badDiags === 0;
+    }
+
+    function scoreMove(row, col, player) {
+        const testBoard = board.map(r => r.slice());
+        testBoard[row][col] = player;
+        const opponent = player === 1 ? 2 : 1;
+
+        let capturedCount = 0;
+        for (const [nr, nc] of neighbors(row, col)) {
+            if (testBoard[nr][nc] === opponent) {
+                const group = getGroup(testBoard, nr, nc);
+                if (liberties(testBoard, group) === 0) {
+                    for (const [gr, gc] of group) testBoard[gr][gc] = 0;
+                    capturedCount += group.length;
+                }
+            }
+        }
+
+        let score = SCORE_BASE + capturedCount * SCORE_CAPTURE;
+
+        // Save a friendly group that was in atari
+        const newGroupLibs = liberties(testBoard, getGroup(testBoard, row, col));
+        for (const [nr, nc] of neighbors(row, col)) {
+            if (board[nr][nc] === player && liberties(board, getGroup(board, nr, nc)) === 1) {
+                if (newGroupLibs > 1) { score += SCORE_SAVE_ATARI; break; }
+            }
+        }
+
+        // Put enemy groups into atari (deduplicated by group representative)
+        const seenEnemyGroups = new Set();
+        for (const [nr, nc] of neighbors(row, col)) {
+            if (testBoard[nr][nc] === opponent) {
+                const group = getGroup(testBoard, nr, nc);
+                const rep = Math.min(...group.map(([r, c]) => r * boardSize + c));
+                if (!seenEnemyGroups.has(rep)) {
+                    seenEnemyGroups.add(rep);
+                    if (liberties(testBoard, group) === 1) score += SCORE_ATARI_ENEMY;
+                }
+            }
+        }
+
+        // Connectivity: adjacent to own stone
+        for (const [nr, nc] of neighbors(row, col)) {
+            if (board[nr][nc] === player) { score += SCORE_CONNECT; break; }
+        }
+
+        // Eye-fill penalty (only when no captures make it worthwhile)
+        if (capturedCount === 0 && isOwnEye(row, col, player)) score = SCORE_EYE_FILL;
+
+        return score;
     }
 
     function isLegalMove(row, col, player) {
