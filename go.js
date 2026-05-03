@@ -403,10 +403,9 @@
         gameOver = true;
         const { blackScore, whiteScore } = scoreBoard();
         const winner = blackScore > whiteScore ? 'Black' : 'White';
-        const diff = Math.abs(blackScore - whiteScore).toFixed(1);
         showOverlay(
-            'Game Over',
-            `${winner} wins by ${diff} points!\nBlack: ${blackScore.toFixed(1)}  ·  White: ${whiteScore.toFixed(1)}`
+            `${winner} Wins!`,
+            `Black: ${blackScore.toFixed(1)}  ·  White: ${whiteScore.toFixed(1)}`
         );
         updateUI();
     }
