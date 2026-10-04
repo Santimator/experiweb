@@ -24,4 +24,3 @@ button{background:rgba(255,255,255,.12);color:var(--cream);border:1px solid rgba
 .pips{display:flex;gap:4px;flex:1}.pips i{width:10px;height:10px;border-radius:50%;border:1px solid var(--ivory);opacity:.45}.pips i.on{background:var(--ivory);opacity:1}.ember .pips i{border-color:var(--ember)}.ember .pips i.on{background:var(--ember)}
 .champ-icon{display:inline-block;background-image:url(assets/champions.webp);background-repeat:no-repeat;vertical-align:middle}.champ-icon.flip{transform:scaleX(-1)}.monster-icon{overflow:visible}
 .bench-seat.at-stake{border-color:var(--green);background:rgba(232,192,96,.12)}
-.aid-figurine.b{filter:grayscale(1) brightness(.42) contrast(1.25)}

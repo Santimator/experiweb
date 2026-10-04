@@ -4,7 +4,7 @@ import {surge} from './arena.mjs';
 import {drawArena} from './render.mjs';
 import {loadArtwork} from './art.mjs';
 // Champion icons are crops of each champion's idle sprite, trimmed to the figure (Black's face left).
-const ICON_BOX={rock:{x:49,y:73,w:223,h:206},scissors:{x:51,y:345,w:221,h:224},paper:{x:52,y:626,w:189,h:208}};
+const ICON_BOX={rock:{x:49,y:73,w:223,h:206},scissors:{x:51,y:345,w:221,h:224},paper:{x:33,y:635,w:179,h:200}};
 function champIcon(t,s='w',size=34){const f=ICON_BOX[t],k=size/f.h;return `<span class="champ-icon${s==='b'?' flip':''}" aria-hidden="true" style="width:${Math.round(f.w*k)}px;height:${size}px;background-size:${Math.round(1774*k)}px ${Math.round(887*k)}px;background-position:${-Math.round(f.x*k)}px ${-Math.round(f.y*k)}px"></span>`;}
 import {benchHtml} from './benches.mjs';
 import {pieceSvg} from './pieces.mjs';
