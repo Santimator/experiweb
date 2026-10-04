@@ -18,5 +18,5 @@ $('pause').onclick=()=>{paused=!paused;restartAt=null;$('pause').textContent=pau
 $('sound').onclick=()=>{sfx.unlock();sfx.setEnabled(!sfx.enabled);$('sound').textContent=sfx.enabled?'Sound on':'Sound off';$('sound').setAttribute('aria-pressed',String(sfx.enabled));};
 // Background tabs stop the simulation; returning does not consume combat time.
  document.addEventListener('visibilitychange',()=>{last=0;accumulator=0;restartAt=null;});
-loadArtwork().then(ok=>{artReady=true;$('assetStatus').textContent=ok?'Hand-painted monsters & courtyard':'Some artwork could not load · refresh to retry';paint();});
+loadArtwork().then(ok=>{artReady=true;$('assetStatus').textContent=ok?'Hand-painted monsters':'Some artwork could not load · refresh to retry';paint();});
 reset();requestAnimationFrame(frame);

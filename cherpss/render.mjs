@@ -1,46 +1,48 @@
-import {SIZE,RULES,surge} from './arena.mjs';
-import {spriteAtlas,spritePose,spriteFrame,courtyard,aidAtlas,aidFrame,extraAtlas,extraFrame,reactionAtlas,reactionFrame} from './art.mjs';
-export const SCENE={width:800,height:736,x:80,y:48};
+import {ARENA,RULES,surge} from './arena.mjs';
+import {spriteAtlas,spritePose,spriteFrame,aidAtlas,aidFrame,extraAtlas,extraFrame,reactionAtlas,reactionFrame} from './art.mjs';
+export const SCENE={width:800,height:800,x:25,y:100};
 const TEAM={w:'#f4d69e',b:'#f5a281'},TAU=Math.PI*2,backgrounds=new Map();
 function poly(c,pts,fill,stroke='#192d2a',width=2){c.beginPath();pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
 function ellipse(c,x,y,rx,ry,fill){c.fillStyle=fill;c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);c.fill();}
 function line(c,x,y,u,v,col,w=2){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x,y);c.lineTo(u,v);c.stroke();}
 function round(c,x,y,w,h,r,fill,stroke){c.beginPath();c.roundRect(x,y,w,h,r);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=1;c.stroke();}}
 function star(c,x,y,r,col){const pts=Array.from({length:16},(_,i)=>{const a=i*Math.PI/8-Math.PI/2,k=i%2?r*.35:r;return[x+Math.cos(a)*k,y+Math.sin(a)*k]});poly(c,pts,col,null);}
-function scenery(c,night){
- const stone=night?'#344755':'#93795c',tile=night?'#536774':'#c5ab7e',edge=night?'#a2b8b8':'#ebd3a0',gold=night?'#97b7c8':'#b28445';
- c.fillStyle=night?'#101d2b':'#283b2c';c.fillRect(0,0,800,736);
- // A garden surrounds the square; every decoration is outside the combat floor.
- for(let i=0;i<48;i++){const x=(i*139+17)%800,y=(i*83+13)%736;ellipse(c,x,y,20+(i%4)*7,12,night?'#1c3440':'#3f5941');ellipse(c,x-5,y-4,13,7,night?'#25434a':'#57734a');}
- round(c,69,37,662,662,18,'#0005');round(c,75,43,650,650,10,stone,edge);
- c.save();c.translate(SCENE.x,SCENE.y);
- const g=c.createRadialGradient(320,230,30,320,320,480);g.addColorStop(0,night?'#677b88':'#d7be91');g.addColorStop(1,night?'#344653':'#aa8b62');c.fillStyle=g;c.fillRect(0,0,SIZE,SIZE);
- for(let r=0;r<8;r++)for(let k=0;k<8;k++){const x=24+k*74,y=24+r*74;c.fillStyle=(r+k)%2?tile+'45':stone+'35';c.fillRect(x+1,y+1,72,72);line(c,x,y+73,x+74,y+73,night?'#20334055':'#7a604455',1);line(c,x+73,y,x+73,y+74,night?'#20334055':'#7a604455',1);
-  // Fine irregular stone grain, deterministic and cached.
-  for(let j=0;j<3;j++)line(c,x+9+(j*19+r*7)%45,y+18+j*16,x+19+(j*19+r*7)%45,y+18+j*16,night?'#d1e2e80d':'#f7e5be30',1);
- }
- c.strokeStyle=gold;c.lineWidth=3;c.strokeRect(12,12,616,616);c.lineWidth=1;c.strokeRect(19,19,602,602);c.strokeRect(26,26,588,588);
- // Inlaid compass and chess diamond in the courtyard's centre.
- for(const r of [104,97,69]){c.strokeStyle=gold+'70';c.lineWidth=r===97?2:1;c.beginPath();c.arc(320,320,r,0,TAU);c.stroke();}
- c.save();c.translate(320,320);for(let i=0;i<8;i++){c.save();c.rotate(i*Math.PI/4);poly(c,[[0,-89],[10,-49],[0,-62],[-10,-49]],gold+'75',null);c.restore();}poly(c,[[0,-48],[48,0],[0,48],[-48,0]],stone+'50',gold+'70',1);star(c,0,0,32,edge+'60');c.restore();
- for(const [x,y] of [[12,12],[628,12],[12,628],[628,628]]){c.save();c.translate(x,y);poly(c,[[0,-8],[8,0],[0,8],[-8,0]],edge,gold);c.restore();}
- c.restore();
- // Four stone lanterns frame the arena. Day and night share exactly this map.
- for(const x of [91,709])for(const y of [28,709]){ellipse(c,x,y+10,17,7,'#0005');round(c,x-11,y-7,22,20,3,stone,edge);round(c,x-6,y-3,12,10,2,night?'#ffcf77':'#e6bc70');poly(c,[[x-16,y-9],[x,y-20],[x+16,y-9]],stone,edge,1);if(night){const glow=c.createRadialGradient(x,y,0,x,y,50);glow.addColorStop(0,'#ffd17445');glow.addColorStop(1,'#ffd17400');c.fillStyle=glow;c.fillRect(x-50,y-50,100,100);}}
- c.font='600 11px system-ui';c.textAlign='center';c.fillStyle=night?'#c5d9e6':'#eddbb6';c.fillText(night?'MOONLIT COURTYARD':'SUNLIT COURTYARD',400,25);
- c.font='10px system-ui';c.fillStyle=night?'#88a5ba':'#a9bd94';c.fillText('IVORY',38,65);c.fillText('EMBER',762,65);
-}
-function paintedBackdrop(c,night){
- c.drawImage(courtyard(),0,0,800,736);
- if(night){
-  // Recolour the same painted map; geometry and bench positions stay identical.
-  c.save();c.globalCompositeOperation='multiply';c.fillStyle='#6881ba';c.fillRect(0,0,800,736);c.globalCompositeOperation='source-over';c.fillStyle='#0b173c60';c.fillRect(0,0,800,736);
-  const moon=c.createRadialGradient(400,310,15,400,368,360);moon.addColorStop(0,'#a2ccff20');moon.addColorStop(1,'#a2ccff00');c.fillStyle=moon;c.fillRect(80,48,640,640);
-  for(const x of [91,709])for(const y of [28,709]){const g=c.createRadialGradient(x,y,1,x,y,53);g.addColorStop(0,'#ffe6a3ba');g.addColorStop(.13,'#ffcf7480');g.addColorStop(1,'#ffcf7400');c.fillStyle=g;c.fillRect(x-53,y-53,106,106);}
-  c.restore();
- }
-}
-function backdrop(c,night){const image=courtyard(),key=String(night)+(image?'painted':'loading');let b=backgrounds.get(key);if(!b&&typeof document!=='undefined'){b=document.createElement('canvas');b.width=800;b.height=736;const bc=b.getContext('2d');if(bc){if(image)paintedBackdrop(bc,night);else scenery(bc,night);backgrounds.set(key,b);}else b=null;}if(b)c.drawImage(b,0,0);else if(image)paintedBackdrop(c,night);else scenery(c,night);}
+// The arena is another dimension: a sand floor inside a marble ring, with marble benches above (Ember)
+// and below (Ivory). Light target squares open the white-marble realm, dark ones the black-marble realm;
+// the champions keep their own colours in both.
+const REALMS={
+ white:{void0:'#f6f1e7',void1:'#b9ae9b',marble0:'#f4f0e8',marble1:'#d6cfc2',vein:'#8f897d',sand0:'#efdcb4',sand1:'#c7a978',grainDark:'#8a6d4255',grainLight:'#fff7df70',edge:'#a89c86',inner:'#c9a45a',text:'#6d604c',stud:'#c9a45a'},
+ black:{void0:'#2a2930',void1:'#040405',marble0:'#2b2a31',marble1:'#111115',vein:'#c8ad73',sand0:'#ad946f',sand1:'#6e5a3f',grainDark:'#2a1e1060',grainLight:'#f0dcb040',edge:'#000000',inner:'#c8ad73',text:'#d9cba9',stud:'#c8ad73'}};
+export const realmOf=world=>world?.night?'black':'white';
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function marble(c,R,path,x,y,w,h,seed){c.save();path();c.clip();const g=c.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,R.marble0);g.addColorStop(.55,R.marble1);g.addColorStop(1,R.marble0);c.fillStyle=g;c.fillRect(x,y,w,h);
+ const r=rng(seed);
+ // Soft clouds first, then a few long, thin veins that drift in one general direction.
+ for(let i=0;i<26;i++){const bx=x+r()*w,by=y+r()*h,br=30+r()*110,cl=c.createRadialGradient(bx,by,0,bx,by,br);cl.addColorStop(0,(i%2?R.marble1:R.marble0)+'90');cl.addColorStop(1,(i%2?R.marble1:R.marble0)+'00');c.fillStyle=cl;c.fillRect(bx-br,by-br,2*br,2*br);}
+ c.strokeStyle=R.vein;c.lineCap='round';for(let i=0;i<9;i++){const a=-.5+r()*.6;let px=x-40+r()*w*.6,py=y+r()*h;c.globalAlpha=.25+r()*.35;c.lineWidth=.6+r()*1.2;c.beginPath();c.moveTo(px,py);
+  for(let k=0;k<5;k++){const len=60+r()*120,nx=px+Math.cos(a)*len,ny=py+Math.sin(a)*len+(r()-.5)*40;c.quadraticCurveTo((px+nx)/2+(r()-.5)*30,(py+ny)/2+(r()-.5)*30,nx,ny);px=nx;py=ny;}c.stroke();
+  // A hair-thin branch now and then.
+  if(r()<.5){c.globalAlpha*=.6;c.lineWidth*=.5;c.beginPath();c.moveTo(px,py);c.quadraticCurveTo(px+30,py+(r()-.5)*50,px+60+r()*60,py+(r()-.5)*60);c.stroke();}}
+ c.restore();}
+function scenery(c,realm){const R=REALMS[realm],cx=SCENE.x+ARENA.cx,cy=SCENE.y+ARENA.cy,rx=ARENA.rx,ry=ARENA.ry;
+ const v=c.createRadialGradient(400,400,120,400,400,620);v.addColorStop(0,R.void0);v.addColorStop(1,R.void1);c.fillStyle=v;c.fillRect(0,0,800,800);
+ // Benches.
+ for(const [y,seed] of [[8,11],[708,23]]){ellipse(c,400,y+80,380,10,'#0004');marble(c,R,()=>{c.beginPath();c.roundRect(20,y,760,84,18);},20,y,760,84,seed);c.strokeStyle=R.edge;c.lineWidth=2;c.beginPath();c.roundRect(20,y,760,84,18);c.stroke();c.strokeStyle=R.inner+'90';c.lineWidth=1;c.beginPath();c.roundRect(27,y+7,746,70,13);c.stroke();}
+ // Marble ring.
+ ellipse(c,cx,cy+8,rx+26,ry+26,'#0005');
+ marble(c,R,()=>{c.beginPath();c.ellipse(cx,cy,rx+24,ry+24,0,0,TAU);c.ellipse(cx,cy,rx,ry,0,0,TAU,true);},cx-rx-24,cy-ry-24,2*rx+48,2*ry+48,37);
+ c.strokeStyle=R.edge;c.lineWidth=2;c.beginPath();c.ellipse(cx,cy,rx+24,ry+24,0,0,TAU);c.stroke();
+ for(let i=0;i<12;i++){const a=i*TAU/12;ellipse(c,cx+Math.cos(a)*(rx+12),cy+Math.sin(a)*(ry+12),4.5,4.5,R.stud);}
+ // Sand floor: warm centre, raked rings, fine grain.
+ c.save();c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,TAU);c.clip();
+ const g=c.createRadialGradient(cx,cy-40,40,cx,cy,rx);g.addColorStop(0,R.sand0);g.addColorStop(1,R.sand1);c.fillStyle=g;c.fillRect(cx-rx,cy-ry,2*rx,2*ry);
+ c.strokeStyle=R.grainDark;c.lineWidth=1;for(const k of [.3,.45,.6,.75,.9]){c.globalAlpha=.35;c.beginPath();c.ellipse(cx,cy,rx*k,ry*k,0,0,TAU);c.stroke();}c.globalAlpha=1;
+ const r=rng(91);for(let i=0;i<3200;i++){c.fillStyle=i%3?R.grainDark:R.grainLight;c.fillRect(cx-rx+r()*2*rx,cy-ry+r()*2*ry,1+r()*1.4,1+r()*1.4);}
+ c.strokeStyle=R.inner;c.globalAlpha=.55;c.lineWidth=2;c.beginPath();c.ellipse(cx,cy,64,52,0,0,TAU);c.stroke();star(c,cx,cy,26,R.inner+'80');c.globalAlpha=1;
+ const shade=c.createRadialGradient(cx,cy,ry*.6,cx,cy,rx*1.05);shade.addColorStop(0,'#0000');shade.addColorStop(1,'#00000040');c.fillStyle=shade;c.fillRect(cx-rx,cy-ry,2*rx,2*ry);c.restore();
+ c.strokeStyle=R.inner;c.lineWidth=2.5;c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,TAU);c.stroke();
+ c.font='700 11px system-ui';c.textAlign='left';c.fillStyle=R.text;c.fillText('EMBER',34,26);c.fillText('IVORY',34,786);}
+function backdrop(c,realm){let b=backgrounds.get(realm);if(!b&&typeof document!=='undefined'){b=document.createElement('canvas');b.width=800;b.height=800;const bc=b.getContext('2d');if(bc){scenery(bc,realm);backgrounds.set(realm,b);}else b=null;}if(b)c.drawImage(b,0,0);else scenery(c,realm);}
 function chessToken(c,t,x,y,s){c.save();c.translate(x,y);c.fillStyle=TEAM[s];c.strokeStyle='#2d2b28';c.lineWidth=1.6;
  if(t==='p'){ellipse(c,0,-9,5,5,TEAM[s]);poly(c,[[-4,-3],[4,-3],[7,7],[-7,7]],TEAM[s]);}
  else if(t==='r')poly(c,[[-9,-13],[-4,-13],[-4,-8],[-1,-8],[-1,-13],[3,-13],[3,-8],[6,-8],[6,-13],[10,-13],[8,-3],[6,7],[-6,7],[-8,-3]],TEAM[s]);
@@ -52,18 +54,20 @@ function chessToken(c,t,x,y,s){c.save();c.translate(x,y);c.fillStyle=TEAM[s];c.s
 // After a knockout the winning bench cheers and the losing bench slumps; during the duel a piece
 // lights up for a moment whenever its bonus helps (shield soaks a hit, healing ticks, and so on).
 function reaction(world,s,t){if(world?.done){const w=world.result?.winner;return w===s?'cheer':'sad';}const at=world?.aid?.[s]?.[t];return at!==undefined&&world.elapsed-at<.6?'active':null;}
-function benches(c,support,night,world,clock){for(const s of ['w','b']){const list=support?.[s]??[],x=s==='w'?10:734,top=97;
- if(!courtyard()){round(c,x+3,top+8,53,532,9,'#0005');round(c,x,top,56,532,7,'#4c342c','#916a4d');for(let y=top+12;y<top+524;y+=15)line(c,x+4,y,x+52,y,'#b0895940',1);}
- const gap=Math.min(62,480/Math.max(1,list.length)),first=top+48+(480-gap*list.length)/2;
- list.forEach((p,i)=>{const y=first+i*gap;ellipse(c,x+28,y+16,18,6,'#140a0870');
-  const state=reaction(world,s,p.t),reactions=reactionAtlas();
-  if(state&&reactions){const h=p.t==='p'?40:47,f=reactionFrame(p.t,s,state),k=h*f.unit,hop=state==='cheer'?Math.abs(Math.sin(clock*7+i))*-5:0;
-   c.save();if(night)c.globalAlpha=.96;c.drawImage(reactions,f.x,f.y,f.w,f.h,x+28-f.anchorX*k,y+20+hop-f.anchorY*k,f.w*k,f.h*k);c.restore();return;}
-  const image=aidAtlas(),frame=aidFrame(p.t,s);if(image&&frame){const h=p.t==='p'?40:47,w=h*frame.w/frame.h;c.save();if(night)c.globalAlpha=.96;c.drawImage(image,frame.x,frame.y,frame.w,frame.h,x+28-w/2,y+20-h,w,h);c.restore();}else chessToken(c,p.t,x+28,y,s);
- });
- c.fillStyle=TEAM[s];c.font='700 10px system-ui';c.textAlign='center';c.fillText(s==='w'?'IVORY':'EMBER',x+28,78);
- if(!list.length){c.fillStyle=TEAM[s]+'b0';c.font='10px system-ui';c.fillText('EMPTY',x+28,top+263);}
-}}
+// The pieces whose lives are on the line (the attacker and the defender) sit large in the middle of
+// their bench; the helpers fan out to both sides.
+function drawPiece(c,p,s,x,base,h,world,clock,i){const state=reaction(world,s,p.t),reactions=reactionAtlas();ellipse(c,x,base-3,h*.38,5,'#0006');
+ if(state&&reactions){const f=reactionFrame(p.t,s,state),k=h*f.unit,hop=state==='cheer'?Math.abs(Math.sin(clock*7+i))*-5:0;c.drawImage(reactions,f.x,f.y,f.w,f.h,x-f.anchorX*k,base+hop-f.anchorY*k,f.w*k,f.h*k);return;}
+ const image=aidAtlas(),frame=aidFrame(p.t,s);if(image&&frame){const w=h*frame.w/frame.h;c.drawImage(image,frame.x,frame.y,frame.w,frame.h,x-w/2,base-h,w,h);}else{c.save();c.translate(x,base-10);c.scale(h/40,h/40);chessToken(c,p.t,0,0,s);c.restore();}}
+function benches(c,support,world,clock){const centre=support?.centre;const R=REALMS[realmOf(world)];
+ for(const s of ['w','b']){const list=support?.[s]??[],base=s==='b'?80:780,atStake=p=>p.attacker||p.i===centre;
+  const stake=list.filter(atStake),helpers=list.filter(p=>!atStake(p)),slots=[];
+  stake.forEach((p,i)=>slots.push({p,x:400+(i-(stake.length-1)/2)*80,big:true}));
+  helpers.forEach((p,i)=>{const k=Math.floor(i/2)+1,dir=i%2?1:-1;slots.push({p,x:400+dir*(46+k*58),big:false});});
+  for(const {p,x,big} of slots){if(big){const g=c.createRadialGradient(x,base-28,4,x,base-28,46);g.addColorStop(0,TEAM[s]+'90');g.addColorStop(1,TEAM[s]+'00');c.fillStyle=g;c.fillRect(x-46,base-74,92,92);}
+   drawPiece(c,p,s,x,base,big?64:p.t==='p'?36:42,world,clock,slots.indexOf(slots.find(z=>z.p===p)));}
+  if(!list.length){c.fillStyle=R.text;c.font='11px system-ui';c.textAlign='center';c.fillText('NO SUPPORT',400,base-30);}
+ }}
 function flashTilt(f){return f.flash>0?-.08:0;}
 // Telegraphs: a Rock winding up shows where its blow will land, so players can react.
 function telegraph(c,f,world){if(!(f.charge>0)||!f.chargeDir)return;const m=world?surge(world,f):1,[dx,dy]=f.chargeDir,a=Math.atan2(dy,dx),total=f.chargeKind==='swing'?RULES.rockSwingWindup:RULES.rockStompWindup,k=1-f.charge/total;
@@ -86,11 +90,11 @@ function fighter(c,f,time,world,clock=time){
  if(!world?.done)poly(c,[[f.x+f.dx*49-f.dy*3,f.y+f.dy*49+f.dx*3],[f.x+f.dx*56,f.y+f.dy*56],[f.x+f.dx*49+f.dy*3,f.y+f.dy*49-f.dx*3]],TEAM[f.s]+'95',null);
 }
 export function drawArena(c,world,support,clock=typeof performance!=='undefined'?performance.now()/1000:world.elapsed){
- c.clearRect(0,0,800,736);backdrop(c,world.night);benches(c,support,world.night,world,clock);c.save();c.translate(SCENE.x,SCENE.y);
+ c.clearRect(0,0,800,800);backdrop(c,realmOf(world));benches(c,support,world,clock);c.save();c.translate(SCENE.x,SCENE.y);
  for(const o of world.obstacles){const image=aidAtlas(),frame=aidFrame('r',o.s);ellipse(c,o.x+o.w/2,o.y+o.h,o.w*.65,10,'#10202c65');if(image&&frame)c.drawImage(image,frame.x,frame.y,frame.w,frame.h,o.x-7,o.y-17,o.w+14,o.h+20);else{round(c,o.x,o.y,o.w,o.h,3,'#b4a17c','#373c3b');line(c,o.x,o.y+24,o.x+o.w,o.y+24,'#4e5558');} }
  for(const p of world.projectiles){const col=p.special?'#d7a5ff':'#ffd285';for(let k=4;k>0;k--)ellipse(c,p.x-p.dx*k*9,p.y-p.dy*k*9,p.r*(1-k*.15),p.r*(1-k*.15),col+'35');ellipse(c,p.x,p.y,p.r+4,col+'45');ellipse(c,p.x,p.y,p.r,col);ellipse(c,p.x-2,p.y-2,p.r*.5,p.r*.5,'#fff3d0');}
  for(const f of [...world.fighters].sort((a,b)=>a.y-b.y))fighter(c,f,world.elapsed,world,clock);
  for(const e of world.effects){c.save();const age=1-e.life/e.total;c.globalAlpha=Math.max(0,1-age);c.strokeStyle=e.color;c.fillStyle=e.color;c.lineWidth=4;c.textAlign='center';if(e.kind==='slash'){const angle=Math.atan2(e.dy,e.dx);c.beginPath();c.arc(e.x,e.y,e.r,angle-1.1+age*.5,angle+1.1);c.stroke();c.globalAlpha*=.4;c.lineWidth=10;c.stroke();}else if(e.kind==='quake'){c.lineWidth=6;c.beginPath();c.arc(e.x,e.y,e.r*(.55+.45*age),0,TAU);c.stroke();}else if(e.kind==='text'){c.font='800 17px system-ui';c.strokeStyle='#152331';c.lineWidth=3;c.strokeText(e.text,e.x,e.y-age*26);c.fillText(e.text,e.x,e.y-age*26);}else{c.beginPath();c.arc(e.x,e.y,e.kind==='guard'?43:20+age*60,0,TAU);c.stroke();for(let i=0;i<8;i++){const a=i*TAU/8;star(c,e.x+Math.cos(a)*(25+age*55),e.y+Math.sin(a)*(25+age*55),3,e.color);}}c.restore();}
- if(world.countdown>0){c.fillStyle='#101b2c80';c.fillRect(0,0,640,640);c.fillStyle='#ffe4b0';c.font='800 70px system-ui';c.textAlign='center';c.fillText(world.countdown>.5?String(Math.ceil(world.countdown-.4)):'FIGHT',320,333);}
+ if(world.countdown>0){c.fillStyle='#10101480';c.beginPath();c.ellipse(ARENA.cx,ARENA.cy,ARENA.rx,ARENA.ry,0,0,TAU);c.fill();c.fillStyle='#fff1d2';c.font='800 70px system-ui';c.textAlign='center';c.fillText(world.countdown>.5?String(Math.ceil(world.countdown-.4)):'FIGHT',ARENA.cx,ARENA.cy+24);}
  c.restore();
 }
