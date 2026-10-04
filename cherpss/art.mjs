@@ -1,22 +1,15 @@
 // Painted assets are local and shared by the game and automatic demonstration.
 import {RULES} from './arena.mjs';
-const files={champions:'champions.webp',courtyard:'courtyard.webp',aids:'aids.webp',extra:'champions-extra.webp',reactions:'bench-reactions.webp'};
+const files={champions:'champions.webp',realmWhite:'realm-white.webp',realmBlack:'realm-black.webp',aids:'aids.webp',extra:'champions-extra.webp',reactions:'bench-reactions.webp'};
 const images={},pending={};let loading=null;
-// The Black team's figurines are still painted terracotta: from this fraction of the sheet's height down,
-// turn them into dark stone in code (stand-in until the black set is painted).
-const DARKEN={aids:.5,reactions:.5};
-function darkenBelow(im,from){if(typeof document==='undefined')return im;const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');if(!x?.getImageData)return im;x.drawImage(im,0,0);
- const y0=Math.floor(im.height*from),d=x.getImageData(0,y0,im.width,im.height-y0),p=d.data;
- for(let i=0;i<p.length;i+=4){const l=.3*p[i]+.59*p[i+1]+.11*p[i+2],v=24+l*.42;p[i]=v;p[i+1]=v;p[i+2]=v*1.06;}
- x.putImageData(d,0,y0);return c;}
 function loadImage(key){
  if(pending[key])return pending[key];
  if(typeof Image==='undefined')return Promise.resolve(false);
- pending[key]=new Promise(resolve=>{const im=new Image();im.onload=()=>{images[key]=DARKEN[key]?darkenBelow(im,DARKEN[key]):im;resolve(true);};im.onerror=()=>resolve(false);im.src=new URL('./assets/'+files[key],import.meta.url).href;});return pending[key];
+ pending[key]=new Promise(resolve=>{const im=new Image();im.onload=()=>{images[key]=im;resolve(true);};im.onerror=()=>resolve(false);im.src=new URL('./assets/'+files[key],import.meta.url).href;});return pending[key];
 }
 export function loadArtwork(){return loading??=Promise.all(Object.keys(files).map(loadImage)).then(results=>results.every(Boolean));}
 export function spriteAtlas(){return images.champions??null;}
-export function courtyard(){return images.courtyard??null;}
+export function courtyard(night){return images[night?'realmBlack':'realmWhite']??null;}
 export function aidAtlas(){return images.aids??null;}
 export function extraAtlas(){return images.extra??null;}
 export function reactionAtlas(){return images.reactions??null;}
@@ -32,7 +25,7 @@ export function reactionFrame(type,side,state){const col=['p','n','b','r','q','k
  // Same on-screen size as the idle figurine: idle height maps to its alpha box in aids.webp.
  return{x:col*181,y:row*181,w:181,h:181,anchorX:90.5,anchorY:144.5,unit:2*REACTION_SCALE[type]/(box[3]+4)};}
 const COLUMNS=[0,300,596,883,1183,1540,1774],ROWS=[0,300,591,887];
-const ANCHORS={rock:[160,458,742,1045,1320,1640],scissors:[160,454,746,1037,1290,1640],paper:[149,451,742,1040,1290,1645]};
+const ANCHORS={rock:[160,458,742,1045,1320,1640],scissors:[160,454,746,1037,1290,1640],paper:[135,466,758,1033,1292,1609]};
 export function spriteFrame(type,pose){const row={rock:0,scissors:1,paper:2}[type],x=COLUMNS[pose],y=ROWS[row];return{x,y,w:COLUMNS[pose+1]-x,h:ROWS[row+1]-y,anchorX:ANCHORS[type][pose]-x,anchorY:[278,574,834][row]-y};}
 const AID_BOXES=[[94,113,179,238],[441,62,210,293],[800,38,203,316],[1152,80,211,274],[1523,32,202,323],[1885,24,204,331],[94,455,179,236],[441,405,211,290],[800,381,203,314],[1152,421,211,274],[1523,375,202,320],[1884,367,205,329]];
 export function aidFrame(type,side){if(!aidAtlas())return null;const index=['p','n','b','r','q','k'].indexOf(type)+(side==='w'?0:6),[x,y,w,h]=AID_BOXES[index];return{x:x-2,y:y-2,w:w+4,h:h+4};}
