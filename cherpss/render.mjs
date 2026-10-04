@@ -30,17 +30,13 @@ function scenery(c,night){
  c.font='600 11px system-ui';c.textAlign='center';c.fillStyle=night?'#c5d9e6':'#eddbb6';c.fillText(night?'BLACK REALM':'WHITE REALM',400,25);
  c.font='10px system-ui';c.fillStyle=night?'#88a5ba':'#a9bd94';c.fillText('WHITE',38,65);c.fillText('BLACK',762,65);
 }
-function paintedBackdrop(c,night){
- c.drawImage(courtyard(),0,0,800,736);
- if(night){
-  // Black realm (stand-in until its own painting exists): the same map darkened neutrally, no colour cast,
-  // with the floor kept a little lighter so the fighters stay readable.
-  c.save();c.globalCompositeOperation='multiply';c.fillStyle='#5c5a58';c.fillRect(0,0,800,736);c.globalCompositeOperation='source-over';
-  const floor=c.createRadialGradient(400,368,60,400,368,380);floor.addColorStop(0,'#ffffff22');floor.addColorStop(1,'#ffffff00');c.fillStyle=floor;c.fillRect(80,48,640,640);
-  c.restore();
- }
-}
-function backdrop(c,night){const image=courtyard(),key=String(night)+(image?'painted':'loading');let b=backgrounds.get(key);if(!b&&typeof document!=='undefined'){b=document.createElement('canvas');b.width=800;b.height=736;const bc=b.getContext('2d');if(bc){if(image)paintedBackdrop(bc,night);else scenery(bc,night);backgrounds.set(key,b);}else b=null;}if(b)c.drawImage(b,0,0);else if(image)paintedBackdrop(c,night);else scenery(c,night);}
+function paintedBackdrop(c,night){c.drawImage(courtyard(night),0,0,800,736);}
+function backdrop(c,night){const image=courtyard(night),key=String(night)+(image?'painted':'loading');let b=backgrounds.get(key);if(!b&&typeof document!=='undefined'){b=document.createElement('canvas');b.width=800;b.height=736;const bc=b.getContext('2d');if(bc){if(image)paintedBackdrop(bc,night);else scenery(bc,night);backgrounds.set(key,b);}else b=null;}if(b)c.drawImage(b,0,0);else if(image)paintedBackdrop(c,night);else scenery(c,night);}
+// The scroll mage's bolt: a glowing parchment rune spinning along a violet trail.
+function paperRune(c,p,clock){const col=p.special?'#e2c4ff':'#b99cf0';for(let k=4;k>0;k--)ellipse(c,p.x-p.dx*k*9,p.y-p.dy*k*9,p.r*(1-k*.15),p.r*(1-k*.15),col+'30');ellipse(c,p.x,p.y,p.r+5,col+'48');
+ c.save();c.translate(p.x,p.y);c.rotate(Math.atan2(p.dy,p.dx)+Math.sin((clock??0)*14+p.x*.05)*.5);const w=p.r*1.5,h=p.r*1.1;
+ c.fillStyle='#fbf6ea';c.strokeStyle='#8a63d2';c.lineWidth=1.5;c.fillRect(-w/2,-h/2,w,h);c.strokeRect(-w/2,-h/2,w,h);
+ c.strokeStyle='#7d55c8';c.lineWidth=1.2;c.beginPath();c.arc(0,0,h*.28,0,TAU);c.moveTo(-w*.3,0);c.lineTo(w*.3,0);c.stroke();c.restore();}
 function chessToken(c,t,x,y,s){c.save();c.translate(x,y);c.fillStyle=TEAM[s];c.strokeStyle='#2d2b28';c.lineWidth=1.6;
  if(t==='p'){ellipse(c,0,-9,5,5,TEAM[s]);poly(c,[[-4,-3],[4,-3],[7,7],[-7,7]],TEAM[s]);}
  else if(t==='r')poly(c,[[-9,-13],[-4,-13],[-4,-8],[-1,-8],[-1,-13],[3,-13],[3,-8],[6,-8],[6,-13],[10,-13],[8,-3],[6,7],[-6,7],[-8,-3]],TEAM[s]);
@@ -66,7 +62,7 @@ function benches(c,support,night,world,clock){const centre=support?.centre;for(c
   if(state&&reactions){const f=reactionFrame(p.t,s,state),k=h*f.unit,hop=state==='cheer'?Math.abs(Math.sin(clock*7+i))*-5:0;c.drawImage(reactions,f.x,f.y,f.w,f.h,x+28-f.anchorX*k,base+hop-f.anchorY*k,f.w*k,f.h*k);return;}
   const image=aidAtlas(),frame=aidFrame(p.t,s);if(image&&frame){const w=h*frame.w/frame.h;c.drawImage(image,frame.x,frame.y,frame.w,frame.h,x+28-w/2,base-h,w,h);}else chessToken(c,p.t,x+28,base-12,s);
  });
- c.fillStyle=TEAM[s];c.font='700 10px system-ui';c.textAlign='center';c.fillText(s==='w'?'WHITE':'BLACK',x+28,78);
+ c.fillStyle=night?TEAM[s]:'#4a453d';c.font='700 10px system-ui';c.textAlign='center';c.fillText(s==='w'?'WHITE':'BLACK',x+28,78);
  if(!list.length){c.fillStyle=TEAM[s]+'b0';c.font='10px system-ui';c.fillText('EMPTY',x+28,top+263);}
 }}
 function flashTilt(f){return f.flash>0?-.08:0;}
@@ -93,7 +89,7 @@ function fighter(c,f,time,world,clock=time){
 export function drawArena(c,world,support,clock=typeof performance!=='undefined'?performance.now()/1000:world.elapsed){
  c.clearRect(0,0,800,736);backdrop(c,world.night);benches(c,support,world.night,world,clock);c.save();c.translate(SCENE.x,SCENE.y);
  for(const o of world.obstacles){const image=aidAtlas(),frame=aidFrame('r',o.s);ellipse(c,o.x+o.w/2,o.y+o.h,o.w*.65,10,'#10202c65');if(image&&frame)c.drawImage(image,frame.x,frame.y,frame.w,frame.h,o.x-7,o.y-17,o.w+14,o.h+20);else{round(c,o.x,o.y,o.w,o.h,3,'#b4a17c','#373c3b');line(c,o.x,o.y+24,o.x+o.w,o.y+24,'#4e5558');} }
- for(const p of world.projectiles){const col=p.special?'#d7a5ff':'#ffd285';for(let k=4;k>0;k--)ellipse(c,p.x-p.dx*k*9,p.y-p.dy*k*9,p.r*(1-k*.15),p.r*(1-k*.15),col+'35');ellipse(c,p.x,p.y,p.r+4,col+'45');ellipse(c,p.x,p.y,p.r,col);ellipse(c,p.x-2,p.y-2,p.r*.5,p.r*.5,'#fff3d0');}
+ for(const p of world.projectiles)paperRune(c,p,clock);
  for(const f of [...world.fighters].sort((a,b)=>a.y-b.y))fighter(c,f,world.elapsed,world,clock);
  for(const e of world.effects){c.save();const age=1-e.life/e.total;c.globalAlpha=Math.max(0,1-age);c.strokeStyle=e.color;c.fillStyle=e.color;c.lineWidth=4;c.textAlign='center';if(e.kind==='slash'){const angle=Math.atan2(e.dy,e.dx);c.beginPath();c.arc(e.x,e.y,e.r,angle-1.1+age*.5,angle+1.1);c.stroke();c.globalAlpha*=.4;c.lineWidth=10;c.stroke();}else if(e.kind==='quake'){c.lineWidth=6;c.beginPath();c.arc(e.x,e.y,e.r*(.55+.45*age),0,TAU);c.stroke();}else if(e.kind==='text'){c.font='800 17px system-ui';c.strokeStyle='#152331';c.lineWidth=3;c.strokeText(e.text,e.x,e.y-age*26);c.fillText(e.text,e.x,e.y-age*26);}else{c.beginPath();c.arc(e.x,e.y,e.kind==='guard'?43:20+age*60,0,TAU);c.stroke();for(let i=0;i<8;i++){const a=i*TAU/8;star(c,e.x+Math.cos(a)*(25+age*55),e.y+Math.sin(a)*(25+age*55),3,e.color);}}c.restore();}
  if(world.countdown>0){c.fillStyle='#101b2c80';c.fillRect(0,0,640,640);c.fillStyle='#ffe4b0';c.font='800 70px system-ui';c.textAlign='center';c.fillText(world.countdown>.5?String(Math.ceil(world.countdown-.4)):'FIGHT',320,333);}
