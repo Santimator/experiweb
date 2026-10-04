@@ -8,9 +8,9 @@ A small collection of browser games at [santiago-mj.com](https://santiago-mj.com
 | --- | --- | --- | --- |
 | **Carrom** | `carrom.html` | 2–4, or 1 vs AI | Flick the striker to pocket your pieces. |
 | **Go** | `go.html` | 2, or 1 vs AI | 9×9, 13×13 or 19×19 board, with a pass rule and scoring. |
-| **CheRPSs** | `cherpss/` | 2 (local) | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. |
+| **CheRPSs** | `cherpss/` | 2 (local) | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. **Unlisted** while in playtesting: no lobby card, not indexed; open it by URL. |
 
-`index.html` is the lobby that links to each game.
+`index.html` is the lobby that links to each listed game.
 
 ### CheRPSs
 
