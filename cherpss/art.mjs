@@ -1,14 +1,22 @@
 // Painted assets are local and shared by the game and automatic demonstration.
 import {RULES} from './arena.mjs';
-const files={champions:'champions.webp',aids:'aids.webp',extra:'champions-extra.webp',reactions:'bench-reactions.webp'};
+const files={champions:'champions.webp',courtyard:'courtyard.webp',aids:'aids.webp',extra:'champions-extra.webp',reactions:'bench-reactions.webp'};
 const images={},pending={};let loading=null;
+// The Black team's figurines are still painted terracotta: from this fraction of the sheet's height down,
+// turn them into dark stone in code (stand-in until the black set is painted).
+const DARKEN={aids:.5,reactions:.5};
+function darkenBelow(im,from){if(typeof document==='undefined')return im;const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');if(!x?.getImageData)return im;x.drawImage(im,0,0);
+ const y0=Math.floor(im.height*from),d=x.getImageData(0,y0,im.width,im.height-y0),p=d.data;
+ for(let i=0;i<p.length;i+=4){const l=.3*p[i]+.59*p[i+1]+.11*p[i+2],v=24+l*.42;p[i]=v;p[i+1]=v;p[i+2]=v*1.06;}
+ x.putImageData(d,0,y0);return c;}
 function loadImage(key){
  if(pending[key])return pending[key];
  if(typeof Image==='undefined')return Promise.resolve(false);
- pending[key]=new Promise(resolve=>{const im=new Image();im.onload=()=>{images[key]=im;resolve(true);};im.onerror=()=>resolve(false);im.src=new URL('./assets/'+files[key],import.meta.url).href;});return pending[key];
+ pending[key]=new Promise(resolve=>{const im=new Image();im.onload=()=>{images[key]=DARKEN[key]?darkenBelow(im,DARKEN[key]):im;resolve(true);};im.onerror=()=>resolve(false);im.src=new URL('./assets/'+files[key],import.meta.url).href;});return pending[key];
 }
 export function loadArtwork(){return loading??=Promise.all(Object.keys(files).map(loadImage)).then(results=>results.every(Boolean));}
 export function spriteAtlas(){return images.champions??null;}
+export function courtyard(){return images.courtyard??null;}
 export function aidAtlas(){return images.aids??null;}
 export function extraAtlas(){return images.extra??null;}
 export function reactionAtlas(){return images.reactions??null;}
@@ -17,7 +25,7 @@ export function reactionAtlas(){return images.reactions??null;}
 export const EXTRA={victory:0,hurt:1,ko:2,windup:3,release:4};
 const EXTRA_SCALE={rock:.6075,scissors:.5544,paper:.4901};
 export function extraFrame(type,pose){const row={rock:0,scissors:1,paper:2}[type];return{x:pose*296,y:row*296,w:296,h:296,anchorX:148,anchorY:243,scale:.36/EXTRA_SCALE[type]};}
-// bench-reactions (stored at half size): 181px cells; rows ivory active/cheer/sad, then Ember; columns p n b r q k.
+// bench-reactions (stored at half size): 181px cells; rows ivory active/cheer/sad, then Black; columns p n b r q k.
 // Its pieces were shrunk by REACTION_SCALE relative to aids.webp.
 const REACTION_SCALE={p:1.5878,n:1.3466,b:1.3298,r:1.3133,q:1.3466,k:1.2895};
 export function reactionFrame(type,side,state){const col=['p','n','b','r','q','k'].indexOf(type),row=(side==='w'?0:3)+{active:0,cheer:1,sad:2}[state],box=AID_BOXES[col];

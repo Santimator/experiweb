@@ -3,14 +3,14 @@ import {Match} from './match.mjs';
 import {surge} from './arena.mjs';
 import {drawArena} from './render.mjs';
 import {loadArtwork} from './art.mjs';
-// Champion icons are crops of each champion's idle sprite, trimmed to the figure (Ember's face left).
+// Champion icons are crops of each champion's idle sprite, trimmed to the figure (Black's face left).
 const ICON_BOX={rock:{x:49,y:73,w:223,h:206},scissors:{x:51,y:345,w:221,h:224},paper:{x:52,y:626,w:189,h:208}};
 function champIcon(t,s='w',size=34){const f=ICON_BOX[t],k=size/f.h;return `<span class="champ-icon${s==='b'?' flip':''}" aria-hidden="true" style="width:${Math.round(f.w*k)}px;height:${size}px;background-size:${Math.round(1774*k)}px ${Math.round(887*k)}px;background-position:${-Math.round(f.x*k)}px ${-Math.round(f.y*k)}px"></span>`;}
 import {benchHtml} from './benches.mjs';
 import {pieceSvg} from './pieces.mjs';
 import {autoInput} from './bots.mjs';
 import {SoundBank} from './sound.mjs';
-const $=id=>document.getElementById(id),TEAM={w:'Ivory',b:'Ember'},ROLE={rock:'The juggernaut',scissors:'The assassin',paper:'The mage'},GLYPH={p:'♟',n:'♞',b:'♝',r:'♜',q:'♛',k:'♚'};
+const $=id=>document.getElementById(id),TEAM={w:'White',b:'Black'},ROLE={rock:'The juggernaut',scissors:'The assassin',paper:'The mage'},GLYPH={p:'♟',n:'♞',b:'♝',r:'♜',q:'♛',k:'♚'};
 const STORE='cherpss-v1',keys=new Set(),pressed=new Set();let selected=null,promotionMoves=[],saveTimer=0,aftermathUntil=0,resultShown=false,frameNow=0,toastTimer,lastFrame=0,hudTimer=0,controllerSeen=false,previousPads={},storageAvailable=true;
 const detectedPhone=!!window.matchMedia?.('(pointer: coarse)').matches&&!!window.matchMedia?.('(max-width: 900px)').matches;
 let controlPreference=null,automatic=detectedPhone,handoff=false,moveHints=true;
@@ -86,7 +86,7 @@ window.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'))
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();pressed.clear();});
 // Attacks and specials fire on the press itself: holding the key does nothing more, so every blow is a tap.
 function input(){const out={};for(const s of ['w','b']){const m=mapping[s];out[s]={x:Number(keys.has(m.right))-Number(keys.has(m.left)),y:Number(keys.has(m.down))-Number(keys.has(m.up)),attack:pressed.has(m.attack),guard:keys.has(m.guard),special:pressed.has(m.special)};}return out;}
-function pads(controls){const list=Array.from(navigator.getGamepads?.()??[]).filter(Boolean).slice(0,2);if(list.length&&!controllerSeen){controllerSeen=true;toast('Controller connected. First pad is Ivory; second is Ember.');}for(let i=0;i<list.length;i++){const p=list[i],s=i===0?'w':'b',prev=previousPads[p.index]??[];const down=n=>!!p.buttons[n]?.pressed;const edge=n=>down(n)&&!prev[n];if(match.phase==='pick'){if(edge(0))choose(s,'rock');else if(edge(2))choose(s,'scissors');else if(edge(1))choose(s,'paper');}else if(match.phase==='fight'){if(Math.abs(p.axes[0]??0)>.2)controls[s].x=p.axes[0];if(Math.abs(p.axes[1]??0)>.2)controls[s].y=p.axes[1];if(down(14))controls[s].x=-1;if(down(15))controls[s].x=1;if(down(12))controls[s].y=-1;if(down(13))controls[s].y=1;controls[s].attack||=edge(0);controls[s].guard||=down(2);controls[s].special||=edge(1);}previousPads[p.index]=p.buttons.map(b=>b.pressed);}}
+function pads(controls){const list=Array.from(navigator.getGamepads?.()??[]).filter(Boolean).slice(0,2);if(list.length&&!controllerSeen){controllerSeen=true;toast('Controller connected. First pad is White; second is Black.');}for(let i=0;i<list.length;i++){const p=list[i],s=i===0?'w':'b',prev=previousPads[p.index]??[];const down=n=>!!p.buttons[n]?.pressed;const edge=n=>down(n)&&!prev[n];if(match.phase==='pick'){if(edge(0))choose(s,'rock');else if(edge(2))choose(s,'scissors');else if(edge(1))choose(s,'paper');}else if(match.phase==='fight'){if(Math.abs(p.axes[0]??0)>.2)controls[s].x=p.axes[0];if(Math.abs(p.axes[1]??0)>.2)controls[s].y=p.axes[1];if(down(14))controls[s].x=-1;if(down(15))controls[s].x=1;if(down(12))controls[s].y=-1;if(down(13))controls[s].y=1;controls[s].attack||=edge(0);controls[s].guard||=down(2);controls[s].special||=edge(1);}previousPads[p.index]=p.buttons.map(b=>b.pressed);}}
 function frame(now){frameNow=now;const dt=lastFrame?Math.min(.04,(now-lastFrame)/1000):0;lastFrame=now;const controls=input();if(!automatic)pads(controls);pressed.clear();if(match.phase==='fight'){match.tick(dt,automatic?autoInput(match.world):controls);for(const event of match.world.events)sfx.play(event);match.world.events=[];if(match.phase==='result'){aftermathUntil=now+2400;save();render();}else{drawArena(ctx,match.world,match.support);hudTimer+=dt;if(hudTimer>.08){hud();hudTimer=0;}saveTimer+=dt;if(saveTimer>.5){save();saveTimer=0;}}}
  else if(match.phase==='result'&&match.world){drawArena(ctx,match.world,match.support);if(!resultShown&&now>=aftermathUntil)render();}
  requestAnimationFrame(frame);}

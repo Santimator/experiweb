@@ -1,14 +1,13 @@
-import {RULES,ARENA,insideArena} from './arena.mjs';
+import {RULES} from './arena.mjs';
 // The same local AI policy drives both sides; champion choice stays with the players.
 // Movement scores a ring of candidate directions: keep a preferred range, stay out of
 // walls and corners, avoid cover, keep some momentum, and wander a little.
 // Skill (0..1) stands in for a human player's execution: reactions, aim, footwork and timing.
-const DIRS=Array.from({length:16},(_,i)=>[Math.cos(i*Math.PI/8),Math.sin(i*Math.PI/8)]);
+const SIZE=640,DIRS=Array.from({length:16},(_,i)=>[Math.cos(i*Math.PI/8),Math.sin(i*Math.PI/8)]);
 const PREFERRED={rock:57,scissors:49,paper:230},BOLT_SPEED=460;
 export const DEFAULT_SKILL=.6;
 const CLOSE=1.5;
-// Distance to the ring along the ray from the centre, penalised inside a 110px band like the old square walls.
-function wallPenalty(x,y){const dx=x-ARENA.cx,dy=y-ARENA.cy,d=Math.hypot(dx,dy)||1,c=dx/d,s=dy/d,edge=1/Math.hypot(c/ARENA.rx,s/ARENA.ry),gap=Math.max(0,110-(edge-d));return gap*gap/100;}
+function wallPenalty(x,y){let p=0;for(const d of [x,y,SIZE-x,SIZE-y]){const gap=Math.max(0,110-d);p+=gap*gap;}return p/100;}
 function blocked(world,x,y){return world.obstacles.some(o=>x>o.x-24&&x<o.x+o.w+24&&y>o.y-24&&y<o.y+o.h+24);}
 function steer(world,f,enemy,desired,q,{lookahead=60,rangeWeight=1,wallWeight=1,chase=false}={}){
  f.ai??={dir:null,wander:0,wanderAt:0};
@@ -17,7 +16,7 @@ function steer(world,f,enemy,desired,q,{lookahead=60,rangeWeight=1,wallWeight=1,
  // Judge each step against where the enemy will be by then, not where it is now.
  const tau=lookahead/(f.base.speed*(1+f.buff.speed)),es=enemy.moving?enemy.base.speed*(1+enemy.buff.speed)*(enemy.slow>0?.65:1)*tau:0,px=enemy.x+enemy.dx*es,py=enemy.y+enemy.dy*es;
  for(const [dx,dy] of DIRS){const x=f.x+dx*lookahead,y=f.y+dy*lookahead;
-  if(!insideArena(x,y)||blocked(world,x,y))continue;
+  if(x<25||x>SIZE-25||y<25||y>SIZE-25||blocked(world,x,y))continue;
   const d=Math.hypot(px-x,py-y);
   // Being too close is worse than being too far: closing in again is easy, escaping is not.
   let score=chase?-d:-(d<desired?(desired-d)*CLOSE:d-desired)*rangeWeight-wallPenalty(x,y)*wallWeight;
@@ -27,7 +26,7 @@ function steer(world,f,enemy,desired,q,{lookahead=60,rangeWeight=1,wallWeight=1,
   score+=Math.random()*noise;
   if(score>bestScore){bestScore=score;best=[dx,dy];}
  }
- if(!best){const tx=ARENA.cx-f.x,ty=ARENA.cy-f.y,tl=Math.hypot(tx,ty)||1;best=[tx/tl,ty/tl];}
+ if(!best)best=[(SIZE/2-f.x)/SIZE,(SIZE/2-f.y)/SIZE];
  f.ai.dir=best;return best;
 }
 // Reaction time: a condition must hold this long before the bot acts on it (~160 ms at 0.6 skill).
