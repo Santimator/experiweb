@@ -39,8 +39,8 @@ export function autoInput(world,skill=DEFAULT_SKILL){
   f.ai??={dir:null,wander:0,wanderAt:0};
   let x=0,y=0;
   // Scissors against Rock: wait outside its reach, dart in while its swing recovers.
-  // Against the Rock, go in whenever it is not winding up; its heavy swing needs a moment to land.
-  const opening=enemy.t==='rock'&&enemy.charge===0;
+  // Against the Rock: bait a swing by stepping into its reach, then punish while it recovers.
+  const opening=enemy.t==='rock'&&enemy.charge===0&&(enemy.cd>.3||enemy.cast>0);
   if(f.t==='scissors'&&enemy.t==='rock')f.ai.engage=reacted(world,f,'open',opening,q);
   // A telegraphed charge is coming this way: step off its line (if the player reads it in time).
   // A Rock is winding up and this fighter is inside the blow: back out (if read in time).
@@ -52,7 +52,10 @@ export function autoInput(world,skill=DEFAULT_SKILL){
    [x,y]=steer(world,f,enemy,mirror?160:PREFERRED.paper,q,{rangeWeight:mirror?1:2,wallWeight:1.4});
   }else if(f.t==='scissors'&&enemy.t==='rock'&&!f.ai.engage){
    // Out of swing reach; out of dash reach too while the Rock's dash is ready.
-   [x,y]=steer(world,f,enemy,enemy.base.range+40,q,{rangeWeight:2,wallWeight:1});
+   if(world.elapsed>=(f.ai.baitAt??0)){f.ai.baitAt=world.elapsed+.9+Math.random()*.9;f.ai.baitEnd=world.elapsed+.25;}
+   // While the stomp is ready, wait outside its circle; otherwise hover at the edge of the swing.
+   const stompReady=enemy.specialCd<.5,baiting=!stompReady&&world.elapsed<f.ai.baitEnd&&enemy.cd===0;
+   [x,y]=steer(world,f,enemy,stompReady?RULES.rockStompRadius+f.r+30:enemy.base.range+f.r+(baiting?-6:30),q,{rangeWeight:2,wallWeight:1});
   }else if(f.t==='scissors'&&f.specialCd>3.7&&d<105){
    // Hit and run after the dash.
    [x,y]=steer(world,f,enemy,170,q,{wallWeight:1});
