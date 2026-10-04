@@ -60,15 +60,18 @@ export function collectSupport(g,m){
 }
 // What each neighbouring piece adds to its side's champion, and the cap per effect.
 // Tuned in simulation so that two helpers of the right kind can roughly even out a counter matchup
-// (knights let a Rock run down a mage, bishops keep it standing, kings let Paper out-damage Scissors)
-// without making any champion the obvious pick. Rock vs Paper is a speed race, so knights are small.
-export const SUPPORT={p:{shield:2},n:{speed:.01},b:{regen:.3},r:{shield:3,cover:1},q:{cooldown:.06},k:{damage:.06}};
-export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.18,damage:.12,cover:2};
+// (knights or bishops for a Rock against a mage, kings for Paper against Scissors, queens for Scissors
+// against a Rock) without making any champion the obvious pick. Rock vs Paper is a speed race, so knights
+// are small. Rooks are siege engines: stronger specials (they used to raise walls, which barely mattered).
+export const SUPPORT={p:{shield:2},n:{speed:.01},b:{regen:.3},r:{power:.15},q:{cooldown:.06},k:{damage:.06}};
+export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.18,damage:.12,cover:2,attackSpeed:.4,reach:40,lifesteal:.5,armor:.5,power:.45,interrupt:1};
 export function bonuses(pieces){
  const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
  for(const [t,n] of Object.entries(counts))for(const [k,v] of Object.entries(SUPPORT[t]??{}))sum[k]=(sum[k]??0)+n*v;
  const cap=k=>Math.min(SUPPORT_CAPS[k]??Infinity,sum[k]??0);
- return{counts,shield:cap('shield'),speed:cap('speed'),regen:cap('regen'),cooldown:1-cap('cooldown'),damage:1+cap('damage'),cover:Math.floor(cap('cover'))};
+ return{counts,shield:cap('shield'),speed:cap('speed'),regen:cap('regen'),cooldown:1-cap('cooldown'),damage:1+cap('damage'),cover:Math.floor(cap('cover')),
+  // Optional effects (unused by default): faster attacks, longer melee reach, lifesteal, armour, stronger specials, wind-up interrupts.
+  attackSpeed:cap('attackSpeed'),reach:cap('reach'),lifesteal:cap('lifesteal'),armor:cap('armor'),power:cap('power'),interrupt:cap('interrupt')};
 }
 export function continuationIssue(g){
  for(const s of ['w','b'])if(g.board.filter(p=>p?.s===s&&p.t==='k').length!==1)return 'Ordinary chess needs both kings.';

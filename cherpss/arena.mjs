@@ -19,24 +19,27 @@ function move(world,f,dx,dy){const oldX=f.x,oldY=f.y;f.x=Math.max(25,Math.min(SI
 export function surge(world,f){return f.s===world.attacker&&world.elapsed>RULES.surgeAt?2**((world.elapsed-RULES.surgeAt)/RULES.surgeDouble):1;}
 function dash(world,f,dx,dy,stride){for(let i=0;i<10;i++)move(world,f,dx*stride/10,dy*stride/10);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#a1d2b8'});}
 function stomp(world,f){const target=world.fighters.find(x=>x!==f),r=RULES.rockStompRadius*surge(world,f);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#d6bd90'});effect(world,{kind:'quake',x:f.x,y:f.y,r,color:'#d6bd90',life:.45,total:.45});
- if(distance(f,target)<r+target.r)hit(world,target,RULES.rockStomp,f);for(const o of world.obstacles)if(distance(f,{x:o.x+o.w/2,y:o.y+o.h/2})<r+20)o.hp-=RULES.rockStomp;}
+ if(distance(f,target)<r+target.r)hit(world,target,RULES.rockStomp*(1+f.buff.power),f);for(const o of world.obstacles)if(distance(f,{x:o.x+o.w/2,y:o.y+o.h/2})<r+20)o.hp-=RULES.rockStomp;}
 function effect(world,e){world.effects.push({life:.3,total:.3,...e});}
 // Bench pieces light up when their bonus does something: aid[side][piece] = time it last helped.
 function aid(world,s,...types){world.aid??={w:{},b:{}};for(const t of types)world.aid[s][t]=world.elapsed;}
 function hit(world,target,raw,source){
- let damage=raw*source.buff.damage*surge(world,source);
+ let damage=raw*source.buff.damage*surge(world,source)*(1-target.buff.armor);
  if(target.guard&&target.stamina>0){world.events.push('guard');damage*=.35;target.stamina=Math.max(0,target.stamina-raw*.7);effect(world,{kind:'guard',x:target.x,y:target.y,color:'#94c5db'});}
  const absorb=Math.min(target.shield,damage);target.shield-=absorb;damage-=absorb;target.hp=Math.max(0,target.hp-damage);target.flash=.16;
- if(absorb>0){world.events.push('shield');aid(world,target.s,'p','r');}if(damage>0){world.events.push('hit');if(source.buff.damage>1)aid(world,source.s,'k');}
+ if(damage>0&&source.buff.lifesteal>0)source.hp=Math.min(source.startHp,source.hp+damage*source.buff.lifesteal);
+ // Interrupt: a blow landing during a wind-up can cancel it.
+ if(target.charge>0&&source.buff.interrupt>0&&Math.random()<source.buff.interrupt){target.charge=0;target.chargeLeft=0;target.cast=.12;effect(world,{kind:'text',x:target.x,y:target.y-50,text:'interrupted',color:'#f4c45e',life:.7,total:.7});}
+ if(absorb>0){world.events.push('shield');aid(world,target.s,'p');}if(damage>0){world.events.push('hit');if(source.buff.damage>1)aid(world,source.s,'k');}
  // A hit the shield soaks up entirely reads as "shield", not as a puzzling 0.
  const soaked=absorb>0&&Math.round(damage)===0;effect(world,{kind:'text',x:target.x,y:target.y-32,text:soaked?'shield':String(Math.round(damage)),color:soaked?'#94c5db':source.s==='w'?'#eed7ac':'#ffad91',life:.6,total:.6});
 }
-function melee(world,f,power,range,arc){range*=surge(world,f);const target=world.fighters.find(x=>x!==f),d=distance(f,target),dot=(f.dx*(target.x-f.x)+f.dy*(target.y-f.y))/Math.max(1,d);
+function melee(world,f,power,range,arc){range=(range+f.buff.reach)*surge(world,f);const target=world.fighters.find(x=>x!==f),d=distance(f,target),dot=(f.dx*(target.x-f.x)+f.dy*(target.y-f.y))/Math.max(1,d);
  effect(world,{kind:'slash',x:f.x,y:f.y,dx:f.dx,dy:f.dy,r:range,color:f.s==='w'?'#ebd0a1':'#ed9d83'});
  if(d<range+target.r&&dot>Math.cos(arc/2))hit(world,target,power,f);
  for(const o of world.obstacles){const point={x:o.x+o.w/2,y:o.y+o.h/2};if(distance(f,point)<range+20)o.hp-=power;}
 }
-function projectile(world,f,special=false){world.projectiles.push({x:f.x+f.dx*28,y:f.y+f.dy*28,dx:f.dx,dy:f.dy,speed:special?350:460,r:special?15:7,life:2,power:special?RULES.paperBlast:f.base.hit,source:f,special});}
+function projectile(world,f,special=false){world.projectiles.push({x:f.x+f.dx*28,y:f.y+f.dy*28,dx:f.dx,dy:f.dy,speed:special?350:460,r:special?15:7,life:2,power:special?RULES.paperBlast*(1+f.buff.power):f.base.hit,source:f,special});}
 function finish(world,winner,reason){world.done=true;world.events.push(reason.includes('minute')?'timeout':'knockout');world.result={winner,reason,damage:Object.fromEntries(world.fighters.map(f=>[f.s,Math.max(0,f.startHp-f.hp)]))};}
 export function stepArena(world,dt,input={w:{},b:{}}){
  if(world.done)return world.result;
@@ -57,12 +60,12 @@ export function stepArena(world,dt,input={w:{},b:{}}){
   // A champion knocked out earlier in this same frame cannot strike back.
   if(f.hp<=0)continue;
   if(f.chargeLeft>0&&f.charge===0){[f.dx,f.dy]=f.chargeDir;if(f.chargeKind==='swing')melee(world,f,f.base.hit,f.base.range,2.8);else stomp(world,f);}
-  if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd;f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
+  if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd*(1-f.buff.attackSpeed);f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
    f.castSlow=f.t==='paper'?RULES.paperCastSlow:.12;if(f.t==='paper')projectile(world,f);else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockSwingWindup);f.chargeKind='swing';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockSwingWindup+.08;}else melee(world,f,f.base.hit,f.base.range,1.8);}
-  if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);if(f.buff.cooldown<1)aid(world,f.s,'q');if(f.t==='scissors'&&f.buff.speed>0)aid(world,f.s,'n');f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
+  if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);if(f.buff.cooldown<1)aid(world,f.s,'q');if(f.buff.power>0)aid(world,f.s,'r');if(f.t==='scissors'&&f.buff.speed>0)aid(world,f.s,'n');f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
    if(f.t==='paper'){f.cast=.38;projectile(world,f,true);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});}
    else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockStompWindup);f.chargeKind='stomp';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockStompWindup+.25;}
-   else{const mx=a.x??0,my=a.y??0,ml=Math.hypot(mx,my);dash(world,f,ml?mx/ml:f.dx,ml?my/ml:f.dy,RULES.scissorsDash);f.cast=.08;melee(world,f,RULES.scissorsDashHit,f.base.range,1.8);}
+   else{const mx=a.x??0,my=a.y??0,ml=Math.hypot(mx,my);dash(world,f,ml?mx/ml:f.dx,ml?my/ml:f.dy,RULES.scissorsDash);f.cast=.08;melee(world,f,RULES.scissorsDashHit*(1+f.buff.power),f.base.range,1.8);}
   }
  }
  // Separate fighters without letting a collision push either through arena cover.
