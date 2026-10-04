@@ -65,8 +65,9 @@ export function collectSupport(g,m){
 // of fights, knights and bishops ~21%, rooks ~16%, queens and kings ~12%). Each underdog gets about the
 // same total help: knights let a Rock run down a mage, bishops recharge and power up specials (the Scissors'
 // dash against a Rock), queens and kings let Paper out-shoot Scissors. Pawns are small and roughly neutral.
-// Re-tuned for the round arena, where Rock vs Paper is a pure speed race (knights stay very small).
-export const SUPPORT={p:{shield:1,damage:.01},n:{speed:.0125},b:{cooldown:.15,power:.05},r:{power:.1},q:{attackSpeed:.15},k:{damage:.08}};
+// Re-tuned for the round arena, where Rock vs Paper is a pure speed race (knights stay very small), and for
+// longer fights, which amplify every edge: pawns are nearly neutral because they are in most fights.
+export const SUPPORT={p:{damage:.01},n:{speed:.006},b:{cooldown:.2,power:.1},r:{power:.04},q:{attackSpeed:.06},k:{damage:.06}};
 export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.3,damage:.2,cover:2,attackSpeed:.4,reach:40,lifesteal:.5,armor:.5,power:.45,interrupt:1};
 export function bonuses(pieces){
  const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
