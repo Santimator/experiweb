@@ -65,7 +65,10 @@ export function collectSupport(g,m){
 // of fights, knights and bishops ~21%, rooks ~16%, queens and kings ~12%). Each underdog gets about the
 // same total help: knights let a Rock run down a mage, bishops recharge and power up specials (the Scissors'
 // dash against a Rock), queens and kings let Paper out-shoot Scissors. Pawns are small and roughly neutral.
-export const SUPPORT={p:{shield:1,damage:.015},n:{speed:.02},b:{cooldown:.25,power:.15},r:{power:.1},q:{attackSpeed:.12},k:{damage:.08}};
+// Counters are meant to dominate (~85% at equal skill), so helpers only nudge: the helped side ends up ahead
+// about 51-60% and no single helper makes any champion a safe pick. Knights stay tiny: Rock vs Paper is a
+// speed race with a cliff. Bishops mostly feed the Scissors' dash; kings help Paper out-shoot Scissors.
+export const SUPPORT={p:{shield:.5,damage:.01},n:{speed:.017},b:{cooldown:.3,power:.25},r:{power:.08},q:{attackSpeed:.06},k:{damage:.05}};
 export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.3,damage:.2,cover:2,attackSpeed:.4,reach:40,lifesteal:.5,armor:.5,power:.45,interrupt:1};
 export function bonuses(pieces){
  const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
