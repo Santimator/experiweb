@@ -60,10 +60,10 @@ function benches(c,support,night){for(const s of ['w','b']){const list=support?.
 }}
 function flashTilt(f){return f.flash>0?-.08:0;}
 // Telegraphs: a Rock winding up shows where its blow will land, so players can react.
-function telegraph(c,f){if(!(f.charge>0)||!f.chargeDir)return;const [dx,dy]=f.chargeDir,a=Math.atan2(dy,dx),total=f.chargeKind==='swing'?RULES.rockSwingWindup:RULES.rockCharge,k=1-f.charge/total;
+function telegraph(c,f){if(!(f.charge>0)||!f.chargeDir)return;const [dx,dy]=f.chargeDir,a=Math.atan2(dy,dx),total=f.chargeKind==='swing'?RULES.rockSwingWindup:RULES.rockStompWindup,k=1-f.charge/total;
  c.save();c.globalAlpha=.3+.4*k;c.fillStyle='#b8432a55';c.strokeStyle='#8f2a17';c.lineWidth=2;c.setLineDash([7,5]);c.beginPath();
  if(f.chargeKind==='swing'){c.moveTo(f.x,f.y);c.arc(f.x,f.y,f.base.range+21,a-1.4,a+1.4);c.closePath();}
- else{const reach=RULES.rockDash+RULES.rockSlamRange;c.translate(f.x,f.y);c.rotate(a);c.roundRect(0,-26,reach,52,26);}
+ else c.arc(f.x,f.y,RULES.rockStompRadius,0,TAU);
  c.fill();c.stroke();c.restore();}
 function fighter(c,f,time){
  telegraph(c,f);
@@ -82,7 +82,7 @@ export function drawArena(c,world,support){
  for(const o of world.obstacles){const image=aidAtlas(),frame=aidFrame('r',o.s);ellipse(c,o.x+o.w/2,o.y+o.h,o.w*.65,10,'#10202c65');if(image&&frame)c.drawImage(image,frame.x,frame.y,frame.w,frame.h,o.x-7,o.y-17,o.w+14,o.h+20);else{round(c,o.x,o.y,o.w,o.h,3,'#b4a17c','#373c3b');line(c,o.x,o.y+24,o.x+o.w,o.y+24,'#4e5558');} }
  for(const p of world.projectiles){const col=p.special?'#d7a5ff':'#ffd285';for(let k=4;k>0;k--)ellipse(c,p.x-p.dx*k*9,p.y-p.dy*k*9,p.r*(1-k*.15),p.r*(1-k*.15),col+'35');ellipse(c,p.x,p.y,p.r+4,col+'45');ellipse(c,p.x,p.y,p.r,col);ellipse(c,p.x-2,p.y-2,p.r*.5,p.r*.5,'#fff3d0');}
  for(const f of [...world.fighters].sort((a,b)=>a.y-b.y))fighter(c,f,world.elapsed);
- for(const e of world.effects){c.save();const age=1-e.life/e.total;c.globalAlpha=Math.max(0,1-age);c.strokeStyle=e.color;c.fillStyle=e.color;c.lineWidth=4;c.textAlign='center';if(e.kind==='slash'){const angle=Math.atan2(e.dy,e.dx);c.beginPath();c.arc(e.x,e.y,e.r,angle-1.1+age*.5,angle+1.1);c.stroke();c.globalAlpha*=.4;c.lineWidth=10;c.stroke();}else if(e.kind==='text'){c.font='800 17px system-ui';c.strokeStyle='#152331';c.lineWidth=3;c.strokeText(e.text,e.x,e.y-age*26);c.fillText(e.text,e.x,e.y-age*26);}else{c.beginPath();c.arc(e.x,e.y,e.kind==='guard'?43:20+age*60,0,TAU);c.stroke();for(let i=0;i<8;i++){const a=i*TAU/8;star(c,e.x+Math.cos(a)*(25+age*55),e.y+Math.sin(a)*(25+age*55),3,e.color);}}c.restore();}
+ for(const e of world.effects){c.save();const age=1-e.life/e.total;c.globalAlpha=Math.max(0,1-age);c.strokeStyle=e.color;c.fillStyle=e.color;c.lineWidth=4;c.textAlign='center';if(e.kind==='slash'){const angle=Math.atan2(e.dy,e.dx);c.beginPath();c.arc(e.x,e.y,e.r,angle-1.1+age*.5,angle+1.1);c.stroke();c.globalAlpha*=.4;c.lineWidth=10;c.stroke();}else if(e.kind==='quake'){c.lineWidth=6;c.beginPath();c.arc(e.x,e.y,e.r*(.55+.45*age),0,TAU);c.stroke();}else if(e.kind==='text'){c.font='800 17px system-ui';c.strokeStyle='#152331';c.lineWidth=3;c.strokeText(e.text,e.x,e.y-age*26);c.fillText(e.text,e.x,e.y-age*26);}else{c.beginPath();c.arc(e.x,e.y,e.kind==='guard'?43:20+age*60,0,TAU);c.stroke();for(let i=0;i<8;i++){const a=i*TAU/8;star(c,e.x+Math.cos(a)*(25+age*55),e.y+Math.sin(a)*(25+age*55),3,e.color);}}c.restore();}
  if(world.countdown>0){c.fillStyle='#101b2c80';c.fillRect(0,0,640,640);c.fillStyle='#ffe4b0';c.font='800 70px system-ui';c.textAlign='center';c.fillText(world.countdown>.5?String(Math.ceil(world.countdown-.4)):'FIGHT',320,333);}
  c.restore();
 }

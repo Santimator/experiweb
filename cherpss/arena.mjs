@@ -1,9 +1,10 @@
 import {bonuses} from './engine.mjs';
 export const SIZE=640;
 export const STATS={rock:{hp:125,speed:150,hit:15,range:77,attackCd:.78,specialCd:5.2,color:'#ccb895'},scissors:{hp:92,speed:210,hit:8,range:63,attackCd:.34,specialCd:5.8,color:'#97bdad'},paper:{hp:100,speed:184,hit:10,range:0,attackCd:.7,specialCd:5.3,color:'#a2abd7'}};
-// Move tuning. The Rock hits hardest but telegraphs: its swing and its charge wind up first,
-// then land the way it was facing, so quicker champions can dart out of the way.
-export const RULES={rockSwingWindup:.15,rockCharge:.3,rockDash:100,rockSlam:19,rockSlamRange:86,scissorsDash:155,scissorsDashHit:11,paperBlast:14,slowFactor:.65,slowTime:1.2};
+// Move tuning. The Rock hits hardest but telegraphs: its swing winds up before landing where it
+// faced, and its stomp winds up before shaking the ground all around it. The Scissors' dash is
+// the assassin's tool: it lunges wherever the player is moving, in for a heavy slash or out to escape.
+export const RULES={rockSwingWindup:.15,rockStompWindup:.4,rockStompRadius:110,rockStomp:18,scissorsDash:155,scissorsDashHit:20,paperBlast:14,slowFactor:.65,slowTime:1.2};
 export function makeArena(selection,support,vitality,{duration=null,night=false,attacker='w'}={}){
  const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[]),maxHp=base.hp;
  return{s,t,x:i?480:160,y:320,dx:i?-1:1,dy:0,r:21,hp:maxHp*Math.max(.3,vitality[s][t]/100),startHp:maxHp*Math.max(.3,vitality[s][t]/100),maxHp,shield:buff.shield,stamina:100,cd:0,specialCd:0,cast:0,castSlow:.12,charge:0,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
@@ -13,7 +14,9 @@ export function makeArena(selection,support,vitality,{duration=null,night=false,
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function collides(f,o){const x=Math.max(o.x,Math.min(f.x,o.x+o.w)),y=Math.max(o.y,Math.min(f.y,o.y+o.h));return Math.hypot(f.x-x,f.y-y)<f.r;}
 function move(world,f,dx,dy){const oldX=f.x,oldY=f.y;f.x=Math.max(25,Math.min(SIZE-25,f.x+dx));if(world.obstacles.some(o=>o.hp>0&&collides(f,o)))f.x=oldX;f.y=Math.max(25,Math.min(SIZE-25,f.y+dy));if(world.obstacles.some(o=>o.hp>0&&collides(f,o)))f.y=oldY;}
-function dash(world,f,stride){for(let i=0;i<10;i++)move(world,f,f.dx*stride/10,f.dy*stride/10);effect(world,{kind:'pulse',x:f.x,y:f.y,color:f.t==='rock'?'#d6bd90':'#a1d2b8'});}
+function dash(world,f,dx,dy,stride){for(let i=0;i<10;i++)move(world,f,dx*stride/10,dy*stride/10);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#a1d2b8'});}
+function stomp(world,f){const target=world.fighters.find(x=>x!==f),r=RULES.rockStompRadius;effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#d6bd90'});effect(world,{kind:'quake',x:f.x,y:f.y,r,color:'#d6bd90',life:.45,total:.45});
+ if(distance(f,target)<r+target.r)hit(world,target,RULES.rockStomp,f);for(const o of world.obstacles)if(distance(f,{x:o.x+o.w/2,y:o.y+o.h/2})<r+20)o.hp-=RULES.rockStomp;}
 function effect(world,e){world.effects.push({life:.3,total:.3,...e});}
 function hit(world,target,raw,source){
  let damage=raw*source.buff.damage;
@@ -46,13 +49,13 @@ export function stepArena(world,dt,input={w:{},b:{}}){
  // Alternate who resolves first each step so neither side wins simultaneous exchanges by list order.
  world.step=(world.step??0)+1;const order=world.step%2?world.fighters:[...world.fighters].reverse();
  for(const f of order){const a=input[f.s]??{};
-  if(f.chargeLeft>0&&f.charge===0){[f.dx,f.dy]=f.chargeDir;if(f.chargeKind==='swing')melee(world,f,f.base.hit,f.base.range,2.8);else{dash(world,f,RULES.rockDash);melee(world,f,RULES.rockSlam,RULES.rockSlamRange,3.2);}}
+  if(f.chargeLeft>0&&f.charge===0){[f.dx,f.dy]=f.chargeDir;if(f.chargeKind==='swing')melee(world,f,f.base.hit,f.base.range,2.8);else stomp(world,f);}
   if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd;f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
    f.castSlow=f.t==='paper'?1:.12;if(f.t==='paper')projectile(world,f);else if(f.t==='rock'){f.charge=RULES.rockSwingWindup;f.chargeKind='swing';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockSwingWindup+.08;}else melee(world,f,f.base.hit,f.base.range,1.8);}
   if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
    if(f.t==='paper'){f.cast=.38;projectile(world,f,true);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});}
-   else if(f.t==='rock'){f.charge=RULES.rockCharge;f.chargeKind='slam';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockCharge+.2;effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#d6bd90'});}
-   else{dash(world,f,RULES.scissorsDash);f.cast=.08;melee(world,f,RULES.scissorsDashHit,59,1.8);}
+   else if(f.t==='rock'){f.charge=RULES.rockStompWindup;f.chargeKind='stomp';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockStompWindup+.25;}
+   else{const mx=a.x??0,my=a.y??0,ml=Math.hypot(mx,my);dash(world,f,ml?mx/ml:f.dx,ml?my/ml:f.dy,RULES.scissorsDash);f.cast=.08;melee(world,f,RULES.scissorsDashHit,f.base.range,1.8);}
   }
  }
  // Separate fighters without letting a collision push either through arena cover.

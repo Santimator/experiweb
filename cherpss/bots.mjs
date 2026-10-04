@@ -43,16 +43,16 @@ export function autoInput(world,skill=DEFAULT_SKILL){
   const opening=enemy.t==='rock'&&enemy.charge===0;
   if(f.t==='scissors'&&enemy.t==='rock')f.ai.engage=reacted(world,f,'open',opening,q);
   // A telegraphed charge is coming this way: step off its line (if the player reads it in time).
-  const threatened=enemy.charge>0&&d<(enemy.chargeKind==='swing'?enemy.base.range+60:260)&&(enemy.chargeDir[0]*-vx+enemy.chargeDir[1]*-vy)/d>.5;
-  if(reacted(world,f,'dodge',threatened,q)){f.ai.dodge??=Math.random()<.5?1:-1;}else if(!threatened)f.ai.dodge=undefined;
-  if(f.ai.dodge&&enemy.chargeKind==='swing'){x=-nx;y=-ny;}
-  else if(f.ai.dodge){x=-enemy.chargeDir[1]*f.ai.dodge;y=enemy.chargeDir[0]*f.ai.dodge;}
+  // A Rock is winding up and this fighter is inside the blow: back out (if read in time).
+  const threatened=enemy.charge>0&&(enemy.chargeKind==='stomp'?d<RULES.rockStompRadius+f.r+25:d<enemy.base.range+60&&(enemy.chargeDir[0]*-vx+enemy.chargeDir[1]*-vy)/d>.5);
+  f.ai.dodge=reacted(world,f,'dodge',threatened,q);
+  if(f.ai.dodge){x=-nx;y=-ny;}
   else if(f.t==='paper'){
    // A mage kites: hold long range, prefer open space, never get pinned.
    [x,y]=steer(world,f,enemy,mirror?160:PREFERRED.paper,q,{rangeWeight:mirror?1:2,wallWeight:1.4});
   }else if(f.t==='scissors'&&enemy.t==='rock'&&!f.ai.engage){
    // Out of swing reach; out of dash reach too while the Rock's dash is ready.
-   [x,y]=steer(world,f,enemy,enemy.specialCd<.4?RULES.rockDash+RULES.rockSlamRange+40:enemy.base.range+40,q,{rangeWeight:2,wallWeight:1});
+   [x,y]=steer(world,f,enemy,enemy.base.range+40,q,{rangeWeight:2,wallWeight:1});
   }else if(f.t==='scissors'&&f.specialCd>3.7&&d<105){
    // Hit and run after the dash.
    [x,y]=steer(world,f,enemy,170,q,{wallWeight:1});
@@ -69,8 +69,11 @@ export function autoInput(world,skill=DEFAULT_SKILL){
   const attack=reacted(world,f,'attack',inRange,q);
   // Never let repeated normal attacks suppress an available special. Mirror matches hesitate
   // a little so identical champions don't land identical specials on the same frame.
-  const specialRange=f.t==='paper'?d>130:f.t==='scissors'?d>75&&d<235&&(enemy.t!=='rock'||opening):d>100&&d<210;
+  const lunge=RULES.scissorsDash+f.base.range+enemy.r;
+  const specialRange=f.t==='paper'?d>130:f.t==='scissors'?(f.ai.dodge&&enemy.chargeKind==='stomp')||d>90&&d<lunge-10&&(enemy.t!=='rock'||opening):d<RULES.rockStompRadius+enemy.r-10;
   const special=reacted(world,f,'special',f.specialCd===0&&!guard&&specialRange,q)&&(!mirror||Math.random()<.35);
+  // The assassin's dash goes where it moves: straight at the target to lunge (the escape already moves away).
+  if(special&&f.t==='scissors'&&!f.ai.dodge){x=nx;y=ny;}
   // Aim partly ahead of a moving target; a full lead would make bolts impossible to dodge.
   let aimX=nx,aimY=ny;
   // The Rock aims its charge where the target will be when the wind-up ends.
