@@ -12,5 +12,5 @@ test('illustrated automatic demonstration preserves lighting, pauses, and replay
  nodes.night.onclick();assert.equal(nodes.night.attributes['aria-pressed'],'true');const before=nodes.spriteHud.innerHTML;nodes.pause.onclick();frames(600);assert.equal(nodes.spriteHud.innerHTML,before);nodes.pause.onclick();
  document.hidden=true;events.visibilitychange();frames(600);assert.equal(nodes.spriteHud.innerHTML,before);document.hidden=false;events.visibilitychange();
  frames(4000);assert.equal(nodes.vectorHud,undefined);nodes.replay.onclick();assert.ok(nodes.demoStatus.textContent.includes('getting ready'));assert.equal(nodes.night.attributes['aria-pressed'],'true');
- nodes.pair.value='paper,rock';nodes.pair.onchange();assert.ok(nodes.spriteHud.innerHTML.includes('Ivory · Paper'));frames(300);assert.equal(nodes.spriteHud.innerHTML,nodes.spriteHud.innerHTML);
+ nodes.pair.value='paper,rock';nodes.pair.onchange();assert.ok(nodes.spriteHud.innerHTML.includes('White · Paper'));frames(300);assert.equal(nodes.spriteHud.innerHTML,nodes.spriteHud.innerHTML);
 });

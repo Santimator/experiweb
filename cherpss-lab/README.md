@@ -40,4 +40,6 @@ and override the game's values for that run only.
 - Rook walls changed nothing measurable (about 3%), so rooks now give stronger specials instead.
 - Realistic support (`supports.json`): a side has a pawn ~60% of the time, knights/bishops ~21%, rooks ~16%, queens/kings ~12%; two of the same non-pawn almost never. Balance helpers by presence × effect.
 - Longer fights amplify any per-exchange edge (more health alone pushed counters toward 100%); `opt_long.mjs` tunes with a fight-length window.
+- Paper blink (teleport instead of the slowing blast) was rejected: Scissors beat Paper 100% in every variant (`results/paper-blink-rejected.json`).
+- Round arena tried and retired; the game is back on the square courtyard.
 - `results/` keeps the tuned champion values and the lever study output.
