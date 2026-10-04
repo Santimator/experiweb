@@ -1,6 +1,6 @@
 // Painted assets are local and shared by the game and automatic demonstration.
 import {RULES} from './arena.mjs';
-const files={champions:'champions.webp',courtyard:'courtyard.webp',aids:'aids.webp',extra:'champions-extra.webp',reactions:'bench-reactions.webp'};
+const files={champions:'champions.webp',aids:'aids.webp',extra:'champions-extra.webp',reactions:'bench-reactions.webp'};
 const images={},pending={};let loading=null;
 function loadImage(key){
  if(pending[key])return pending[key];
@@ -9,7 +9,6 @@ function loadImage(key){
 }
 export function loadArtwork(){return loading??=Promise.all(Object.keys(files).map(loadImage)).then(results=>results.every(Boolean));}
 export function spriteAtlas(){return images.champions??null;}
-export function courtyard(){return images.courtyard??null;}
 export function aidAtlas(){return images.aids??null;}
 export function extraAtlas(){return images.extra??null;}
 export function reactionAtlas(){return images.reactions??null;}
