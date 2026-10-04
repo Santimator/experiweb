@@ -39,4 +39,5 @@ and override the game's values for that run only.
 - Armour, lifesteal and large regen help whoever holds them everywhere and break the pick game.
 - Rook walls changed nothing measurable (about 3%), so rooks now give stronger specials instead.
 - Realistic support (`supports.json`): a side has a pawn ~60% of the time, knights/bishops ~21%, rooks ~16%, queens/kings ~12%; two of the same non-pawn almost never. Balance helpers by presence × effect.
+- Longer fights amplify any per-exchange edge (more health alone pushed counters toward 100%); `opt_long.mjs` tunes with a fight-length window.
 - `results/` keeps the tuned champion values and the lever study output.
