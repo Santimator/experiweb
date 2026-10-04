@@ -1,5 +1,5 @@
 import {PIECES} from './engine.mjs';
-export const AID={p:'A little edge',n:'Speed',b:'Faster, stronger specials',r:'Stronger specials',q:'Faster attacks',k:'More damage'};
+export const AID={p:'Shield',n:'Speed',b:'Quicker, stronger special',r:'Stronger special',q:'Faster attacks',k:'More damage'};
 // The piece whose life is on the line comes first, marked "At stake"; helpers follow.
 export function benchHtml(pieces=[],side='w',centre){
  const team=side==='w'?'White':'Black',stake=p=>p.attacker||p.i===centre;pieces=[...pieces].sort((a,b)=>stake(b)-stake(a));
