@@ -3,7 +3,7 @@
 <head>
  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
  <meta name="theme-color" content="#1a0a00"><meta name="description" content="A local two-player game of chess and monster duels. Plan on the board. Fight in the square.">
- <title>CheRPSs — Board & Brawl</title><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?v=1"><link rel="stylesheet" href="theme.css?v=1">
+ <title>CheRPSs — Board & Brawl</title><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?v=1"><link rel="stylesheet" href="theme.css?v=2">
 </head>
 <body>
 <header><a class="brand" href="./" aria-label="CheRPSs home"><span class="brand-mark">♞</span><span>CheRPSs<small>BOARD & BRAWL</small></span></a><div class="header-actions"><a class="games-link" href="../">← Games</a><span class="local-tag"><i></i> LOCAL · 2 PLAYERS</span><button id="rulesBtn" class="quiet">How to play</button><button id="newBtn" class="quiet">New match</button></div></header>
@@ -14,7 +14,7 @@
   <section class="centre-panel" aria-label="Game area">
    <div class="board-bar"><div><span class="status-dot"></span><span id="status" aria-live="polite">Ivory to move</span></div><span id="boardMode">DUEL CHESS</span></div>
    <div id="boardArea"><div class="board-frame"><div class="rank-labels"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div><div id="board" role="group" aria-label="Chess board"></div><div class="file-labels"><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span></div></div><div class="board-caption" id="boardCaption">Click a piece, then a highlighted square. Captures become duels.</div></div>
-   <div id="arenaArea" hidden><div class="arena-hud"><div id="hud-w"></div><div class="arena-clock"><strong id="clock">∞</strong><span id="lightLabel">DAY ARENA</span></div><div id="hud-b"></div></div><div class="canvas-wrap"><canvas id="arena" width="800" height="736" aria-label="Monster duel arena"></canvas></div><div class="board-caption">Manual: face a direction to aim · Automatic: champions fight for you</div></div>
+   <div id="arenaArea" hidden><div class="arena-hud"><div id="hud-w"></div><div class="arena-clock"><strong id="clock">∞</strong><span id="lightLabel">DAY ARENA</span></div><div id="hud-b"></div></div><div class="canvas-wrap"><canvas id="arena" width="800" height="736" aria-label="Monster duel arena"></canvas><div id="resultCard" class="result-card" role="status" hidden></div></div><div class="board-caption">Manual: face a direction to aim · Automatic: champions fight for you</div></div>
    <div id="stageOverlay" class="stage-overlay" hidden></div>
   </section>
   <aside class="player-panel ember"><div class="player-heading"><span class="team-dot"></span><div><h2>Ember</h2><p>PLAYER TWO</p></div><span class="turn-badge" id="turn-b" hidden>YOUR TURN</span></div><div class="roster" id="roster-b"></div><div class="control-card"><span class="eyebrow">YOUR SIDE OF THE KEYBOARD</span><div class="keys movement"><kbd>↑</kbd><br><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></div><div class="control-line"><kbd>J</kbd><span>Attack</span><kbd>K</kbd><span>Guard</span><kbd>L</kbd><span>Special</span></div><p>Controller: stick · A attack · X guard · B special</p></div><div class="support-card" id="support-b"></div></aside>
