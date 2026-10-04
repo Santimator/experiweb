@@ -30,7 +30,7 @@ function hit(world,target,raw,source){
  if(damage>0&&source.buff.lifesteal>0)source.hp=Math.min(source.startHp,source.hp+damage*source.buff.lifesteal);
  // Interrupt: a blow landing during a wind-up can cancel it.
  if(target.charge>0&&source.buff.interrupt>0&&Math.random()<source.buff.interrupt){target.charge=0;target.chargeLeft=0;target.cast=.12;effect(world,{kind:'text',x:target.x,y:target.y-50,text:'interrupted',color:'#f4c45e',life:.7,total:.7});}
- if(absorb>0){world.events.push('shield');aid(world,target.s,'p');}if(damage>0){world.events.push('hit');if(source.buff.damage>1)aid(world,source.s,'k');}
+ if(absorb>0){world.events.push('shield');aid(world,target.s,'p');}if(damage>0){world.events.push('hit');if(source.buff.damage>1)aid(world,source.s,'k','p');}
  // A hit the shield soaks up entirely reads as "shield", not as a puzzling 0.
  const soaked=absorb>0&&Math.round(damage)===0;effect(world,{kind:'text',x:target.x,y:target.y-32,text:soaked?'shield':String(Math.round(damage)),color:soaked?'#94c5db':source.s==='w'?'#eed7ac':'#ffad91',life:.6,total:.6});
 }
@@ -60,9 +60,9 @@ export function stepArena(world,dt,input={w:{},b:{}}){
   // A champion knocked out earlier in this same frame cannot strike back.
   if(f.hp<=0)continue;
   if(f.chargeLeft>0&&f.charge===0){[f.dx,f.dy]=f.chargeDir;if(f.chargeKind==='swing')melee(world,f,f.base.hit,f.base.range,2.8);else stomp(world,f);}
-  if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd*(1-f.buff.attackSpeed);f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
+  if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd*(1-f.buff.attackSpeed);if(f.buff.attackSpeed>0)aid(world,f.s,'q');f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
    f.castSlow=f.t==='paper'?RULES.paperCastSlow:.12;if(f.t==='paper')projectile(world,f);else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockSwingWindup);f.chargeKind='swing';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockSwingWindup+.08;}else melee(world,f,f.base.hit,f.base.range,1.8);}
-  if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);if(f.buff.cooldown<1)aid(world,f.s,'q');if(f.buff.power>0)aid(world,f.s,'r');if(f.t==='scissors'&&f.buff.speed>0)aid(world,f.s,'n');f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
+  if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);if(f.buff.cooldown<1||f.buff.power>0)aid(world,f.s,'b','r');if(f.t==='scissors'&&f.buff.speed>0)aid(world,f.s,'n');f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
    if(f.t==='paper'){f.cast=.38;projectile(world,f,true);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});}
    else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockStompWindup);f.chargeKind='stomp';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockStompWindup+.25;}
    else{const mx=a.x??0,my=a.y??0,ml=Math.hypot(mx,my);dash(world,f,ml?mx/ml:f.dx,ml?my/ml:f.dy,RULES.scissorsDash);f.cast=.08;melee(world,f,RULES.scissorsDashHit*(1+f.buff.power),f.base.range,1.8);}

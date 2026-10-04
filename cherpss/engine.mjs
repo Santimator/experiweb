@@ -59,12 +59,12 @@ export function collectSupport(g,m){
  pieces.push({...g.board[m.from],i:m.to,attacker:true});return{centre,pieces,w:pieces.filter(p=>p.s==='w'),b:pieces.filter(p=>p.s==='b')};
 }
 // What each neighbouring piece adds to its side's champion, and the cap per effect.
-// Tuned in simulation so that two helpers of the right kind can roughly even out a counter matchup
-// (knights or bishops for a Rock against a mage, kings for Paper against Scissors, queens for Scissors
-// against a Rock) without making any champion the obvious pick. Rock vs Paper is a speed race, so knights
-// are small. Rooks are siege engines: stronger specials (they used to raise walls, which barely mattered).
-export const SUPPORT={p:{shield:2},n:{speed:.01},b:{regen:.3},r:{power:.15},q:{cooldown:.06},k:{damage:.06}};
-export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.18,damage:.12,cover:2,attackSpeed:.4,reach:40,lifesteal:.5,armor:.5,power:.45,interrupt:1};
+// Tuned in simulation with realistic support (which pieces actually stand next to a duel: pawns in ~60%
+// of fights, knights and bishops ~21%, rooks ~16%, queens and kings ~12%). Each underdog gets about the
+// same total help: knights let a Rock run down a mage, bishops recharge and power up specials (the Scissors'
+// dash against a Rock), queens and kings let Paper out-shoot Scissors. Pawns are small and roughly neutral.
+export const SUPPORT={p:{shield:1,damage:.015},n:{speed:.02},b:{cooldown:.25,power:.15},r:{power:.1},q:{attackSpeed:.12},k:{damage:.08}};
+export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.3,damage:.2,cover:2,attackSpeed:.4,reach:40,lifesteal:.5,armor:.5,power:.45,interrupt:1};
 export function bonuses(pieces){
  const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
  for(const [t,n] of Object.entries(counts))for(const [k,v] of Object.entries(SUPPORT[t]??{}))sum[k]=(sum[k]??0)+n*v;
