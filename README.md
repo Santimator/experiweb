@@ -14,7 +14,7 @@ A small collection of browser games at [santiago-mj.com](https://santiago-mj.com
 
 ### CheRPSs
 
-Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happen. Both players secretly pick a champion, and the two fight it out in an arena. The pieces around the target square give each side bonuses. Champions carry their wounds into later duels. You win by defeating the enemy king or exhausting all three of the opponent's champions. The loser can then ask to finish the game as ordinary chess.
+Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happen. Both players secretly pick a champion, and the two fight it out in an arena. The pieces around the target square give each side bonuses. Each side has four champions of each type; the loser of a duel is eliminated. You win by defeating the enemy king or eliminating all of the opponent's champions. The loser can then ask to finish the game as ordinary chess.
 
 - **Desktop:** shared keyboard (Ivory uses WASD + F/G/H; Ember uses the arrows + J/K/L) or two gamepads.
 - **Phone:** private pass-and-play picks, then automatic battles.
