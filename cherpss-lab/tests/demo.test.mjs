@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 // Exercise the real automatic demonstration and background-tab time handling.
 test('illustrated automatic demonstration preserves lighting, pauses, and replays',async()=>{
  const html=await readFile(new URL('../../cherpss/art.html',import.meta.url),'utf8'),nodes={},raf=[],events={};
- const context=new Proxy({createRadialGradient:()=>({addColorStop(){}})},{get:(t,p)=>p in t?t[p]:()=>{},set:(t,p,v)=>(t[p]=v,true)});
+ const context=new Proxy({createRadialGradient:()=>({addColorStop(){}}),createLinearGradient:()=>({addColorStop(){}})},{get:(t,p)=>p in t?t[p]:()=>{},set:(t,p,v)=>(t[p]=v,true)});
  for(const m of html.matchAll(/id="([^"]+)"/g))nodes[m[1]]={value:'',textContent:'',innerHTML:'',attributes:{},setAttribute(k,v){this.attributes[k]=v;},getContext:()=>context};nodes.pair.value='rock,scissors';
  globalThis.document={hidden:false,getElementById:id=>nodes[id],createElement:()=>({getContext:()=>context}),addEventListener:(k,fn)=>events[k]=fn};globalThis.requestAnimationFrame=fn=>raf.push(fn);
  await import('../../cherpss/demo.mjs?test');let now=100;const frames=n=>{for(let i=0;i<n;i++){now+=1000/60;raf.shift()(now);}};

@@ -19,7 +19,7 @@ class Element{
 }
 async function harness(saved,phone=false){
  const html=await readFile(new URL('../../cherpss/index.html',import.meta.url),'utf8');
- const context=new Proxy({createRadialGradient:()=>({addColorStop(){}})},{get:(t,p)=>p in t?t[p]:()=>{},set:(t,p,v)=>(t[p]=v,true)});
+ const context=new Proxy({createRadialGradient:()=>({addColorStop(){}}),createLinearGradient:()=>({addColorStop(){}})},{get:(t,p)=>p in t?t[p]:()=>{},set:(t,p,v)=>(t[p]=v,true)});
  const classes=new Set();const doc={nodes:{},context,events:{},hidden:false,body:{classList:{toggle(c,on){if(on)classes.add(c);else classes.delete(c);},contains:c=>classes.has(c)}},getElementById(id){return this.nodes[id]??null;},createElement(tag){return new Element(tag,this);},querySelector(query){return query==='dialog[open]'?Object.values(this.nodes).find(n=>n.open)??null:null;},querySelectorAll(){return[];},addEventListener(type,fn){this.events[type]=fn;}};
  for(const m of html.matchAll(/id="([^"]+)"/g))doc.nodes[m[1]]=new Element(m[1],doc);doc.nodes.modeSelect.value='duel';doc.nodes.durationSelect.value='none';
  const events={},store={value:saved?JSON.stringify(saved):null},raf=[];
