@@ -50,6 +50,8 @@ export function stepArena(world,dt,input={w:{},b:{}}){
  // Alternate who resolves first each step so neither side wins simultaneous exchanges by list order.
  world.step=(world.step??0)+1;const order=world.step%2?world.fighters:[...world.fighters].reverse();
  for(const f of order){const a=input[f.s]??{};
+  // A champion knocked out earlier in this same frame cannot strike back.
+  if(f.hp<=0)continue;
   if(f.chargeLeft>0&&f.charge===0){[f.dx,f.dy]=f.chargeDir;if(f.chargeKind==='swing')melee(world,f,f.base.hit,f.base.range,2.8);else stomp(world,f);}
   if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd;f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
    f.castSlow=f.t==='paper'?RULES.paperCastSlow:.12;if(f.t==='paper')projectile(world,f);else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockSwingWindup);f.chargeKind='swing';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockSwingWindup+.08;}else melee(world,f,f.base.hit,f.base.range,1.8);}
