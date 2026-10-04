@@ -56,12 +56,17 @@ export function autoInput(world,skill=DEFAULT_SKILL){
   }else if(f.t==='scissors'&&f.specialCd>3.7&&d<105){
    // Hit and run after the dash.
    [x,y]=steer(world,f,enemy,170,q,{wallWeight:1});
+  }else if(f.t==='rock'&&enemy.t==='paper'&&enemy.moving&&d>PREFERRED.rock+12){
+   // Cut the mage off: head for where it is going rather than where it is (better with skill).
+   const lead=q*Math.min(1.2,Math.max(0,d-140)/(f.base.speed*(1+f.buff.speed))),es=enemy.base.speed*(1+enemy.buff.speed)*(enemy.slow>0?RULES.slowFactor:1);
+   const tx=enemy.x+enemy.dx*es*lead-f.x,ty=enemy.y+enemy.dy*es*lead-f.y,tl=Math.hypot(tx,ty)||1;x=tx/tl;y=ty/tl;
   }else if(d>PREFERRED[f.t]+12){[x,y]=steer(world,f,enemy,PREFERRED[f.t],q,{chase:true,lookahead:40});}
   else if(d<PREFERRED[f.t]-12){x=-nx;y=-ny;}
   // Reflexes are imperfect: each bolt is read once, and only sometimes in time to guard.
   const incoming=world.projectiles.some(p=>{if(p.source===f||Math.hypot(p.x-f.x,p.y-f.y)>=95)return false;p.read??={};p.read[f.s]??=Math.random()<react;return p.read[f.s];});
   // A mage never guards: guarding slows it, and a slow mage gets caught.
-  const guard=f.stamina>35&&f.t!=='paper'&&(incoming||(f.t==='rock'&&d<90&&enemy.cd<.16&&Math.sin(world.elapsed*3)>0));
+  // Chasing a mage, a Rock takes the bolt rather than slowing down to block it.
+  const guard=f.stamina>35&&f.t!=='paper'&&(incoming&&!(f.t==='rock'&&enemy.t==='paper'&&d>110)||(f.t==='rock'&&d<90&&enemy.cd<.16&&Math.sin(world.elapsed*3)>0));
   // Less skilled melee players swing from too far away and whiff.
   const reach=f.base.range+13+Math.random()*(1-q)*30;
   // A mage only holds fire up close when it can still outrun the enemy (the Rock); otherwise it fights back.

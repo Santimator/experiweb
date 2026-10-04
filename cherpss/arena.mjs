@@ -4,7 +4,7 @@ export const STATS={rock:{hp:125,speed:150,hit:15,range:77,attackCd:.78,specialC
 // Move tuning. The Rock hits hardest but telegraphs: its swing winds up before landing where it
 // faced, and its stomp winds up before shaking the ground all around it. The Scissors' dash is
 // the assassin's tool: it lunges wherever the player is moving, in for a heavy slash or out to escape.
-export const RULES={rockSwingWindup:.15,rockStompWindup:.4,rockStompRadius:110,rockStomp:18,scissorsDash:155,scissorsDashHit:20,paperBlast:14,slowFactor:.65,slowTime:1.2};
+export const RULES={paperCastSlow:1,rockSwingWindup:.15,rockStompWindup:.4,rockStompRadius:110,rockStomp:18,scissorsDash:155,scissorsDashHit:20,paperBlast:14,slowFactor:.65,slowTime:1.2};
 export function makeArena(selection,support,vitality,{duration=null,night=false,attacker='w'}={}){
  const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[]),maxHp=base.hp;
  return{s,t,x:i?480:160,y:320,dx:i?-1:1,dy:0,r:21,hp:maxHp*Math.max(.3,vitality[s][t]/100),startHp:maxHp*Math.max(.3,vitality[s][t]/100),maxHp,shield:buff.shield,stamina:100,cd:0,specialCd:0,cast:0,castSlow:.12,charge:0,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
@@ -51,10 +51,10 @@ export function stepArena(world,dt,input={w:{},b:{}}){
  for(const f of order){const a=input[f.s]??{};
   if(f.chargeLeft>0&&f.charge===0){[f.dx,f.dy]=f.chargeDir;if(f.chargeKind==='swing')melee(world,f,f.base.hit,f.base.range,2.8);else stomp(world,f);}
   if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd;f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
-   f.castSlow=f.t==='paper'?1:.12;if(f.t==='paper')projectile(world,f);else if(f.t==='rock'){f.charge=RULES.rockSwingWindup;f.chargeKind='swing';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockSwingWindup+.08;}else melee(world,f,f.base.hit,f.base.range,1.8);}
+   f.castSlow=f.t==='paper'?RULES.paperCastSlow:.12;if(f.t==='paper')projectile(world,f);else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockSwingWindup);f.chargeKind='swing';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockSwingWindup+.08;}else melee(world,f,f.base.hit,f.base.range,1.8);}
   if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
    if(f.t==='paper'){f.cast=.38;projectile(world,f,true);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});}
-   else if(f.t==='rock'){f.charge=RULES.rockStompWindup;f.chargeKind='stomp';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockStompWindup+.25;}
+   else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockStompWindup);f.chargeKind='stomp';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockStompWindup+.25;}
    else{const mx=a.x??0,my=a.y??0,ml=Math.hypot(mx,my);dash(world,f,ml?mx/ml:f.dx,ml?my/ml:f.dy,RULES.scissorsDash);f.cast=.08;melee(world,f,RULES.scissorsDashHit,f.base.range,1.8);}
   }
  }
