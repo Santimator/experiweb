@@ -6,7 +6,7 @@ export const STATS={rock:{hp:95,speed:173,hit:17,range:74,attackCd:1.08,specialC
 // the assassin's tool: it lunges wherever the player is moving, in for a heavy slash or out to escape.
 // Attacker surge: a duel still running after surgeAt seconds starts favouring the attacker, whose
 // speed, reach and damage double every surgeDouble seconds (x2 at 2:00, x4 at 3:00...). Hiding can't last.
-export const RULES={surgeAt:60,surgeDouble:60,paperCastSlow:.55,rockSwingWindup:.05,rockStompWindup:.25,rockStompRadius:130,rockStomp:17,scissorsDash:115,scissorsDashHit:26,paperBlast:18,slowFactor:.55,slowTime:.8};
+export const RULES={paperSpecial:'blast',blinkDistance:170,blinkCd:8,surgeAt:60,surgeDouble:60,paperCastSlow:.55,rockSwingWindup:.05,rockStompWindup:.25,rockStompRadius:130,rockStomp:17,scissorsDash:115,scissorsDashHit:26,paperBlast:18,slowFactor:.55,slowTime:.8};
 export function makeArena(selection,support,vitality,{duration=null,night=false,attacker='w'}={}){
  const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[]),maxHp=base.hp;
  return{s,t,x:i?480:160,y:320,dx:i?-1:1,dy:0,r:21,hp:maxHp,startHp:maxHp,maxHp,shield:buff.shield,stamina:100,cd:0,specialCd:0,cast:0,castSlow:.12,charge:0,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
@@ -63,7 +63,12 @@ export function stepArena(world,dt,input={w:{},b:{}}){
   if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd*(1-f.buff.attackSpeed);if(f.buff.attackSpeed>0)aid(world,f.s,'q');f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
    f.castSlow=f.t==='paper'?RULES.paperCastSlow:.12;if(f.t==='paper')projectile(world,f);else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockSwingWindup);f.chargeKind='swing';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockSwingWindup+.08;}else melee(world,f,f.base.hit,f.base.range,1.8);}
   if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);if(f.buff.cooldown<1||f.buff.power>0)aid(world,f.s,'b','r');if(f.t==='scissors'&&f.buff.speed>0)aid(world,f.s,'n');f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
-   if(f.t==='paper'){f.cast=.38;projectile(world,f,true);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});}
+   if(f.t==='paper'&&RULES.paperSpecial==='blink'){
+    // Experimental: the mage reads a big scroll and blinks away (where it is moving, else away from the enemy).
+    const e=world.fighters.find(x=>x!==f),mx=a.x??0,my=a.y??0,ml=Math.hypot(mx,my),ex=f.x-e.x,ey=f.y-e.y,el=Math.hypot(ex,ey)||1,dx=ml?mx/ml:ex/el,dy=ml?my/ml:ey/el;
+    effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});f.x=Math.max(25,Math.min(SIZE-25,f.x+dx*RULES.blinkDistance));f.y=Math.max(25,Math.min(SIZE-25,f.y+dy*RULES.blinkDistance));
+    effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});f.cast=.1;f.specialCd=RULES.blinkCd*f.buff.cooldown;}
+   else if(f.t==='paper'){f.cast=.38;projectile(world,f,true);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});}
    else if(f.t==='rock'){f.charge=Math.max(.001,RULES.rockStompWindup);f.chargeKind='stomp';f.chargeDir=[f.dx,f.dy];f.cast=RULES.rockStompWindup+.25;}
    else{const mx=a.x??0,my=a.y??0,ml=Math.hypot(mx,my);dash(world,f,ml?mx/ml:f.dx,ml?my/ml:f.dy,RULES.scissorsDash);f.cast=.08;melee(world,f,RULES.scissorsDashHit*(1+f.buff.power),f.base.range,1.8);}
   }

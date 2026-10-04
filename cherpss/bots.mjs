@@ -78,7 +78,7 @@ export function autoInput(world,skill=DEFAULT_SKILL){
   // Never let repeated normal attacks suppress an available special. Mirror matches hesitate
   // a little so identical champions don't land identical specials on the same frame.
   const lunge=RULES.scissorsDash+f.base.range+enemy.r;
-  const specialRange=f.t==='paper'?d>130:f.t==='scissors'?(f.ai.dodge&&enemy.chargeKind==='stomp')||d>90&&d<lunge-10&&(enemy.t!=='rock'||opening):d<RULES.rockStompRadius+enemy.r-10;
+  const specialRange=f.t==='paper'?(RULES.paperSpecial==='blink'?d<(enemy.t==='rock'?enemy.base.range+45:95):d>130):f.t==='scissors'?(f.ai.dodge&&enemy.chargeKind==='stomp')||d>90&&d<lunge-10&&(enemy.t!=='rock'||opening):d<RULES.rockStompRadius+enemy.r-10;
   const special=reacted(world,f,'special',f.specialCd===0&&!guard&&specialRange,q)&&(!mirror||Math.random()<.35);
   // The assassin's dash goes where it moves: straight at the target to lunge (the escape already moves away).
   if(special&&f.t==='scissors'&&!f.ai.dodge){x=nx;y=ny;}
