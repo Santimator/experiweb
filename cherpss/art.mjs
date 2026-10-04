@@ -1,11 +1,13 @@
 // Painted assets are local and shared by the game and automatic demonstration.
 import {RULES} from './arena.mjs';
 const files={champions:'champions.webp',realmWhite:'realm-white.webp',realmBlack:'realm-black.webp',aids:'aids.webp',extra:'champions-extra.webp',reactions:'bench-reactions.webp'};
+// Bump when any painted asset changes, so browsers drop the cached copies.
+export const ART_VERSION=2;
 const images={},pending={};let loading=null;
 function loadImage(key){
  if(pending[key])return pending[key];
  if(typeof Image==='undefined')return Promise.resolve(false);
- pending[key]=new Promise(resolve=>{const im=new Image();im.onload=()=>{images[key]=im;resolve(true);};im.onerror=()=>resolve(false);im.src=new URL('./assets/'+files[key],import.meta.url).href;});return pending[key];
+ pending[key]=new Promise(resolve=>{const im=new Image();im.onload=()=>{images[key]=im;resolve(true);};im.onerror=()=>resolve(false);im.src=new URL('./assets/'+files[key]+'?v='+ART_VERSION,import.meta.url).href;});return pending[key];
 }
 export function loadArtwork(){return loading??=Promise.all(Object.keys(files).map(loadImage)).then(results=>results.every(Boolean));}
 export function spriteAtlas(){return images.champions??null;}
