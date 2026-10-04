@@ -25,7 +25,7 @@ export function reactionFrame(type,side,state){const col=['p','n','b','r','q','k
  // Same on-screen size as the idle figurine: idle height maps to its alpha box in aids.webp.
  return{x:col*181,y:row*181,w:181,h:181,anchorX:90.5,anchorY:144.5,unit:2*REACTION_SCALE[type]/(box[3]+4)};}
 const COLUMNS=[0,300,596,883,1183,1540,1774],ROWS=[0,300,591,887];
-const ANCHORS={rock:[160,458,742,1045,1320,1640],scissors:[160,454,746,1037,1290,1640],paper:[135,466,758,1033,1292,1609]};
+const ANCHORS={rock:[160,458,742,1045,1320,1640],scissors:[160,454,746,1037,1290,1640],paper:[140,495,796,1034,1287,1653]};
 export function spriteFrame(type,pose){const row={rock:0,scissors:1,paper:2}[type],x=COLUMNS[pose],y=ROWS[row];return{x,y,w:COLUMNS[pose+1]-x,h:ROWS[row+1]-y,anchorX:ANCHORS[type][pose]-x,anchorY:[278,574,834][row]-y};}
 const AID_BOXES=[[94,113,179,238],[441,62,210,293],[800,38,203,316],[1152,80,211,274],[1523,32,202,323],[1885,24,204,331],[94,455,179,236],[441,405,211,290],[800,381,203,314],[1152,421,211,274],[1523,375,202,320],[1884,367,205,329]];
 export function aidFrame(type,side){if(!aidAtlas())return null;const index=['p','n','b','r','q','k'].indexOf(type)+(side==='w'?0:6),[x,y,w,h]=AID_BOXES[index];return{x:x-2,y:y-2,w:w+4,h:h+4};}
