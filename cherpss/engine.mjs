@@ -59,8 +59,11 @@ export function collectSupport(g,m){
  pieces.push({...g.board[m.from],i:m.to,attacker:true});return{centre,pieces,w:pieces.filter(p=>p.s==='w'),b:pieces.filter(p=>p.s==='b')};
 }
 // What each neighbouring piece adds to its side's champion, and the cap per effect.
-export const SUPPORT={p:{shield:4},n:{speed:.04},b:{regen:.6},r:{shield:7,cover:1},q:{cooldown:.09},k:{damage:.06}};
-export const SUPPORT_CAPS={shield:24,speed:.12,regen:1.2,cooldown:.18,damage:.12,cover:2};
+// Tuned in simulation so that two helpers of the right kind can roughly even out a counter matchup
+// (knights let a Rock run down a mage, bishops keep it standing, kings let Paper out-damage Scissors)
+// without making any champion the obvious pick. Rock vs Paper is a speed race, so knights are small.
+export const SUPPORT={p:{shield:2},n:{speed:.01},b:{regen:.3},r:{shield:3,cover:1},q:{cooldown:.06},k:{damage:.06}};
+export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.18,damage:.12,cover:2};
 export function bonuses(pieces){
  const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
  for(const [t,n] of Object.entries(counts))for(const [k,v] of Object.entries(SUPPORT[t]??{}))sum[k]=(sum[k]??0)+n*v;
