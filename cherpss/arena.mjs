@@ -4,7 +4,8 @@ export const STATS={rock:{hp:125,speed:150,hit:15,range:77,attackCd:.78,specialC
 // Move tuning. The Rock hits hardest but telegraphs: its swing winds up before landing where it
 // faced, and its stomp winds up before shaking the ground all around it. The Scissors' dash is
 // the assassin's tool: it lunges wherever the player is moving, in for a heavy slash or out to escape.
-export const RULES={paperCastSlow:1,rockSwingWindup:.15,rockStompWindup:.4,rockStompRadius:110,rockStomp:18,scissorsDash:155,scissorsDashHit:20,paperBlast:14,slowFactor:.65,slowTime:1.2};
+// Sudden death: after this many seconds of fighting, healing stops and every hit lands twice as hard.
+export const RULES={suddenDeath:40,paperCastSlow:1,rockSwingWindup:.15,rockStompWindup:.4,rockStompRadius:110,rockStomp:18,scissorsDash:155,scissorsDashHit:20,paperBlast:14,slowFactor:.65,slowTime:1.2};
 export function makeArena(selection,support,vitality,{duration=null,night=false,attacker='w'}={}){
  const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[]),maxHp=base.hp;
  return{s,t,x:i?480:160,y:320,dx:i?-1:1,dy:0,r:21,hp:maxHp*Math.max(.3,vitality[s][t]/100),startHp:maxHp*Math.max(.3,vitality[s][t]/100),maxHp,shield:buff.shield,stamina:100,cd:0,specialCd:0,cast:0,castSlow:.12,charge:0,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
@@ -19,7 +20,7 @@ function stomp(world,f){const target=world.fighters.find(x=>x!==f),r=RULES.rockS
  if(distance(f,target)<r+target.r)hit(world,target,RULES.rockStomp,f);for(const o of world.obstacles)if(distance(f,{x:o.x+o.w/2,y:o.y+o.h/2})<r+20)o.hp-=RULES.rockStomp;}
 function effect(world,e){world.effects.push({life:.3,total:.3,...e});}
 function hit(world,target,raw,source){
- let damage=raw*source.buff.damage;
+ let damage=raw*source.buff.damage*(world.elapsed>=RULES.suddenDeath?2:1);
  if(target.guard&&target.stamina>0){world.events.push('guard');damage*=.35;target.stamina=Math.max(0,target.stamina-raw*.7);effect(world,{kind:'guard',x:target.x,y:target.y,color:'#94c5db'});}
  const absorb=Math.min(target.shield,damage);target.shield-=absorb;damage-=absorb;target.hp=Math.max(0,target.hp-damage);target.flash=.16;
  if(absorb>0)world.events.push('shield');if(damage>0)world.events.push('hit');
@@ -36,11 +37,11 @@ function finish(world,winner,reason){world.done=true;world.events.push(reason.in
 export function stepArena(world,dt,input={w:{},b:{}}){
  if(world.done)return world.result;
  world.events=[];dt=Math.min(.04,Math.max(0,dt));if(world.countdown>0){world.countdown=Math.max(0,world.countdown-dt);const count=world.countdown>.5?Math.ceil(world.countdown-.4):0;if(count!==world.lastCountdown){world.events.push(count===0?'fight':'countdown');world.lastCountdown=count;}return null;}
- if(world.time!==null)world.time=Math.max(0,world.time-dt);world.elapsed+=dt;
+ if(world.time!==null)world.time=Math.max(0,world.time-dt);if(world.elapsed<RULES.suddenDeath&&world.elapsed+dt>=RULES.suddenDeath)world.events.push('countdown');world.elapsed+=dt;
  for(const f of world.fighters){const a=input[f.s]??{};f.cd=Math.max(0,f.cd-dt);f.specialCd=Math.max(0,f.specialCd-dt);f.cast=Math.max(0,f.cast-dt);f.slow=Math.max(0,f.slow-dt);f.flash=Math.max(0,f.flash-dt);f.chargeLeft=f.charge??0;f.charge=Math.max(0,(f.charge??0)-dt);f.guardDelay=Math.max(0,f.guardDelay-dt);
   f.guard=!!a.guard&&f.stamina>4&&f.cast===0;
   if(f.guard){f.stamina=Math.max(0,f.stamina-24*dt);f.guardDelay=.75;}else if(!f.guardDelay)f.stamina=Math.min(100,f.stamina+23*dt);
-  f.hp=Math.min(f.startHp,f.hp+f.buff.regen*dt);
+  if(world.elapsed<RULES.suddenDeath)f.hp=Math.min(f.startHp,f.hp+f.buff.regen*dt);
   let dx=a.x??0,dy=a.y??0,length=Math.hypot(dx,dy);f.moving=length>0;if(length>0){dx/=length;dy/=length;f.dx=dx;f.dy=dy;const speed=f.base.speed*(1+f.buff.speed)*(f.guard?.46:1)*(f.slow>0?RULES.slowFactor:1)*(f.cast>0?f.castSlow:1);move(world,f,dx*speed*dt,dy*speed*dt);}
   if(Number.isFinite(a.aimX)&&Number.isFinite(a.aimY)){const aimLength=Math.hypot(a.aimX,a.aimY);if(aimLength){f.dx=a.aimX/aimLength;f.dy=a.aimY/aimLength;}}
   if(f.charge>0)[f.dx,f.dy]=f.chargeDir;

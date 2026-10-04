@@ -1,5 +1,6 @@
 import {newGame,moves,square,PIECES,NAMES,TYPES,inCheck,validateSave,positionKey} from './engine.mjs';
 import {Match} from './match.mjs';
+import {RULES} from './arena.mjs';
 import {drawArena} from './render.mjs';
 import {loadArtwork} from './art.mjs';
 import {benchHtml} from './benches.mjs';
@@ -65,7 +66,7 @@ function render(){
  }
  if(phase==='fight'){hud();drawArena(ctx,match.world,match.support);}
 }
-function hud(){if(!match.world)return;for(const f of match.world.fighters){$('hud-'+f.s).innerHTML=`<div class="hud-name">${TEAM[f.s]} · ${NAMES[f.t]}</div><div class="hp-track"><i style="width:${Math.max(0,100*f.hp/f.maxHp)}%"></i></div><div class="hud-sub">${Math.ceil(f.hp)} HP · ${Math.ceil(f.stamina)} guard · ${f.specialCd>0?'special '+f.specialCd.toFixed(1)+'s':'SPECIAL READY'}${f.shield>0?' · shield '+Math.ceil(f.shield):''}</div>`;}$('clock').textContent=match.world.time===null?'∞':Math.ceil(match.world.time);$('lightLabel').textContent=(match.world.night?'NIGHT':'DAY')+(automatic?' · AUTO':' ARENA');}
+function hud(){if(!match.world)return;for(const f of match.world.fighters){$('hud-'+f.s).innerHTML=`<div class="hud-name">${TEAM[f.s]} · ${NAMES[f.t]}</div><div class="hp-track"><i style="width:${Math.max(0,100*f.hp/f.maxHp)}%"></i></div><div class="hud-sub">${Math.ceil(f.hp)} HP · ${Math.ceil(f.stamina)} guard · ${f.specialCd>0?'special '+f.specialCd.toFixed(1)+'s':'SPECIAL READY'}${f.shield>0?' · shield '+Math.ceil(f.shield):''}</div>`;}$('clock').textContent=match.world.time===null?'∞':Math.ceil(match.world.time);const sudden=match.world.elapsed>=RULES.suddenDeath;$('lightLabel').dataset.sudden=sudden;$('lightLabel').textContent=sudden?'SUDDEN DEATH · ×2':(match.world.night?'NIGHT':'DAY')+(automatic?' · AUTO':' ARENA');}
 function choose(s,t){const before=match.phase;if(match.choose(s,t)){handoff=automatic&&match.phase==='pick';keys.clear();pressed.clear();sfx.play('select');render();if(before!==match.phase)lastFrame=0;}else if(match.game.roster[s][t]<=0)toast(NAMES[t]+' is exhausted. Choose another champion.');}
 function renderTouchPick(){const s=match.selection.w?'b':'w',cancel=match.practice?'<div class="stage-actions"><button id="cancelPractice" class="secondary">Back to board</button></div>':'';
  if(handoff){overlay(`<span class="eyebrow">FIRST CHOICE LOCKED IN</span><h2>Pass to ${TEAM[s]}</h2><p>The other player should look away.<br>The first champion stays hidden.</p><div class="stage-actions"><button id="handoffBtn" class="primary">${TEAM[s]} is ready</button></div>${cancel}`);$('handoffBtn').onclick=()=>{handoff=false;render();};return;}
