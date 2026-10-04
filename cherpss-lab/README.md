@@ -19,6 +19,7 @@ for playtesting, not truth.
 | `node cond.mjs [params]` | Counters with realistic support, and how much each piece moves each matchup when the underdog or favourite has it nearby. |
 | `node assign.mjs '{support}'` | Searches support values so every underdog gets the same total help (presence × effect). |
 | `node pick1.mjs '{params}'` | Pick game when one side has a single helper of each type. |
+| `node pool.mjs` | Champion pool size vs how games end (king falls vs a side runs out). |
 | `lab.mjs`, `worker.mjs` | Parallel fight runner (4 worker threads) and the pick-game solver. |
 
 Params files look like `{"stats":{"rock":{"hp":95}},"rules":{"rockStompRadius":130},"support":{"r":{"power":0.15}}}`
