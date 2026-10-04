@@ -42,7 +42,7 @@ function scenery(c,realm){const R=REALMS[realm],cx=SCENE.x+ARENA.cx,cy=SCENE.y+A
  const shade=c.createRadialGradient(cx,cy,ry*.6,cx,cy,rx*1.05);shade.addColorStop(0,'#0000');shade.addColorStop(1,'#00000040');c.fillStyle=shade;c.fillRect(cx-rx,cy-ry,2*rx,2*ry);c.restore();
  c.strokeStyle=R.inner;c.lineWidth=2.5;c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,TAU);c.stroke();
  c.font='700 11px system-ui';c.textAlign='left';c.fillStyle=R.text;c.fillText('EMBER',34,26);c.fillText('IVORY',34,786);}
-function backdrop(c,realm){let b=backgrounds.get(realm);if(!b&&typeof document!=='undefined'){b=document.createElement('canvas');b.width=800;b.height=800;const bc=b.getContext('2d');if(bc){scenery(bc,realm);backgrounds.set(realm,b);}else b=null;}if(b)c.drawImage(b,0,0);else scenery(c,realm);}
+export function backdrop(c,realm){let b=backgrounds.get(realm);if(!b&&typeof document!=='undefined'){b=document.createElement('canvas');b.width=800;b.height=800;const bc=b.getContext('2d');if(bc){scenery(bc,realm);backgrounds.set(realm,b);}else b=null;}if(b)c.drawImage(b,0,0);else scenery(c,realm);}
 function chessToken(c,t,x,y,s){c.save();c.translate(x,y);c.fillStyle=TEAM[s];c.strokeStyle='#2d2b28';c.lineWidth=1.6;
  if(t==='p'){ellipse(c,0,-9,5,5,TEAM[s]);poly(c,[[-4,-3],[4,-3],[7,7],[-7,7]],TEAM[s]);}
  else if(t==='r')poly(c,[[-9,-13],[-4,-13],[-4,-8],[-1,-8],[-1,-13],[3,-13],[3,-8],[6,-8],[6,-13],[10,-13],[8,-3],[6,7],[-6,7],[-8,-3]],TEAM[s]);
