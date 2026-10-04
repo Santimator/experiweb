@@ -25,7 +25,9 @@ export class Match{
  }
  requestChess(){if(this.phase==='continuation'&&!this.offerIssue){this.offerStage='winner';return true;}return false;}
  keepWin(){if(this.phase==='continuation'){this.phase='gameover';this.offerStage=null;}}
- acceptChess(){if(this.phase!=='continuation'||this.offerStage!=='winner'||this.offerIssue)return false;this.game.mode='classic';this.game.history.push('Both players agreed to continue as ordinary chess.');this.phase='board';this.offerStage=null;this.checkEnd();return true;}
+ acceptChess(){if(this.phase!=='continuation'||this.offerStage!=='winner'||this.offerIssue)return false;this.game.mode='classic';
+  // Repetition and fifty-move counts start fresh: duel-phase history must not end the chess game early.
+  this.game.half=0;this.game.repetitions={[importPositionKey(this.game)]:1};this.game.history.push('Both players agreed to continue as ordinary chess.');this.phase='board';this.offerStage=null;this.checkEnd();return true;}
 }
 // Imported separately to keep the repetition check shared with the chess engine.
 import {positionKey as importPositionKey} from './engine.mjs';

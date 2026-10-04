@@ -1,9 +1,9 @@
 import {bonuses} from './engine.mjs';
 export const SIZE=640;
-export const STATS={rock:{hp:125,speed:158,hit:15,range:77,attackCd:.78,specialCd:5.2,color:'#ccb895'},scissors:{hp:92,speed:210,hit:8,range:63,attackCd:.34,specialCd:5.8,color:'#97bdad'},paper:{hp:100,speed:184,hit:7,range:0,attackCd:.7,specialCd:5.3,color:'#a2abd7'}};
+export const STATS={rock:{hp:125,speed:150,hit:15,range:77,attackCd:.78,specialCd:5.2,color:'#ccb895'},scissors:{hp:92,speed:210,hit:8,range:63,attackCd:.34,specialCd:5.8,color:'#97bdad'},paper:{hp:100,speed:184,hit:10,range:0,attackCd:.7,specialCd:5.3,color:'#a2abd7'}};
 export function makeArena(selection,support,vitality,{duration=null,night=false,attacker='w'}={}){
  const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[]),maxHp=base.hp;
- return{s,t,x:i?480:160,y:320,dx:i?-1:1,dy:0,r:21,hp:maxHp*Math.max(.3,vitality[s][t]/100),startHp:maxHp*Math.max(.3,vitality[s][t]/100),maxHp,shield:buff.shield+(s===attacker?5:0),stamina:100,cd:0,specialCd:0,cast:0,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
+ return{s,t,x:i?480:160,y:320,dx:i?-1:1,dy:0,r:21,hp:maxHp*Math.max(.3,vitality[s][t]/100),startHp:maxHp*Math.max(.3,vitality[s][t]/100),maxHp,shield:buff.shield,stamina:100,cd:0,specialCd:0,cast:0,castSlow:.12,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
  const obstacles=[];for(const f of fighters)for(let k=0;k<f.buff.cover;k++)obstacles.push({x:f.s==='w'?210:390,y:k===0?165:425,w:40,h:50,hp:55,s:f.s});
  return{fighters,projectiles:[],effects:[],events:[],lastCountdown:null,obstacles,time:duration===60?60:null,duration:duration===60?60:null,attacker,countdown:2.4,night,elapsed:0,done:false,result:null};
 }
@@ -16,7 +16,8 @@ function hit(world,target,raw,source){
  if(target.guard&&target.stamina>0){world.events.push('guard');damage*=.35;target.stamina=Math.max(0,target.stamina-raw*.7);effect(world,{kind:'guard',x:target.x,y:target.y,color:'#94c5db'});}
  const absorb=Math.min(target.shield,damage);target.shield-=absorb;damage-=absorb;target.hp=Math.max(0,target.hp-damage);target.flash=.16;
  if(absorb>0)world.events.push('shield');if(damage>0)world.events.push('hit');
- effect(world,{kind:'text',x:target.x,y:target.y-32,text:String(Math.round(damage)),color:source.s==='w'?'#eed7ac':'#ffad91',life:.6,total:.6});
+ // A hit the shield soaks up entirely reads as "shield", not as a puzzling 0.
+ const soaked=absorb>0&&Math.round(damage)===0;effect(world,{kind:'text',x:target.x,y:target.y-32,text:soaked?'shield':String(Math.round(damage)),color:soaked?'#94c5db':source.s==='w'?'#eed7ac':'#ffad91',life:.6,total:.6});
 }
 function melee(world,f,power,range,arc){const target=world.fighters.find(x=>x!==f),d=distance(f,target),dot=(f.dx*(target.x-f.x)+f.dy*(target.y-f.y))/Math.max(1,d);
  effect(world,{kind:'slash',x:f.x,y:f.y,dx:f.dx,dy:f.dy,r:range,color:f.s==='w'?'#ebd0a1':'#ed9d83'});
@@ -33,15 +34,16 @@ export function stepArena(world,dt,input={w:{},b:{}}){
   f.guard=!!a.guard&&f.stamina>4&&f.cast===0;
   if(f.guard){f.stamina=Math.max(0,f.stamina-24*dt);f.guardDelay=.75;}else if(!f.guardDelay)f.stamina=Math.min(100,f.stamina+23*dt);
   f.hp=Math.min(f.startHp,f.hp+f.buff.regen*dt);
-  let dx=a.x??0,dy=a.y??0,length=Math.hypot(dx,dy);f.moving=length>0;if(length>0){dx/=length;dy/=length;f.dx=dx;f.dy=dy;const speed=f.base.speed*(1+f.buff.speed)*(f.guard?.46:1)*(f.slow>0?.65:1)*(f.cast>0?.12:1);move(world,f,dx*speed*dt,dy*speed*dt);}
+  let dx=a.x??0,dy=a.y??0,length=Math.hypot(dx,dy);f.moving=length>0;if(length>0){dx/=length;dy/=length;f.dx=dx;f.dy=dy;const speed=f.base.speed*(1+f.buff.speed)*(f.guard?.46:1)*(f.slow>0?.65:1)*(f.cast>0?f.castSlow:1);move(world,f,dx*speed*dt,dy*speed*dt);}
   if(Number.isFinite(a.aimX)&&Number.isFinite(a.aimY)){const aimLength=Math.hypot(a.aimX,a.aimY);if(aimLength){f.dx=a.aimX/aimLength;f.dy=a.aimY/aimLength;}}
  }
  // Apply both players' movement and guard before resolving either attack.
  // Alternate who resolves first each step so neither side wins simultaneous exchanges by list order.
  world.step=(world.step??0)+1;const order=world.step%2?world.fighters:[...world.fighters].reverse();
  for(const f of order){const a=input[f.s]??{};
-  if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd;f.cast=f.t==='paper'?.19:.08;if(f.t==='paper')projectile(world,f);else melee(world,f,f.base.hit,f.base.range,f.t==='rock'?2.8:1.8);}
-  if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);f.specialCd=f.base.specialCd*f.buff.cooldown;
+  if(a.attack&&f.cd===0&&!f.guard&&f.cast===0){world.events.push(f.t==='paper'?'cast':'swing-'+f.t);f.cd=f.base.attackCd;f.cast=f.t==='paper'?.19:.08;// A mage casts its normal bolt on the move; specials and swings still root.
+   f.castSlow=f.t==='paper'?1:.12;if(f.t==='paper')projectile(world,f);else melee(world,f,f.base.hit,f.base.range,f.t==='rock'?2.8:1.8);}
+  if(a.special&&f.specialCd===0&&!f.guard&&f.cast===0){world.events.push('special-'+f.t);f.castSlow=.12;f.specialCd=f.base.specialCd*f.buff.cooldown;
    if(f.t==='paper'){f.cast=.38;projectile(world,f,true);effect(world,{kind:'pulse',x:f.x,y:f.y,color:'#b2a4eb'});}
    else{const stride=f.t==='scissors'?155:100;for(let i=0;i<10;i++)move(world,f,f.dx*stride/10,f.dy*stride/10);effect(world,{kind:'pulse',x:f.x,y:f.y,color:f.t==='rock'?'#d6bd90':'#a1d2b8'});if(f.t==='rock'){f.cast=.2;melee(world,f,19,86,3.2);}else{f.cast=.08;melee(world,f,11,59,1.8);}}
   }
