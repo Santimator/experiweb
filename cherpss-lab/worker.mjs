@@ -8,4 +8,5 @@ function fight(a,b,supA,supB,qA,qB,swap){const sel=swap?{w:b,b:a}:{w:a,b},sup=sw
  const w=A.makeArena(sel,{w:sup.w.map(t=>({t})),b:sup.b.map(t=>({t}))},E.newGame().roster,{attacker:Math.random()<.5?'w':'b'});w.countdown=0;
  let r=null,t=0;while(!r&&t<120){r=A.stepArena(w,1/60,B.autoInput(w,sk));t+=1/60;}
  const sa=swap?'b':'w',fa=w.fighters.find(f=>f.s===sa),fb=w.fighters.find(f=>f.s!==sa);return{margin:fa.hp/fa.maxHp-fb.hp/fb.maxHp,res:!r?'t':r.winner===null?'d':r.winner===sa?'a':'b',t};}
-parentPort.on('message',({params,jobs})=>{apply(params);const out=jobs.map(j=>{const o={a:0,b:0,d:0,t:0,time:0,margin:0};for(let i=0;i<j.n;i++){const r=fight(j.a,j.b,j.supA??[],j.supB??[],j.qA??.6,j.qB??.6,i%2);o[r.res]++;o.time+=r.t;o.margin+=r.margin;}return o;});parentPort.postMessage(out);});
+import fs from 'node:fs';const REAL=JSON.parse(fs.readFileSync(new URL('./supports.json',import.meta.url)));
+parentPort.on('message',({params,jobs})=>{apply(params);const out=jobs.map(j=>{const o={a:0,b:0,d:0,t:0,time:0,margin:0};for(let i=0;i<j.n;i++){let sa=j.supA??[],sb=j.supB??[];if(j.real){const d=REAL[Math.floor(Math.random()*REAL.length)];[sa,sb]=Math.random()<.5?[d.w,d.b]:[d.b,d.w];}const r=fight(j.a,j.b,sa,sb,j.qA??.6,j.qB??.6,i%2);o[r.res]++;o.time+=r.t;o.margin+=r.margin;if(j.record)(o.rec??=[]).push([sa,sb,r.res]);}return o;});parentPort.postMessage(out);});

@@ -3,7 +3,7 @@ const W=4,workers=Array.from({length:W},()=>new Worker(new URL('./worker.mjs',im
 export async function runJobs(params,jobs){// split each job's n across workers
  const parts=workers.map(()=>[]);for(const j of jobs){const per=Math.ceil(j.n/W);for(let k=0;k<W;k++)parts[k].push({...j,n:per});}
  const res=await Promise.all(workers.map((w,k)=>new Promise(r=>{w.once('message',r);w.postMessage({params,jobs:parts[k]});})));
- return jobs.map((j,i)=>{const o={a:0,b:0,d:0,t:0,time:0,margin:0};for(const r of res)for(const k in o)o[k]+=r[i][k];const n=o.a+o.b+o.d+o.t;return{...j,n,pa:(o.a+.5*o.d+.5*o.t)/n,dbl:o.d/n,to:o.t/n,avg:o.time/n,margin:o.margin/n};});}
+ return jobs.map((j,i)=>{const o={a:0,b:0,d:0,t:0,time:0,margin:0};const rec=[];for(const r of res){for(const k in o)o[k]+=r[i][k];if(r[i].rec)rec.push(...r[i].rec);}const n=o.a+o.b+o.d+o.t;return{...j,n,pa:(o.a+.5*o.d+.5*o.t)/n,dbl:o.d/n,to:o.t/n,avg:o.time/n,margin:o.margin/n,rec};});}
 export function close(){workers.forEach(w=>w.terminate());}
 export const T=['rock','scissors','paper'],COUNTER=[['rock','scissors'],['scissors','paper'],['paper','rock']];
 // zero-sum 3x3 solve by grid search over mixed strategies: row maximizes min column payoff
