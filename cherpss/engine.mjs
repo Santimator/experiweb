@@ -49,7 +49,7 @@ export function applyMove(state,m,attackerWins=true){
  if(target&&attackerWins!==true){g.board[m.from]=null;if(attackerWins===null){revoke(g,target,ci);g.board[ci]=null;}}
  else {revoke(g,target,ci);if(m.epCapture!==undefined)g.board[ci]=null;g.board[m.from]=null;g.board[m.to]={s:p.s,t:m.promote??p.t};if(m.castle){g.board[m.castle.to]=g.board[m.castle.from];g.board[m.castle.from]=null;}if(m.double)g.ep=(m.from+m.to)/2;}
  g.turn=other(state.turn);g.ply++;g.half=p.t==='p'||target?0:g.half+1;g.last={from:m.from,to:m.to,attackerWins};
- const entry=`${state.turn==='w'?'Ivory':'Ember'}: ${PIECES[p.t]} ${square(m.from)} → ${square(m.to)}${target?(attackerWins===null?' · both pieces lost':attackerWins?' · capture':' · repelled'):''}${m.promote&&attackerWins?' = '+PIECES[m.promote]:''}`;
+ const entry=`${state.turn==='w'?'White':'Black'}: ${PIECES[p.t]} ${square(m.from)} → ${square(m.to)}${target?(attackerWins===null?' · both pieces lost':attackerWins?' · capture':' · repelled'):''}${m.promote&&attackerWins?' = '+PIECES[m.promote]:''}`;
  g.history.push(entry);const key=positionKey(g);g.repetitions??={};g.repetitions[key]=(g.repetitions[key]??0)+1;return g;
 }
 export function moves(g,from){const out=pseudoMoves(g,from);return g.mode==='classic'?out.filter(m=>!inCheck(applyMove(g,m),g.board[from].s)):out;}
@@ -65,9 +65,7 @@ export function collectSupport(g,m){
 // of fights, knights and bishops ~21%, rooks ~16%, queens and kings ~12%). Each underdog gets about the
 // same total help: knights let a Rock run down a mage, bishops recharge and power up specials (the Scissors'
 // dash against a Rock), queens and kings let Paper out-shoot Scissors. Pawns are small and roughly neutral.
-// Re-tuned for the round arena, where Rock vs Paper is a pure speed race (knights stay very small), and for
-// longer fights, which amplify every edge: pawns are nearly neutral because they are in most fights.
-export const SUPPORT={p:{damage:.01},n:{speed:.006},b:{cooldown:.2,power:.1},r:{power:.04},q:{attackSpeed:.06},k:{damage:.06}};
+export const SUPPORT={p:{shield:1,damage:.015},n:{speed:.02},b:{cooldown:.25,power:.15},r:{power:.1},q:{attackSpeed:.12},k:{damage:.08}};
 export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.3,damage:.2,cover:2,attackSpeed:.4,reach:40,lifesteal:.5,armor:.5,power:.45,interrupt:1};
 export function bonuses(pieces){
  const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
