@@ -7,7 +7,7 @@ import {pieceSvg} from './pieces.mjs';
 import {autoInput} from './bots.mjs';
 import {SoundBank} from './sound.mjs';
 const $=id=>document.getElementById(id),TEAM={w:'Ivory',b:'Ember'},ICON={rock:'⬢',scissors:'✦',paper:'✧'},ROLE={rock:'The juggernaut',scissors:'The assassin',paper:'The mage'},GLYPH={p:'♟',n:'♞',b:'♝',r:'♜',q:'♛',k:'♚'};
-const STORE='monster-chess-v1',keys=new Set(),pressed=new Set();let selected=null,promotionMoves=[],paused=false,toastTimer,lastFrame=0,hudTimer=0,controllerSeen=false,previousPads={},storageAvailable=true;
+const STORE='cherpss-v1',keys=new Set(),pressed=new Set();let selected=null,promotionMoves=[],paused=false,toastTimer,lastFrame=0,hudTimer=0,controllerSeen=false,previousPads={},storageAvailable=true;
 const detectedPhone=!!window.matchMedia?.('(pointer: coarse)').matches&&!!window.matchMedia?.('(max-width: 900px)').matches;
 let controlPreference=null,automatic=detectedPhone,handoff=false,moveHints=true;
 let match=new Match(),saved=null;

@@ -8,17 +8,17 @@ A small collection of browser games at [santiago-mj.com](https://santiago-mj.com
 | --- | --- | --- | --- |
 | **Carrom** | `carrom.html` | 2–4, or 1 vs AI | Flick the striker to pocket your pieces. |
 | **Go** | `go.html` | 2, or 1 vs AI | 9×9, 13×13 or 19×19 board, with a pass rule and scoring. |
-| **Monster Chess** | `monster-chess/` | 2 (local) | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. |
+| **CheRPSs** | `cherpss/` | 2 (local) | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. |
 
 `index.html` is the lobby that links to each game.
 
-### Monster Chess
+### CheRPSs
 
-Normal chess moves, but a capture doesn't just happen. Both players secretly pick a champion, and the two fight it out in an arena. The pieces around the target square give each side bonuses. Champions carry their wounds into later duels. You win by defeating the enemy king or exhausting all three of the opponent's champions. The loser can then ask to finish the game as ordinary chess.
+Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happen. Both players secretly pick a champion, and the two fight it out in an arena. The pieces around the target square give each side bonuses. Champions carry their wounds into later duels. You win by defeating the enemy king or exhausting all three of the opponent's champions. The loser can then ask to finish the game as ordinary chess.
 
 - **Desktop:** shared keyboard (Ivory uses WASD + F/G/H; Ember uses the arrows + J/K/L) or two gamepads.
 - **Phone:** private pass-and-play picks, then automatic battles.
-- `monster-chess/art.html` loops an automatic demo fight.
+- `cherpss/art.html` loops an automatic demo fight.
 - Matches are saved in the browser's `localStorage`.
 - The code is ES modules (`*.mjs`), so it needs to be served over HTTP. Opening the file directly from disk won't work.
 
@@ -29,7 +29,7 @@ index.html            Lobby
 carrom.html/.js       Carrom
 go.html/.js           Go
 style.css             Shared styles for the lobby, Carrom and Go
-monster-chess/        Self-contained Monster Chess (own HTML, CSS, modules, art)
+cherpss/              Self-contained CheRPSs (own HTML, CSS, modules, art)
 favicon.svg
 _headers              Cloudflare Pages headers (security + caching)
 robots.txt
@@ -48,4 +48,4 @@ python3 -m http.server 8000
 
 Hosted on Cloudflare Pages straight from the repo root (no build command, output directory `/`).
 
-`_headers` caches `*.css` and `*.js` for a year. **When you change a stylesheet or script, bump its `?v=` query string** in the HTML that loads it, or returning visitors will keep the old file. Monster Chess's `.mjs` modules are cached for an hour.
+`_headers` caches `*.css` and `*.js` for a year. **When you change a stylesheet or script, bump its `?v=` query string** in the HTML that loads it, or returning visitors will keep the old file. CheRPSs's `.mjs` modules are cached for an hour.
