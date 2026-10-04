@@ -1,0 +1,10 @@
+import {runJobs,close,COUNTER,T} from './lab.mjs';import fs from 'node:fs';
+const params=process.argv[2]?JSON.parse(fs.readFileSync(process.argv[2])):{},N=+(process.env.N||240);
+const SK=[[.6,.6],[.45,.75],[.3,.9],[.75,.45]];const jobs=[];
+for(const [a,b] of COUNTER)for(const [qa,qb] of SK)jobs.push({a,b,qA:qa,qB:qb,n:N});
+for(const t of T)jobs.push({a:t,b:t,n:N});
+const r=await runJobs(params,jobs);
+console.log('favoured win% at skill (fav/underdog): equal .6/.6 | .45/.75 | .3/.9 | .75/.45   margin  time');
+COUNTER.forEach((c,i)=>console.log(`${(c[0]+'>'+c[1]).padEnd(16)}`+SK.map((s,k)=>String(Math.round(100*r[i*4+k].pa)).padStart(5)+'%').join(' ')+`   ${r[i*4].margin.toFixed(2)}  ${r[i*4].avg.toFixed(1)}s`));
+T.forEach((t,i)=>{const x=r[12+i];console.log(`${t} mirror: ${Math.round(100*x.pa)}% dbl ${Math.round(100*x.dbl)}% ${x.avg.toFixed(1)}s`);});
+close();
