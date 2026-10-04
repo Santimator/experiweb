@@ -3,13 +3,13 @@ import {bonuses} from './engine.mjs';
 // 0..ARENA.w by 0..ARENA.h; fighters stay inside the ellipse shrunk by their radius.
 export const ARENA={w:750,h:600,cx:375,cy:300,rx:375,ry:300};
 export function insideArena(x,y,margin=25){const ex=(x-ARENA.cx)/(ARENA.rx-margin),ey=(y-ARENA.cy)/(ARENA.ry-margin);return ex*ex+ey*ey<=1;}
-export const STATS={rock:{hp:95,speed:173,hit:17,range:74,attackCd:1.08,specialCd:6.8,color:'#ccb895'},scissors:{hp:87,speed:202,hit:8,range:78,attackCd:.31,specialCd:7,color:'#97bdad'},paper:{hp:100,speed:187,hit:8,range:0,attackCd:.75,specialCd:5.9,color:'#a2abd7'}};
+export const STATS={rock:{hp:90,speed:173,hit:17,range:77,attackCd:1.03,specialCd:6.8,color:'#ccb895'},scissors:{hp:87,speed:210,hit:10,range:78,attackCd:.28,specialCd:7,color:'#97bdad'},paper:{hp:100,speed:187,hit:8,range:0,attackCd:.55,specialCd:5.9,color:'#a2abd7'}};
 // Move tuning. The Rock hits hardest but telegraphs: its swing winds up before landing where it
 // faced, and its stomp winds up before shaking the ground all around it. The Scissors' dash is
 // the assassin's tool: it lunges wherever the player is moving, in for a heavy slash or out to escape.
 // Attacker surge: a duel still running after surgeAt seconds starts favouring the attacker, whose
 // speed, reach and damage double every surgeDouble seconds (x2 at 2:00, x4 at 3:00...). Hiding can't last.
-export const RULES={surgeAt:60,surgeDouble:60,paperCastSlow:.55,rockSwingWindup:.05,rockStompWindup:.25,rockStompRadius:130,rockStomp:17,scissorsDash:115,scissorsDashHit:26,paperBlast:18,slowFactor:.55,slowTime:.8};
+export const RULES={surgeAt:60,surgeDouble:60,paperCastSlow:.5,rockSwingWindup:.03,rockStompWindup:.25,rockStompRadius:135,rockStomp:17,scissorsDash:125,scissorsDashHit:26,paperBlast:19,slowFactor:.85,slowTime:.8};
 export function makeArena(selection,support,vitality,{duration=null,night=false,attacker='w'}={}){
  const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[]),maxHp=base.hp;
  return{s,t,x:ARENA.cx+(i?18:-18),y:ARENA.cy+(i?-170:170),dx:0,dy:i?1:-1,r:21,hp:maxHp,startHp:maxHp,maxHp,shield:buff.shield,stamina:100,cd:0,specialCd:0,cast:0,castSlow:.12,charge:0,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
