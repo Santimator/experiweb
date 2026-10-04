@@ -1,4 +1,4 @@
-import {SIZE,RULES} from './arena.mjs';
+import {SIZE,RULES,surge} from './arena.mjs';
 import {spriteAtlas,spritePose,spriteFrame,courtyard,aidAtlas,aidFrame,extraAtlas,extraFrame,reactionAtlas,reactionFrame} from './art.mjs';
 export const SCENE={width:800,height:736,x:80,y:48};
 const TEAM={w:'#f4d69e',b:'#f5a281'},TAU=Math.PI*2,backgrounds=new Map();
@@ -66,16 +66,18 @@ function benches(c,support,night,world,clock){for(const s of ['w','b']){const li
 }}
 function flashTilt(f){return f.flash>0?-.08:0;}
 // Telegraphs: a Rock winding up shows where its blow will land, so players can react.
-function telegraph(c,f){if(!(f.charge>0)||!f.chargeDir)return;const [dx,dy]=f.chargeDir,a=Math.atan2(dy,dx),total=f.chargeKind==='swing'?RULES.rockSwingWindup:RULES.rockStompWindup,k=1-f.charge/total;
+function telegraph(c,f,world){if(!(f.charge>0)||!f.chargeDir)return;const m=world?surge(world,f):1,[dx,dy]=f.chargeDir,a=Math.atan2(dy,dx),total=f.chargeKind==='swing'?RULES.rockSwingWindup:RULES.rockStompWindup,k=1-f.charge/total;
  c.save();c.globalAlpha=.3+.4*k;c.fillStyle='#b8432a55';c.strokeStyle='#8f2a17';c.lineWidth=2;c.setLineDash([7,5]);c.beginPath();
- if(f.chargeKind==='swing'){c.moveTo(f.x,f.y);c.arc(f.x,f.y,f.base.range+21,a-1.4,a+1.4);c.closePath();}
- else c.arc(f.x,f.y,RULES.rockStompRadius,0,TAU);
+ if(f.chargeKind==='swing'){c.moveTo(f.x,f.y);c.arc(f.x,f.y,(f.base.range+21)*m,a-1.4,a+1.4);c.closePath();}
+ else c.arc(f.x,f.y,RULES.rockStompRadius*m,0,TAU);
  c.fill();c.stroke();c.restore();}
 function fighter(c,f,time,world,clock=time){
- telegraph(c,f);
+ telegraph(c,f,world);
+ // A surging attacker grows and glows gold.
+ const grow=world?Math.min(1.6,1+(surge(world,f)-1)*.3):1;if(grow>1){c.save();c.globalAlpha=.25+.15*Math.sin(clock*8);ellipse(c,f.x,f.y+10,34*grow,30*grow,'#f4c45e');c.restore();}
  ellipse(c,f.x,f.y+25,f.t==='rock'?33:26,10,'#0b172766');c.strokeStyle=TEAM[f.s]+'b0';c.lineWidth=2;c.beginPath();c.ellipse(f.x,f.y+24,30,11,0,0,TAU);c.stroke();
  const image=spriteAtlas();
- if(image){const [sheet,pose]=spritePose(f,time,world),extra=sheet==='extra'&&extraAtlas(),frame=extra?extraFrame(f.t,pose):spriteFrame(f.t,sheet==='main'?pose:0),scale=extra?frame.scale:.36,src=extra?extraAtlas():image; c.save();c.translate(f.x,f.y+30);if(f.dx<0)c.scale(-1,1);const won=world?.done&&world.result?.winner===f.s,bob=world?.done?(won?-Math.abs(Math.sin(clock*6))*7:0):f.moving?Math.sin(time*13)*1.5:Math.sin(time*4);c.translate(0,bob);c.rotate(flashTilt(f));c.drawImage(src,frame.x,frame.y,frame.w,frame.h,-frame.anchorX*scale,-frame.anchorY*scale,frame.w*scale,frame.h*scale);c.restore();}
+ if(image){const [sheet,pose]=spritePose(f,time,world),extra=sheet==='extra'&&extraAtlas(),frame=extra?extraFrame(f.t,pose):spriteFrame(f.t,sheet==='main'?pose:0),scale=(extra?frame.scale:.36)*grow,src=extra?extraAtlas():image; c.save();c.translate(f.x,f.y+30);if(f.dx<0)c.scale(-1,1);const won=world?.done&&world.result?.winner===f.s,bob=world?.done?(won?-Math.abs(Math.sin(clock*6))*7:0):f.moving?Math.sin(time*13)*1.5:Math.sin(time*4);c.translate(0,bob);c.rotate(flashTilt(f));c.drawImage(src,frame.x,frame.y,frame.w,frame.h,-frame.anchorX*scale,-frame.anchorY*scale,frame.w*scale,frame.h*scale);c.restore();}
  else{c.fillStyle=TEAM[f.s];c.font='12px system-ui';c.textAlign='center';c.fillText('Loading…',f.x,f.y-4);}
  if(f.shield>0||f.guard){c.strokeStyle=f.guard?'#b1e6ff':'#f9d9a178';c.lineWidth=f.guard?4:2;c.beginPath();c.arc(f.x,f.y,40,0,TAU);c.stroke();if(f.guard){star(c,f.x+f.dx*38,f.y+f.dy*38,7,'#e0f4ff');}}
  if(f.buff.regen>0&&f.hp<f.startHp){c.strokeStyle='#99d8a5';c.globalAlpha=.5+.3*Math.sin(time*4);c.lineWidth=2;c.beginPath();c.ellipse(f.x,f.y+22,35,13,0,0,TAU);c.stroke();c.globalAlpha=1;}
