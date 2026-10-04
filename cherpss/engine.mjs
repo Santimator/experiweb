@@ -1,13 +1,15 @@
 export const TYPES=['rock','scissors','paper'];
 export const NAMES={rock:'Rock',scissors:'Scissors',paper:'Paper'};
 export const PIECES={p:'Pawn',n:'Knight',b:'Bishop',r:'Rook',q:'Queen',k:'King'};
+// Each side starts with this many champions of each type; a champion that loses a duel is eliminated.
+export const ROSTER_SIZE=4;
 export const inBoard=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
 export const square=i=>'abcdefgh'[i%8]+(8-Math.floor(i/8));
 export const other=s=>s==='w'?'b':'w';
 export function newGame(mode='duel'){
  const board=Array(64).fill(null),back='rnbqkbnr';
  for(let c=0;c<8;c++){board[c]={s:'b',t:back[c]};board[8+c]={s:'b',t:'p'};board[48+c]={s:'w',t:'p'};board[56+c]={s:'w',t:back[c]};}
- const state={board,turn:'w',mode,rights:{wK:true,wQ:true,bK:true,bQ:true},ep:null,half:0,ply:0,roster:{w:{rock:100,scissors:100,paper:100},b:{rock:100,scissors:100,paper:100}},history:[],last:null};
+ const state={board,turn:'w',mode,rights:{wK:true,wQ:true,bK:true,bQ:true},ep:null,half:0,ply:0,roster:{w:{rock:ROSTER_SIZE,scissors:ROSTER_SIZE,paper:ROSTER_SIZE},b:{rock:ROSTER_SIZE,scissors:ROSTER_SIZE,paper:ROSTER_SIZE}},history:[],last:null};
  state.repetitions={[positionKey(state)]:1};return state;
 }
 export function positionKey(g){return g.board.map(p=>p?p.s+p.t:'-').join('')+g.turn+Object.entries(g.rights).filter(x=>x[1]).map(x=>x[0]).join('')+g.ep;}
@@ -88,7 +90,10 @@ export function classicStatus(g){
  return{over:false,check:inCheck(g,g.turn)};
 }
 export function exhaust(g,s){return TYPES.every(t=>g.roster[s][t]<=0);}
-export function recordWounds(g,selection,winner,damage){const out=structuredClone(g);for(const s of ['w','b']){const loss=s===winner?Math.min(20,Math.ceil(damage[s]*.18)):40;out.roster[s][selection[s]]=Math.max(0,out.roster[s][selection[s]]-loss);}return out;}
+// The losing champion is eliminated (both, after a double knockout); winners come back fresh.
+export function recordWounds(g,selection,winner){const out=structuredClone(g);for(const s of ['w','b'])if(s!==winner)out.roster[s][selection[s]]=Math.max(0,out.roster[s][selection[s]]-1);return out;}
+// Saves from the old vitality system (0-100 per type) become champions left: 100 -> 4, 60 -> 3, 20 -> 1.
+export function migrateRoster(g){if(['w','b'].some(s=>TYPES.some(t=>g.roster?.[s]?.[t]>ROSTER_SIZE)))for(const s of ['w','b'])for(const t of TYPES)g.roster[s][t]=Math.ceil(g.roster[s][t]/100*ROSTER_SIZE);return g;}
 export function validateSave(g){
  if(!g||!['duel','classic'].includes(g.mode)||!['w','b'].includes(g.turn)||!Array.isArray(g.board)||g.board.length!==64)return false;
  if(g.board.some(p=>p&&(!['w','b'].includes(p.s)||!Object.keys(PIECES).includes(p.t))))return false;
@@ -96,7 +101,7 @@ export function validateSave(g){
  if(g.ep!==null&&(!Number.isInteger(g.ep)||g.ep<0||g.ep>=64))return false;
  if(!Number.isInteger(g.ply)||g.ply<0||!Number.isInteger(g.half)||g.half<0||!Array.isArray(g.history)||g.history.some(x=>typeof x!=='string'))return false;
  if(!g.repetitions||typeof g.repetitions!=='object'||Object.values(g.repetitions).some(x=>!Number.isInteger(x)||x<1))return false;
- if(!['w','b'].every(s=>TYPES.every(t=>Number.isFinite(g.roster?.[s]?.[t])&&g.roster[s][t]>=0&&g.roster[s][t]<=100)))return false;
+ if(!['w','b'].every(s=>TYPES.every(t=>Number.isFinite(g.roster?.[s]?.[t])&&g.roster[s][t]>=0&&g.roster[s][t]<=Math.max(100,ROSTER_SIZE))))return false;
  if(['w','b'].some(s=>g.board.filter(p=>p?.s===s&&p.t==='k').length>1))return false;
  if(g.mode==='classic'&&continuationIssue(g))return false;return true;
 }
