@@ -1,4 +1,4 @@
-import {SIZE} from './arena.mjs';
+import {SIZE,RULES} from './arena.mjs';
 import {spriteAtlas,spritePose,spriteFrame,courtyard,aidAtlas,aidFrame} from './art.mjs';
 export const SCENE={width:800,height:736,x:80,y:48};
 const TEAM={w:'#f4d69e',b:'#f5a281'},TAU=Math.PI*2,backgrounds=new Map();
@@ -59,7 +59,14 @@ function benches(c,support,night){for(const s of ['w','b']){const list=support?.
  if(!list.length){c.fillStyle=TEAM[s]+'b0';c.font='10px system-ui';c.fillText('EMPTY',x+28,top+263);}
 }}
 function flashTilt(f){return f.flash>0?-.08:0;}
+// Telegraphs: a Rock winding up shows where its blow will land, so players can react.
+function telegraph(c,f){if(!(f.charge>0)||!f.chargeDir)return;const [dx,dy]=f.chargeDir,a=Math.atan2(dy,dx),total=f.chargeKind==='swing'?RULES.rockSwingWindup:RULES.rockCharge,k=1-f.charge/total;
+ c.save();c.globalAlpha=.3+.4*k;c.fillStyle='#b8432a55';c.strokeStyle='#8f2a17';c.lineWidth=2;c.setLineDash([7,5]);c.beginPath();
+ if(f.chargeKind==='swing'){c.moveTo(f.x,f.y);c.arc(f.x,f.y,f.base.range+21,a-1.4,a+1.4);c.closePath();}
+ else{const reach=RULES.rockDash+RULES.rockSlamRange;c.translate(f.x,f.y);c.rotate(a);c.roundRect(0,-26,reach,52,26);}
+ c.fill();c.stroke();c.restore();}
 function fighter(c,f,time){
+ telegraph(c,f);
  ellipse(c,f.x,f.y+25,f.t==='rock'?33:26,10,'#0b172766');c.strokeStyle=TEAM[f.s]+'b0';c.lineWidth=2;c.beginPath();c.ellipse(f.x,f.y+24,30,11,0,0,TAU);c.stroke();
  const image=spriteAtlas();
  if(image){const frame=spriteFrame(f.t,spritePose(f,time)),scale=.36; c.save();c.translate(f.x,f.y+30);if(f.dx<0)c.scale(-1,1);const bob=f.moving?Math.sin(time*13)*1.5:Math.sin(time*4);c.translate(0,bob);c.rotate(flashTilt(f));c.drawImage(image,frame.x,frame.y,frame.w,frame.h,-frame.anchorX*scale,-frame.anchorY*scale,frame.w*scale,frame.h*scale);c.restore();}

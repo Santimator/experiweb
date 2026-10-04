@@ -58,7 +58,15 @@ export function collectSupport(g,m){
  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!inBoard(r+dy,c+dx))continue;const i=(r+dy)*8+c+dx,p=g.board[i];if(p&&i!==m.from)pieces.push({...p,i});}
  pieces.push({...g.board[m.from],i:m.to,attacker:true});return{centre,pieces,w:pieces.filter(p=>p.s==='w'),b:pieces.filter(p=>p.s==='b')};
 }
-export function bonuses(pieces){const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length]));return{counts,shield:Math.min(24,counts.p*4+counts.r*7),speed:Math.min(.12,counts.n*.04),regen:Math.min(1.2,counts.b*.6),cooldown:1-Math.min(.18,counts.q*.09),damage:1+Math.min(.12,counts.k*.06),cover:Math.min(2,counts.r)};}
+// What each neighbouring piece adds to its side's champion, and the cap per effect.
+export const SUPPORT={p:{shield:4},n:{speed:.04},b:{regen:.6},r:{shield:7,cover:1},q:{cooldown:.09},k:{damage:.06}};
+export const SUPPORT_CAPS={shield:24,speed:.12,regen:1.2,cooldown:.18,damage:.12,cover:2};
+export function bonuses(pieces){
+ const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
+ for(const [t,n] of Object.entries(counts))for(const [k,v] of Object.entries(SUPPORT[t]??{}))sum[k]=(sum[k]??0)+n*v;
+ const cap=k=>Math.min(SUPPORT_CAPS[k]??Infinity,sum[k]??0);
+ return{counts,shield:cap('shield'),speed:cap('speed'),regen:cap('regen'),cooldown:1-cap('cooldown'),damage:1+cap('damage'),cover:Math.floor(cap('cover'))};
+}
 export function continuationIssue(g){
  for(const s of ['w','b'])if(g.board.filter(p=>p?.s===s&&p.t==='k').length!==1)return 'Ordinary chess needs both kings.';
  if(inCheck(g,other(g.turn)))return 'The player who just moved has an exposed king. This position cannot continue as ordinary chess.';
