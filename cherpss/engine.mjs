@@ -67,9 +67,11 @@ export function collectSupport(g,m){
 // +0.3 (pawn, knight) to +0.8 (queen, king) in win-logit; four helpers swing a duel by ~1.5. With the pieces
 // that really stand next to duels, counters still win about 78-85% and a helper nearby moves that by 10-25
 // points. Caps stop stacks of the same piece from running away (about two copies' worth).
+// Pawns ward (a flat cut from every hit) rather than shield: a one-off shield was soon spent in fast
+// Scissors slap-fights, where a queen's attack speed then decided everything.
 const per=(rock,scissors,paper)=>({rock,scissors,paper});
-export const SUPPORT={p:{shield:per(5.5,4.4,7.2)},n:{speed:per(.021,.068,.2)},b:{cooldown:per(.062,.084,.24),power:per(.051,.07,.2)},r:{power:per(.28,.55,.215)},q:{attackSpeed:per(.095,.12,.1)},k:{damage:per(.1,.136,.065)}};
-export const SUPPORT_CAPS={shield:per(11,17.6,29),speed:per(.042,.136,.24),regen:1.2,cooldown:per(.124,.168,.48),damage:per(.2,.272,.13),cover:2,attackSpeed:per(.19,.24,.2),reach:40,lifesteal:.5,armor:.5,power:per(.6,1.12,.6),interrupt:1};
+export const SUPPORT={p:{ward:per(.45,.4,.42)},n:{speed:per(.021,.068,.2)},b:{cooldown:per(.062,.084,.24),power:per(.051,.07,.2)},r:{power:per(.28,.55,.215)},q:{attackSpeed:per(.095,.12,.1)},k:{damage:per(.1,.136,.065)}};
+export const SUPPORT_CAPS={ward:per(.9,1.2,1.26),shield:24,speed:per(.042,.136,.24),regen:1.2,cooldown:per(.124,.168,.48),damage:per(.2,.272,.13),cover:2,attackSpeed:per(.19,.24,.2),reach:40,lifesteal:.5,armor:.5,power:per(.6,1.12,.6),interrupt:1};
 // A value is either one number or one per champion type, so a helper can give each champion the same edge.
 const valueFor=(v,type)=>typeof v==='number'?v:v?.[type]??0;
 export function bonuses(pieces,type){
@@ -78,7 +80,7 @@ export function bonuses(pieces,type){
  const cap=k=>Math.min(SUPPORT_CAPS[k]==null?Infinity:valueFor(SUPPORT_CAPS[k],type),sum[k]??0);
  return{counts,shield:cap('shield'),speed:cap('speed'),regen:cap('regen'),cooldown:1-cap('cooldown'),damage:1+cap('damage'),cover:Math.floor(cap('cover')),
   // Optional effects (unused by default): faster attacks, longer melee reach, lifesteal, armour, stronger specials, wind-up interrupts.
-  attackSpeed:cap('attackSpeed'),reach:cap('reach'),lifesteal:cap('lifesteal'),armor:cap('armor'),power:cap('power'),interrupt:cap('interrupt')};
+  attackSpeed:cap('attackSpeed'),reach:cap('reach'),lifesteal:cap('lifesteal'),armor:cap('armor'),ward:cap('ward'),power:cap('power'),interrupt:cap('interrupt')};
 }
 export function continuationIssue(g){
  for(const s of ['w','b'])if(g.board.filter(p=>p?.s===s&&p.t==='k').length!==1)return 'Ordinary chess needs both kings.';
