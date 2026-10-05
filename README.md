@@ -8,7 +8,7 @@ A small collection of browser games at [santiago-mj.com](https://santiago-mj.com
 | --- | --- | --- | --- |
 | **Carrom** | `carrom.html` | 2–4, or 1 vs AI | Flick the striker to pocket your pieces. |
 | **Go** | `go.html` | 2, or 1 vs AI | 9×9, 13×13 or 19×19 board, with a pass rule and scoring. |
-| **CheRPSs** | `cherpss/` | 2 (local) | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. **Unlisted** while in playtesting: no lobby card, not indexed; open it by URL. |
+| **CheRPSs** | `cherpss/` | 2 (local), or 1 vs AI | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. **Unlisted** while in playtesting: no lobby card, not indexed; open it by URL. |
 
 `index.html` is the lobby that links to each listed game.
 
@@ -18,6 +18,7 @@ Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happ
 
 - **Desktop:** shared keyboard (White uses WASD + F/G/H; Black uses the arrows + J/K/L) or two gamepads.
 - **Phone:** private pass-and-play picks, then automatic battles.
+- **Solo:** play against the AI, Hellagoof (beatable, mostly) or Hellagood (a real challenge), in both the chess and the duels (`ai.mjs`).
 - `cherpss/art.html` loops an automatic demo fight.
 - Matches are saved in the browser's `localStorage`.
 - The code is ES modules (`*.mjs`), so it needs to be served over HTTP. Opening the file directly from disk won't work.
