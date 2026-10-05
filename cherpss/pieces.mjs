@@ -8,3 +8,6 @@ const ART={
  k:'<path d="M30 6h4v5h5v4h-5v6h-4v-6h-5v-4h5zM23 23q9-8 18 0l-3 13H26zM26 38h12l-2 7 10 5v4H18v-4l10-5z"/><path d="M23 49h18" fill="none"/>'
 };
 export function pieceSvg(t,s){return `<svg class="chess-vector ${s} piece-${t}" viewBox="0 0 64 64" aria-hidden="true" focusable="false" fill="currentColor" stroke="var(--piece-outline)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">${ART[t]}</svg>`;}
+// On the board: the painted figurine (same art as the benches), with the vector piece as a fallback
+// shown only if the figurine sheet fails to load.
+export function pieceFigure(t,s){return `<span class="board-fig aid-${t} ${s}" aria-hidden="true"></span>${pieceSvg(t,s)}`;}
