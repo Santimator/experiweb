@@ -4,8 +4,9 @@ import {surge} from './arena.mjs';
 import {drawArena} from './render.mjs';
 import {loadArtwork} from './art.mjs';
 // Champion icons are crops of each champion's idle sprite, trimmed to the figure (Black's face left).
-const ICON_BOX={rock:{x:49,y:73,w:223,h:206},scissors:{x:51,y:345,w:221,h:224},paper:{x:32,y:634,w:180,h:201}};
-function champIcon(t,s='w',size=34){const f=ICON_BOX[t],k=size/f.h;return `<span class="champ-icon${s==='b'?' flip':''}" aria-hidden="true" style="width:${Math.round(f.w*k)}px;height:${size}px;background-size:${Math.round(1774*k)}px ${Math.round(887*k)}px;background-position:${-Math.round(f.x*k)}px ${-Math.round(f.y*k)}px"></span>`;}
+// Idle-frame crops of each team's champions sheet.
+const ICON_BOX={w:{rock:{x:48,y:89,w:204,h:193},scissors:{x:50,y:364,w:200,h:209},paper:{x:54,y:642,w:192,h:196}},b:{rock:{x:47,y:90,w:206,h:192},scissors:{x:43,y:354,w:214,h:219},paper:{x:58,y:641,w:184,h:196}}};
+function champIcon(t,s='w',size=34){const f=ICON_BOX[s==='b'?'b':'w'][t],k=size/f.h;return `<span class="champ-icon ${s==='b'?'b flip':'w'}" aria-hidden="true" style="width:${Math.round(f.w*k)}px;height:${size}px;background-size:${Math.round(1774*k)}px ${Math.round(887*k)}px;background-position:${-Math.round(f.x*k)}px ${-Math.round(f.y*k)}px"></span>`;}
 import {benchHtml} from './benches.mjs';
 import {pieceSvg} from './pieces.mjs';
 import {autoInput} from './bots.mjs';
