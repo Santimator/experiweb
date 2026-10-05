@@ -19,12 +19,12 @@ export function reactionAtlas(){return images.reactions??null;}
 // Team sheets. Main sheet: uneven columns, rows rock/scissors/paper, poses idle, walk, walk, wind-up, attack, guard.
 // Extra sheet: 296px cells; columns victory, hurt, knocked out, special wind-up, special release.
 // Anchors are the measured eye position minus each pose's forward lean (so lunges still lunge); SCALE matches the
-// on-screen size of the original art; EXTRA is how big the extra poses are painted relative to the main ones.
+// on-screen size of the original art (Rock drawn 18% larger so the juggernaut out-bulks the others; hitboxes are equal); EXTRA is how big the extra poses are painted relative to the main ones.
 export const EXTRA={victory:0,hurt:1,ko:2,windup:3,release:4};
 const TEAM_ART={
- w:{anchors:{rock:[142,450,726,1035,1279,1658],scissors:[152,441,726,1028,1286,1646],paper:[170,467,762,1006,1272,1658]},scale:{rock:.3842,scissors:.3858,paper:.3673},extra:{rock:.8438,scissors:1.0077,paper:.9015},
+ w:{anchors:{rock:[142,450,726,1035,1279,1658],scissors:[152,441,726,1028,1286,1646],paper:[170,467,762,1006,1272,1658]},scale:{rock:.4534,scissors:.3858,paper:.3673},extra:{rock:.8438,scissors:1.0077,paper:.9015},
   extraEyes:{rock:[158.8,113.6,189.8,165.3,164.6],scissors:[158.3,119.3,208.5,177,178.1],paper:[158.1,136.9,145.3,131.6,143.5]}},
- b:{anchors:{rock:[142,458,743,1044,1284,1664],scissors:[152,446,731,1032,1283,1654],paper:[169,470,758,1009,1266,1655]},scale:{rock:.3862,scissors:.3682,paper:.3673},extra:{rock:.8538,scissors:.9699,paper:.9312},
+ b:{anchors:{rock:[142,458,743,1044,1284,1664],scissors:[152,446,731,1032,1283,1654],paper:[169,470,758,1009,1266,1655]},scale:{rock:.4557,scissors:.3682,paper:.3673},extra:{rock:.8538,scissors:.9699,paper:.9312},
   extraEyes:{rock:[156.6,119.7,196.5,164,167.7],scissors:[160,122.5,208,185.6,176.7],paper:[160,134.6,157.8,137.7,138.9]}}};
 const IDLE_LEAN={rock:30,scissors:24,paper:5},BASELINE=[279,571,834];
 export function extraFrame(type,pose,side='w'){const art=TEAM_ART[side==='b'?'b':'w'],row={rock:0,scissors:1,paper:2}[type],rel=art.extra[type];
