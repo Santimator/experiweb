@@ -1,4 +1,4 @@
-import {newGame,moves,square,PIECES,NAMES,TYPES,inCheck,validateSave,positionKey,migrateRoster,ROSTER_SIZE} from './engine.mjs';
+import {newGame,moves,captureTarget,square,PIECES,NAMES,TYPES,inCheck,validateSave,positionKey,migrateRoster,ROSTER_SIZE} from './engine.mjs';
 import {Match} from './match.mjs';
 import {surge} from './arena.mjs';
 import {drawArena} from './render.mjs';
@@ -46,9 +46,16 @@ function renderBoard(){
  for(let n=0;n<64;n++){const i=flip?63-n:n,p=g.board[i],b=document.createElement('button');b.type='button';b.className='square'+(((i>>3)+i%8)%2?' dark':'')+(selected===i?' selected':'')+(moveHints&&targets.has(i)?' legal':'')+(moveHints&&targets.has(i)&&p?' capture':'')+([g.last?.from,g.last?.to].includes(i)?' last':'')+(g.mode==='classic'&&p?.t==='k'&&inCheck(g,p.s)?' check':'');b.setAttribute('aria-label',`${square(i)}${p?' · '+TEAM[p.s]+' '+PIECES[p.t]:', empty'}${targets.has(i)?' · available move':''}`);b.setAttribute('aria-pressed',String(selected===i));b.dataset.square=i;b.addEventListener('click',()=>boardClick(i));b.addEventListener('keydown',e=>{const d={ArrowLeft:-1,ArrowRight:1,ArrowUp:-8,ArrowDown:8}[e.code];if(d!==undefined){e.preventDefault();const next=Math.max(0,Math.min(63,i+(flip?-d:d)));$('board').querySelector(`[data-square="${next}"]`)?.focus();}});if(p)b.innerHTML=pieceFigure(p.t,p.s);b.disabled=match.phase!=='board';$('board').append(b);}
  const check=g.mode==='classic'&&inCheck(g,g.turn);$('boardCaption').textContent=g.mode==='classic'?(check?`${TEAM[g.turn]} is in check.`:'Ordinary chess · captures are final · kings must stay safe.'):moveHints?'Click a piece, then a highlighted square. Captures become duels.':'Click a piece, then its destination. Captures become duels.';
 }
-function boardClick(i){if(match.phase!=='board'||solo&&match.game.turn!==solo.human)return;const p=match.game.board[i];if(selected!==null){const options=moves(match.game,selected).filter(m=>m.to===i);if(options.length){if(options[0].promote){promotionMoves=options;$('promotionOptions').replaceChildren();for(const m of options){const b=document.createElement('button');b.innerHTML=`${pieceSvg(m.promote,match.game.turn)}<small>${PIECES[m.promote]}</small>`;b.addEventListener('click',()=>{$('promotionDialog').close();play(m);});$('promotionOptions').append(b);}$('promotionDialog').showModal();return;}play(options[0]);return;}}
+function boardClick(i){if(match.phase!=='board'||solo&&match.game.turn!==solo.human)return;const p=match.game.board[i];if(selected!==null){const options=moves(match.game,selected).filter(m=>m.to===i);if(options.length){if(options[0].promote&&match.game.mode==='duel'&&captureTarget(match.game,options[0])){const q=options.find(m=>m.promote==='q');laterPromotion={to:q.to,s:match.game.turn};play(q);return;}if(options[0].promote){promotionMoves=options;$('promotionOptions').replaceChildren();for(const m of options){const b=document.createElement('button');b.innerHTML=`${pieceSvg(m.promote,match.game.turn)}<small>${PIECES[m.promote]}</small>`;b.addEventListener('click',()=>{$('promotionDialog').close();play(m);});$('promotionOptions').append(b);}$('promotionDialog').showModal();return;}play(options[0]);return;}}
  selected=p?.s===match.game.turn?(selected===i?null:i):null;renderBoard();
 }
+// A pawn that captures onto the last rank in duel chess only promotes if it wins its duel, so the
+// choice of piece is asked afterwards (it fights, and is placed, as a queen until then).
+let laterPromotion=null;
+function askLaterPromotion(){const lp=laterPromotion;laterPromotion=null;const p=lp&&match.game.board[lp.to];if(!p||p.s!==lp.s||p.t!=='q'||match.game.last?.to!==lp.to||!match.game.last?.attackerWins)return;
+ $('promotionOptions').replaceChildren();for(const t of ['q','r','b','n']){const b=document.createElement('button');b.innerHTML=`${pieceSvg(t,lp.s)}<small>${PIECES[t]}</small>`;b.addEventListener('click',()=>{$('promotionDialog').close();
+  match.game.board[lp.to]={s:lp.s,t};const h=match.game.history;if(t!=='q'&&h.length)h[h.length-1]=h[h.length-1].replace(/= Queen$/,'= '+PIECES[t]);save();render();});$('promotionOptions').append(b);}
+ $('promotionDialog').showModal();}
 function play(m){if(match.play(m)){selected=null;handoff=false;keys.clear();pressed.clear();sfx.play('move');save();render();}}
 // The duel result sits in the middle of the arena so both benches stay visible around it.
 function resultCard(html){$('resultCard').hidden=false;$('resultCard').innerHTML=html;resultShown=true;}
@@ -69,7 +76,7 @@ function render(){if(['pick','fight','result'].includes(match.phase))loadArenaAr
   // A short aftermath first: the winner celebrates, the loser collapses, the benches react.
  }else if(phase==='result'){
   const winner=match.result.winner,loser=winner?winner==='w'?'b':'w':null;(match.world?resultCard:overlay)(`<span class="eyebrow">${match.result.practice?'PRACTICE COMPLETE':'THE DUST SETTLES'}</span><h2>${winner?TEAM[winner]+' wins the duel':'A double defeat'}</h2><span class="result-pill">${match.result.reason}</span><p>${match.practice?'Try another champion, or return to your board.':winner?`${winner===match.result.attacker?'The capture succeeds.':'The defender holds. The attacker is removed.'}<br>${TEAM[loser]} loses a ${NAMES[match.selection[loser]]} champion (${match.game.roster[loser][match.selection[loser]]} left).`:'Both board pieces are removed. Both champions are eliminated.'}</p><div class="stage-actions"><button id="continueBtn" class="primary">${match.practice?'Back to board':'Return to board →'}</button>${match.practice?'<button id="againBtn" class="secondary">Another duel</button>':''}</div>`);
-  $('continueBtn').onclick=()=>{match.continueAfterDuel();keys.clear();save();render();};if(match.practice)$('againBtn').onclick=()=>{match.phase=match.returnPhase;match.practice=false;match.practiceStart();keys.clear();render();};
+  $('continueBtn').onclick=()=>{match.continueAfterDuel();keys.clear();save();render();askLaterPromotion();};if(match.practice)$('againBtn').onclick=()=>{match.phase=match.returnPhase;match.practice=false;match.practiceStart();keys.clear();render();};
  }else if(phase==='continuation'){
   const winner=match.ending.winner,loser=match.ending.loser;
   if(match.offerStage==='loser')overlay(`<span class="eyebrow">${match.ending.reason.toUpperCase()}</span><h2>${winner?TEAM[winner]+' wins the brawl':'Both rosters are exhausted'}</h2><p>${loser?TEAM[loser]+', accept the defeat or ask for one last challenge on the chessboard.':'You can agree to settle this with ordinary chess.'}</p>${match.offerIssue?`<p>${match.offerIssue}</p>`:''}<div class="stage-actions"><button id="keepBtn" class="secondary">${winner?'Accept defeat':'Finish match'}</button><button id="requestBtn" class="primary" ${match.offerIssue?'disabled':''}>Request ordinary chess</button></div>`);
@@ -105,7 +112,7 @@ function scheduleAi(){if(!solo||aiBusy)return;const ai=aiSide(),g=match.game;
  if(match.phase==='continuation'){const {winner,loser}=match.ending;
   if(match.offerStage==='loser'&&loser===ai){match.keepWin();save();render();}
   else if(match.offerStage==='winner'&&(winner===ai||winner===null)){match.acceptChess();selected=null;save();render();toast(aiName()+' accepts: ordinary chess it is.');}return;}
- if(match.phase==='board'&&g.turn===ai){aiBusy=true;setTimeout(()=>{const m=match.phase==='board'&&match.game.turn===ai?chooseMove(match.game,solo.level):null;aiBusy=false;if(m)play(m);},450);}}
+ if(match.phase==='board'&&g.turn===ai&&!$('promotionDialog').open){aiBusy=true;setTimeout(()=>{const m=match.phase==='board'&&match.game.turn===ai&&!$('promotionDialog').open?chooseMove(match.game,solo.level):null;aiBusy=false;if(m)play(m);},450);}}
 function frame(now){frameNow=now;const dt=lastFrame?Math.min(.04,(now-lastFrame)/1000):0;lastFrame=now;const controls=input();if(!automatic)pads(controls);pressed.clear();if(match.phase==='fight'){match.tick(dt,fightInput(controls));for(const event of match.world.events)sfx.play(event);match.world.events=[];if(match.phase==='result'){hud();aftermathUntil=now+2400;save();render();}else{drawArena(ctx,match.world,match.support);hudTimer+=dt;if(hudTimer>.08){hud();hudTimer=0;}saveTimer+=dt;if(saveTimer>.5){save();saveTimer=0;}}}
  else if(match.phase==='result'&&match.world){drawArena(ctx,match.world,match.support);if(!resultShown&&now>=aftermathUntil)render();}
  requestAnimationFrame(frame);}
@@ -114,6 +121,8 @@ $('autoBtn').onclick=()=>{if(match.phase==='fight')return;automatic=!automatic;c
 $('rulesBtn').onclick=()=>$('rulesDialog').showModal();$('newBtn').onclick=()=>$('newDialog').showModal();$('soundBtn').onclick=()=>{sfx.setEnabled(!sfx.enabled);sfx.play('select');save();render();};
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 $('opponentSelect').onchange=()=>{$('sideLabel').hidden=$('opponentSelect').value==='friend';};
+// Closing the promotion dialog lets a waiting AI move.
+$('promotionDialog').addEventListener('close',()=>render());
 $('startBtn').onclick=()=>{const opp=$('opponentSelect').value,side=$('sideSelect').value;solo=LEVELS[opp]?{level:opp,human:side==='random'?(Math.random()<.5?'w':'b'):side}:null;aiBusy=false;match=new Match(newGame($('modeSelect').value),$('durationSelect').value==='60'?60:null);selected=null;handoff=false;keys.clear();pressed.clear();$('newDialog').close();save();render();};
 // The figurines are needed at once; the arena art (about 2 MB) loads once the page has settled, or as soon as a duel needs it.
 loadArtwork('board').then(ok=>{if(!ok)document.documentElement?.classList.add('no-figurines');});
