@@ -43,3 +43,6 @@ and override the game's values for that run only.
 - Paper blink (teleport instead of the slowing blast) was rejected: Scissors beat Paper 100% in every variant (`results/paper-blink-rejected.json`).
 - Round arena tried and retired; the game is back on the square courtyard.
 - `results/` keeps the tuned champion values and the lever study output.
+
+## Art to-do for the next GPT request
+- Black king figurine: the cross mixes gold and silver after the code bake. Ask for a clean, single-metal (silver) cross on the Black king in aids.webp and bench-reactions.

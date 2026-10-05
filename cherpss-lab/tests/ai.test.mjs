@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,allMoves,applyMove,moves} from '../dist/engine.mjs';
+import {chooseMove,chooseChampion,pickGame,fightSkill} from '../dist/ai.mjs';
+const legalIn=(g,m)=>allMoves(g).some(x=>x.from===m.from&&x.to===m.to&&(x.promote??null)===(m.promote??null));
+test('both AI levels return legal moves through a random opening',()=>{let g=newGame();for(let ply=0;ply<16;ply++){const m=chooseMove(g,ply%2?'goof':'good',{timeMs:120});assert.ok(m&&legalIn(g,m),'legal at ply '+ply);g=applyMove(g,m,true);}});
+test('in ordinary chess the AI only makes check-safe moves',()=>{let g=newGame('classic');for(let ply=0;ply<10;ply++){const m=chooseMove(g,'good',{timeMs:80});assert.ok(m&&moves(g,m.from).some(x=>x.to===m.to));g=applyMove(g,m);}});
+test('the pick game is an even three-way split without helpers, and favours the helped side',()=>{const all=['rock','scissors','paper'],even=pickGame(all,all,0);assert.ok(Math.abs(even.value-.5)<.02);for(const x of even.mix)assert.ok(Math.abs(x-1/3)<.05);
+ assert.ok(pickGame(all,all,1).value>.6);assert.ok(pickGame(['rock'],all,0).value<.3,'a single champion type is easy to counter');});
+test('AI picks only champions it still has',()=>{const g=newGame();g.roster.b={rock:0,scissors:2,paper:0};for(let i=0;i<20;i++)for(const lv of ['goof','good'])assert.equal(chooseChampion(g,{w:[],b:[]},'b','w',lv),'scissors');});
+test('Hellagood fights better than Hellagoof',()=>assert.ok(fightSkill('good')>.6&&fightSkill('goof')<.6));
+test('the AI challenges a king it can win against',()=>{const g=newGame();g.board.fill(null);const put=(sq,s,t)=>{g.board['abcdefgh'.indexOf(sq[0])+(8-+sq[1])*8]={s,t};};
+ put('e1','w','k');put('a1','w','r');put('e8','b','k');put('e7','w','q');put('d7','w','r');put('f7','w','n');g.rights={wK:false,wQ:false,bK:false,bQ:false};
+ const m=chooseMove(g,'good',{timeMs:300});assert.equal(m.to,'abcdefgh'.indexOf('e')+0*8,'takes the lonely king');});
