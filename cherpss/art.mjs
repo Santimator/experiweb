@@ -1,15 +1,17 @@
 // Painted assets are local and shared by the game and automatic demonstration.
 import {RULES} from './arena.mjs';
 const files={championsW:'champions-white.webp',championsB:'champions-black.webp',extraW:'champions-extra-white.webp',extraB:'champions-extra-black.webp',realmWhite:'realm-white.webp',realmBlack:'realm-black.webp',aids:'aids.webp',reactions:'bench-reactions.webp'};
-// Bump when any painted asset changes, so browsers drop the cached copies.
-export const ART_VERSION=3;
-const images={},pending={};let loading=null;
+// Bump when any painted asset changes, so browsers drop the cached copies (keep the ?v= in theme.css in step).
+export const ART_VERSION=4;
+const images={},pending={};
 function loadImage(key){
  if(pending[key])return pending[key];
  if(typeof Image==='undefined')return Promise.resolve(false);
  pending[key]=new Promise(resolve=>{const im=new Image();im.onload=()=>{images[key]=im;resolve(true);};im.onerror=()=>resolve(false);im.src=new URL('./assets/'+files[key]+'?v='+ART_VERSION,import.meta.url).href;});return pending[key];
 }
-export function loadArtwork(){return loading??=Promise.all(Object.keys(files).map(loadImage)).then(results=>results.every(Boolean));}
+// 'board' is the figurine sheet the chessboard and benches need; 'arena' is everything a duel needs.
+const sets={};
+export function loadArtwork(which='all'){const keys=Object.keys(files).filter(k=>which==='all'||(which==='board')===(k==='aids'));return sets[which]??=Promise.all(keys.map(loadImage)).then(results=>results.every(Boolean));}
 // Each team has its own painted champions (team paint on the same three monsters).
 export function spriteAtlas(side='w'){return images[side==='b'?'championsB':'championsW']??null;}
 export function courtyard(night){return images[night?'realmBlack':'realmWhite']??null;}
