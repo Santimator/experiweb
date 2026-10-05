@@ -26,6 +26,8 @@ function aid(world,s,...types){world.aid??={w:{},b:{}};for(const t of types)worl
 function hit(world,target,raw,source){
  let damage=raw*source.buff.damage*surge(world,source)*(1-target.buff.armor);
  if(target.guard&&target.stamina>0){world.events.push('guard');damage*=.35;target.stamina=Math.max(0,target.stamina-raw*.7);effect(world,{kind:'guard',x:target.x,y:target.y,color:'#94c5db'});}
+ // Ward: a flat cut from every hit (up to 60% of it), so it blunts many small hits more than a few big ones.
+ if(target.buff.ward>0&&damage>0){damage-=Math.min(target.buff.ward,damage*.6);aid(world,target.s,'p');}
  const absorb=Math.min(target.shield,damage);target.shield-=absorb;damage-=absorb;target.hp=Math.max(0,target.hp-damage);target.flash=.16;
  if(damage>0&&source.buff.lifesteal>0)source.hp=Math.min(source.startHp,source.hp+damage*source.buff.lifesteal);
  // Interrupt: a blow landing during a wind-up can cancel it.
