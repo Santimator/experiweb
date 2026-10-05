@@ -61,19 +61,21 @@ export function collectSupport(g,m){
  pieces.push({...g.board[m.from],i:m.to,attacker:true});return{centre,pieces,w:pieces.filter(p=>p.s==='w'),b:pieces.filter(p=>p.s==='b')};
 }
 // What each neighbouring piece adds to its side's champion, and the cap per effect.
-// Tuned in simulation with realistic support (which pieces actually stand next to a duel: pawns in ~60%
-// of fights, knights and bishops ~21%, rooks ~16%, queens and kings ~12%). Each underdog gets about the
-// same total help: knights let a Rock run down a mage, bishops recharge and power up specials (the Scissors'
-// dash against a Rock), queens and kings let Paper out-shoot Scissors. Pawns are small and roughly neutral.
-// Counters are meant to dominate (~85% at equal skill), so helpers only nudge: the helped side ends up ahead
-// about 51-60% and no single helper makes any champion a safe pick. Knights stay tiny: Rock vs Paper is a
-// speed race with a cliff. Bishops mostly feed the Scissors' dash; kings help Paper out-shoot Scissors.
-export const SUPPORT={p:{shield:.5,damage:.01},n:{speed:.017},b:{cooldown:.3,power:.25},r:{power:.08},q:{attackSpeed:.06},k:{damage:.05}};
-export const SUPPORT_CAPS={shield:24,speed:.05,regen:1.2,cooldown:.3,damage:.2,cover:2,attackSpeed:.4,reach:40,lifesteal:.5,armor:.5,power:.45,interrupt:1};
-export function bonuses(pieces){
+// Helper values are per champion (rock / scissors / paper): the same perk is worth very different amounts to
+// each fighter (a few % of speed decides whether a Rock catches a mage; Scissors barely notice), so each value
+// was calibrated in simulation to give every champion about the same edge. One helper is worth roughly
+// +0.3 (pawn, knight) to +0.8 (queen, king) in win-logit; four helpers swing a duel by ~1.5. With the pieces
+// that really stand next to duels, counters still win about 78-85% and a helper nearby moves that by 10-25
+// points. Caps stop stacks of the same piece from running away (about two copies' worth).
+const per=(rock,scissors,paper)=>({rock,scissors,paper});
+export const SUPPORT={p:{shield:per(5.5,4.4,7.2)},n:{speed:per(.021,.068,.2)},b:{cooldown:per(.062,.084,.24),power:per(.051,.07,.2)},r:{power:per(.28,.55,.215)},q:{attackSpeed:per(.095,.12,.1)},k:{damage:per(.1,.136,.065)}};
+export const SUPPORT_CAPS={shield:per(11,17.6,29),speed:per(.042,.136,.24),regen:1.2,cooldown:per(.124,.168,.48),damage:per(.2,.272,.13),cover:2,attackSpeed:per(.19,.24,.2),reach:40,lifesteal:.5,armor:.5,power:per(.6,1.12,.6),interrupt:1};
+// A value is either one number or one per champion type, so a helper can give each champion the same edge.
+const valueFor=(v,type)=>typeof v==='number'?v:v?.[type]??0;
+export function bonuses(pieces,type){
  const counts=Object.fromEntries(Object.keys(PIECES).map(t=>[t,pieces.filter(p=>p.t===t).length])),sum={};
- for(const [t,n] of Object.entries(counts))for(const [k,v] of Object.entries(SUPPORT[t]??{}))sum[k]=(sum[k]??0)+n*v;
- const cap=k=>Math.min(SUPPORT_CAPS[k]??Infinity,sum[k]??0);
+ for(const [t,n] of Object.entries(counts))for(const [k,v] of Object.entries(SUPPORT[t]??{}))sum[k]=(sum[k]??0)+n*valueFor(v,type);
+ const cap=k=>Math.min(SUPPORT_CAPS[k]==null?Infinity:valueFor(SUPPORT_CAPS[k],type),sum[k]??0);
  return{counts,shield:cap('shield'),speed:cap('speed'),regen:cap('regen'),cooldown:1-cap('cooldown'),damage:1+cap('damage'),cover:Math.floor(cap('cover')),
   // Optional effects (unused by default): faster attacks, longer melee reach, lifesteal, armour, stronger specials, wind-up interrupts.
   attackSpeed:cap('attackSpeed'),reach:cap('reach'),lifesteal:cap('lifesteal'),armor:cap('armor'),power:cap('power'),interrupt:cap('interrupt')};

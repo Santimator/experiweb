@@ -8,7 +8,7 @@ export const STATS={rock:{hp:152,speed:176,hit:16,range:77,attackCd:1.1,specialC
 // speed, reach and damage double every surgeDouble seconds (x2 at 2:00, x4 at 3:00...). Hiding can't last.
 export const RULES={paperSpecial:'blast',blinkDistance:170,blinkCd:8,surgeAt:60,surgeDouble:60,paperCastSlow:.45,rockSwingWindup:.05,rockStompWindup:.31,rockStompRadius:130,rockStomp:16,scissorsDash:125,scissorsDashHit:25,paperBlast:18,slowFactor:.55,slowTime:.8};
 export function makeArena(selection,support,vitality,{duration=null,night=false,attacker='w'}={}){
- const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[]),maxHp=base.hp;
+ const fighters=['w','b'].map((s,i)=>{const t=selection[s],base=STATS[t],buff=bonuses(support[s]??[],t),maxHp=base.hp;
  return{s,t,x:i?480:160,y:320,dx:i?-1:1,dy:0,r:21,hp:maxHp,startHp:maxHp,maxHp,shield:buff.shield,stamina:100,cd:0,specialCd:0,cast:0,castSlow:.12,charge:0,guard:false,guardDelay:0,slow:0,flash:0,buff,base};});
  const obstacles=[];for(const f of fighters)for(let k=0;k<f.buff.cover;k++)obstacles.push({x:f.s==='w'?210:390,y:k===0?165:425,w:40,h:50,hp:55,s:f.s});
  return{fighters,projectiles:[],effects:[],events:[],lastCountdown:null,obstacles,time:duration===60?60:null,duration:duration===60?60:null,attacker,countdown:2.4,night,elapsed:0,done:false,result:null};
