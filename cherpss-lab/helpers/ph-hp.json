@@ -1,0 +1,8 @@
+{"support":{
+ "p":{"shield":{"rock":9,"scissors":8.3,"paper":9.6}},
+ "n":{"speed":0.04},
+ "b":{"regen":1.0},
+ "r":{"armor":0.08},
+ "q":{"cooldown":0.12,"power":0.2},
+ "k":{"damage":0.08}},
+"caps":{"shield":{"rock":36,"scissors":33,"paper":38},"speed":0.1,"regen":2.5,"armor":0.24,"cooldown":0.3,"power":0.5,"damage":0.24,"attackSpeed":0}}
