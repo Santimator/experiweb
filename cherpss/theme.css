@@ -28,3 +28,9 @@ button{background:rgba(255,255,255,.12);color:var(--cream);border:1px solid rgba
 /* Board pieces are the painted figurines (White marble, Black stone with silver) on a marble board. */
 .board-fig{position:absolute;left:2.5%;bottom:1%;width:95%;aspect-ratio:1;background-image:url('./assets/aids.webp?v=4');background-size:600% 200%;background-repeat:no-repeat;pointer-events:none;filter:drop-shadow(0 2px 2px #0007)}.board-fig.w{background-position-y:0%}.board-fig.b{background-position-y:100%}
 .square .chess-vector{display:none}.no-figurines .square .chess-vector{display:block}.no-figurines .board-fig{display:none}
+
+/* Key bindings: each player's keys, double-click to change. */
+.seat-note{margin:6px 0 10px!important}.key-list{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;max-width:190px;margin:0 auto;text-align:left;font-size:11px;color:var(--muted)}
+.keycap{min-width:34px;min-height:26px;padding:2px 8px;font:600 12px/1 ui-monospace,monospace;color:var(--cream);background:rgba(255,255,255,.06);border:1px solid rgba(232,192,96,.28);border-bottom-width:3px;border-radius:6px;cursor:pointer;user-select:none}
+.keycap.listening{background:#e8c060;color:#2a1a08;border-color:#e8c060;font-size:10px}
+.link-button{margin-top:10px;padding:2px 6px;min-height:0;background:none!important;border:0;color:var(--muted);font-size:10px;text-decoration:underline;cursor:pointer}

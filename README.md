@@ -16,7 +16,7 @@ A small collection of browser games at [santiago-mj.com](https://santiago-mj.com
 
 Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happen. Both players secretly pick a champion, and the two fight it out in an arena. The pieces around the target square give each side bonuses. Each side has four champions of each type; the loser of a duel is eliminated. You win by defeating the enemy king or eliminating all of the opponent's champions. The loser can then ask to finish the game as ordinary chess.
 
-- **Desktop:** shared keyboard (White uses WASD + F/G/H; Black uses the arrows + J/K/L) or two gamepads.
+- **Desktop:** one shared keyboard, a player at each end: White moves with E S D F and acts with Q A Z; Black moves with P L ; . and acts with the arrow keys. Double-click any key in a player's panel to change it. Two gamepads also work.
 - **Phone:** private pass-and-play picks, then automatic battles.
 - **Solo:** play against the AI, Hellagoof (beatable, mostly) or Hellagood (a real challenge), in both the chess and the duels (`ai.mjs`).
 - `cherpss/art.html` loops an automatic demo fight.
