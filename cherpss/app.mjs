@@ -94,14 +94,17 @@ function renderTouchPick(){const s=solo?solo.human:match.selection.w?'b':'w',can
  if(handoff){overlay(`<span class="eyebrow">FIRST CHOICE LOCKED IN</span><h2>Pass to ${TEAM[s]}</h2><p>The other player should look away.<br>The first champion stays hidden.</p><div class="stage-actions"><button id="handoffBtn" class="primary">${TEAM[s]} is ready</button></div>${cancel}`);$('handoffBtn').onclick=()=>{handoff=false;render();};return;}
  overlay(`<span class="eyebrow">${match.practice?'PRACTICE · ':''}PRIVATE CHAMPION PICK</span><h2>${TEAM[s]}, choose your champion</h2><p>Other player, look away.<br>Both champions reveal together, then fight automatically.</p><div class="touch-choices">${TYPES.map(t=>`<button id="touch-${t}" ${!match.practice&&match.game.roster[s][t]<=0?'disabled':''}><span>${champIcon(t,s,64)}</span><strong>${NAMES[t]}</strong><small>${ROLE[t]}</small></button>`).join('')}</div>${cancel}`);for(const t of TYPES)$('touch-'+t).onclick=()=>choose(s,t);
 }
-// Default keys for two players sitting sideways at either end of one keyboard, each turned towards it:
-// White at the left end (E S D F to move, Q A Z to act), Black at the right end (P L ; . to move, arrows to act).
+// Default keys for two players at either end of one keyboard. White: E S D F to move as usual (E up), the
+// left hand on the Q A Z column to act. Black: the right hand turned sideways on P L ; . (L up, ; down),
+// the left hand on the arrow row to act.
 // Keys are physical positions (event.code), so they stay put on any keyboard layout. Double-click a key in a
 // player's panel to change it.
-const DEFAULT_KEYS={w:{up:'KeyF',down:'KeyS',left:'KeyE',right:'KeyD',attack:'KeyQ',guard:'KeyA',special:'KeyZ'},b:{up:'KeyL',down:'Semicolon',left:'Period',right:'KeyP',attack:'ArrowLeft',guard:'ArrowDown',special:'ArrowRight'}};
+const DEFAULT_KEYS={w:{up:'KeyE',down:'KeyD',left:'KeyS',right:'KeyF',attack:'KeyQ',guard:'KeyA',special:'KeyZ'},b:{up:'KeyL',down:'Semicolon',left:'Period',right:'KeyP',attack:'ArrowLeft',guard:'ArrowDown',special:'ArrowRight'}};
 const ACTIONS=['up','down','left','right','attack','guard','special'],ACTION_LABEL={up:'Move up',down:'Move down',left:'Move left',right:'Move right',attack:'Attack · Rock',guard:'Guard · Scissors',special:'Special · Paper'};
 let mapping=structuredClone(DEFAULT_KEYS),rebinding=null,layoutMap=null;
 try{const k=saved?.keys;if(k&&['w','b'].every(s=>ACTIONS.every(a=>typeof k[s]?.[a]==='string'&&k[s][a].length<24)))mapping={w:{...k.w},b:{...k.b}};}catch{}
+// The first release turned White's E S D F sideways (F up); keys still on that default move to the new one.
+if(JSON.stringify(mapping.w)===JSON.stringify({up:'KeyF',down:'KeyS',left:'KeyE',right:'KeyD',attack:'KeyQ',guard:'KeyA',special:'KeyZ'}))mapping.w=structuredClone(DEFAULT_KEYS.w);
 navigator.keyboard?.getLayoutMap?.().then(m=>{layoutMap=m;renderControls();}).catch(()=>{});
 const KEY_NAMES={ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',Semicolon:';',Period:'.',Comma:',',Slash:'/',Quote:"'",BracketLeft:'[',BracketRight:']',Backslash:'\\',Minus:'-',Equal:'=',Backquote:'`',Space:'Space',Enter:'Enter',ShiftLeft:'L-Shift',ShiftRight:'R-Shift',ControlLeft:'L-Ctrl',ControlRight:'R-Ctrl',AltLeft:'L-Alt',AltRight:'R-Alt',Tab:'Tab',IntlBackslash:'<'};
 function keyLabel(code){const k=layoutMap?.get?.(code);if(k&&k.trim())return k.toUpperCase();return KEY_NAMES[code]??code.replace(/^Key|^Digit|^Numpad/,'');}
