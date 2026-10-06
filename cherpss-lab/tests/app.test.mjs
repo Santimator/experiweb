@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {newGame,positionKey} from '../../cherpss/engine.mjs';
+import {newGame,positionKey} from '../dist/engine.mjs';
 // This harness exercises actual UI handlers and the animation loop without a browser.
 class Element{
  constructor(id,doc){this.id=id;this.doc=doc;this.children=[];this.hidden=false;this.listeners={};this.dataset={};this.attributes={};this.value='';this.textContent='';this.open=false;}
@@ -18,13 +18,13 @@ class Element{
  getContext(){return this.doc.context;}
 }
 async function harness(saved,phone=false){
- const html=await readFile(new URL('../../cherpss/index.html',import.meta.url),'utf8');
+ const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8');
  const context=new Proxy({createRadialGradient:()=>({addColorStop(){}}),createLinearGradient:()=>({addColorStop(){}})},{get:(t,p)=>p in t?t[p]:()=>{},set:(t,p,v)=>(t[p]=v,true)});
  const classes=new Set();const doc={nodes:{},context,events:{},hidden:false,body:{classList:{toggle(c,on){if(on)classes.add(c);else classes.delete(c);},contains:c=>classes.has(c)}},getElementById(id){return this.nodes[id]??null;},createElement(tag){return new Element(tag,this);},querySelector(query){return query==='dialog[open]'?Object.values(this.nodes).find(n=>n.open)??null:null;},querySelectorAll(){return[];},addEventListener(type,fn){this.events[type]=fn;}};
  for(const m of html.matchAll(/id="([^"]+)"/g))doc.nodes[m[1]]=new Element(m[1],doc);doc.nodes.modeSelect.value='duel';doc.nodes.durationSelect.value='none';
  const events={},store={value:saved?JSON.stringify(saved):null},raf=[];
  globalThis.document=doc;globalThis.window={addEventListener(type,fn){events[type]=fn;},matchMedia:()=>({matches:phone})};Object.defineProperty(globalThis,'navigator',{configurable:true,value:{getGamepads:()=>[]}});globalThis.localStorage={getItem:()=>store.value,setItem:(k,v)=>store.value=v};globalThis.requestAnimationFrame=fn=>raf.push(fn);globalThis.setTimeout=()=>0;globalThis.clearTimeout=()=>{};
- await import('../../cherpss/app.mjs?case='+Math.random());
+ await import('../dist/app.mjs?case='+Math.random());
  let now=100;
  return{doc,events,store,get:id=>doc.nodes[id],state:()=>JSON.parse(store.value),key(code,down=true){events[down?'keydown':'keyup']({code,repeat:false,preventDefault(){}});},frames(n){for(let i=0;i<n;i++){now+=16;const fn=raf.shift();assert.ok(fn);fn(now);}},square(i){return doc.nodes.board.children[i];}};
 }
@@ -33,8 +33,8 @@ test('UI: board moves → secret selection → duel → result → updated board
  // e4, d5, exd5: the first challenge in an actual match.
  h.square(52).click();assert.ok(h.square(36).className.includes('legal'));h.square(36).click();assert.equal(h.state().game.turn,'b');h.square(11).click();h.square(27).click();h.square(36).click();h.square(27).click();
  assert.equal(h.get('stageOverlay').hidden,false);assert.ok(h.get('stageOverlay').innerHTML.includes('CHALLENGE AT D5'));
- h.key('KeyF');assert.ok(h.get('stageOverlay').innerHTML.includes('✓ LOCKED IN'));assert.ok(!h.get('roster-w').innerHTML.includes(' active'));
- h.key('KeyL');assert.equal(h.get('arenaArea').hidden,false);assert.equal(h.get('boardArea').hidden,true);assert.ok(h.get('roster-w').innerHTML.includes(' active'));
+ h.key('KeyQ');assert.ok(h.get('stageOverlay').innerHTML.includes('✓ LOCKED IN'));assert.ok(!h.get('roster-w').innerHTML.includes(' active'));
+ h.key('ArrowRight');assert.equal(h.get('arenaArea').hidden,false);assert.equal(h.get('boardArea').hidden,true);assert.ok(h.get('roster-w').innerHTML.includes(' active'));
  h.key('Escape');assert.equal(h.get('pauseOverlay'),undefined);assert.equal(h.get('arenaArea').hidden,false);assert.equal(h.get('rulesBtn').disabled,true);
  h.frames(4100);h.frames(160);assert.ok(h.get('resultCard').innerHTML.includes('THE DUST SETTLES'));assert.ok(h.get('resultCard').innerHTML.includes('attacker wins'));assert.equal(h.get('arenaArea').hidden,false,'benches stay visible around the result');h.get('continueBtn').click();assert.equal(h.get('boardArea').hidden,false);assert.equal(h.state().game.board[27].s,'w');assert.equal(h.state().game.board[36],null);assert.equal(h.state().game.roster.w.rock,4);assert.equal(h.state().game.roster.b.paper,3);assert.equal(h.state().game.turn,'b');
 });
@@ -72,7 +72,7 @@ test('UI: old vector-art saves retain the match and no longer expose an art sele
 test('UI: reloading mid-duel resumes the same fight instead of rerolling picks',async()=>{
  let h=await harness({game:newGame(),duration:60});
  h.square(52).click();h.square(36).click();h.square(11).click();h.square(27).click();h.square(36).click();h.square(27).click();
- h.key('KeyF');h.key('KeyL');h.frames(400);
+ h.key('KeyQ');h.key('ArrowRight');h.frames(400);
  const stored=h.state();assert.ok(stored.duel,'duel snapshot saved');const hp=stored.duel.world.fighters.map(f=>f.hp);
  h=await harness(stored);assert.equal(h.get('arenaArea').hidden,false,'arena reopens');assert.ok(!h.get('stageOverlay').innerHTML.includes('WAITING FOR YOUR CHOICE'));
  const again=h.state();assert.deepEqual(again.duel.world.fighters.map(f=>f.hp),hp);assert.deepEqual(again.duel.selection,{w:'rock',b:'paper'});
