@@ -1,9 +1,12 @@
 // WC Games!: one random short game against mAIa at a random strength. No menus.
 // Each game is one module in games/ (rules + texts + view); only the picked one is loaded.
-// A game module exports: meta {name, goal, levels, origins}, start(first), turn(s), moves(s), play(s, move),
+// A game module exports: meta {name, goal, levels, origins}, start(first, level), turn(s), moves(s), play(s, move),
 // result(s) (null, 0 = you won, 1 = mAIa won, 0.5 = draw; kept in s.w), view(root, s, ui) and trace(s, move).
+// Optional: meta.goal can be a function of the state (when your side changes per match), meta.foe replaces the
+// level lines, and meta.solo marks a puzzle with no mAIa turns (then levels are the puzzle's difficulty).
+// Testing a specific game: ?game=brandubh&level=2&guides=1
 
-const GAMES = ['ur', 'dobutsu'];
+const GAMES = ['ur', 'dobutsu', 'brandubh', 'fanorona', 'poosweeper'];
 const AI_PAUSE_MS = 700;   // mAIa never answers faster than this, so you can see what happened
 const PASS_PAUSE_MS = 1300;
 
@@ -28,12 +31,15 @@ let session, G, worker, request = 0, visibleSince = performance.now();
 // ===== SESSION =====
 // Nothing is saved: close the tab and the match is gone.
 function fresh() {
-    const level = Math.random() * 3 | 0;
-    return { game: pick(GAMES), level, guides: Math.random() < 0.5, foe: pick(FOE[level]) };
+    const q = new URLSearchParams(location.search);
+    const game = GAMES.includes(q.get('game')) ? q.get('game') : pick(GAMES);
+    const level = ['0', '1', '2'].includes(q.get('level')) ? +q.get('level') : Math.random() * 3 | 0;
+    const guides = ['0', '1'].includes(q.get('guides')) ? q.get('guides') === '1' : Math.random() < 0.5;
+    return { game, level, guides };
 }
 
 function startMatch() {
-    session.s = G.start(Math.random() < 0.5 ? 0 : 1);
+    session.s = G.start(Math.random() < 0.5 ? 0 : 1, session.level);
     session.last = null;
     session.elapsed = 0;
     visibleSince = performance.now();
@@ -73,22 +79,23 @@ function next() {
             setTimeout(() => id === request && play(data.move), Math.max(0, AI_PAUSE_MS - (performance.now() - asked)));
         };
         worker.postMessage({ id, game: session.game, state: s, sims: G.meta.levels[session.level] });
-    } else if (G.moves(s)[0] === '-') {
+    } else if (!G.meta.solo && G.moves(s)[0] === '-') {
         setTimeout(() => id === request && play('-'), PASS_PAUSE_MS);
     }
 }
 
 function render() {
     const s = session.s, mine = G.turn(s) === 0, done = over();
-    const stuck = !done && mine && G.moves(s)[0] === '-';
+    const stuck = !done && mine && !G.meta.solo && G.moves(s)[0] === '-';
     G.view($('board'), s, { guides: session.guides, canPlay: !done && mine && !stuck, last: session.last, onMove: play });
     const r = G.result(s);
-    $('status').textContent = done ? (r === 0 ? 'You win!' : r === 1 ? 'mAIa wins' : 'A draw')
-        : stuck ? 'Nothing to play. Passing…' : mine ? 'Your move' : 'mAIa is thinking…';
+    $('status').textContent = done ? (r === 0 ? 'You win!' : r === 1 ? G.meta.lost ?? 'mAIa wins' : 'A draw')
+        : stuck ? 'Nothing to play. Passing…' : G.meta.solo ? '' : mine ? 'Your move' : 'mAIa is thinking…';
     $('status').className = done ? 'end' : mine ? 'you' : 'foe';
     $('board').classList.toggle('done', done);
     $('end').hidden = !done;
     $('origins').hidden = !done; // the story is the reward, not a manual
+    $('goal').textContent = typeof G.meta.goal === 'function' ? G.meta.goal(s) : G.meta.goal;
     tick();
     next();
 }
@@ -101,8 +108,7 @@ async function init() {
     startMatch();
     worker = new Worker(new URL('./worker.mjs', import.meta.url), { type: 'module' });
 
-    $('goal').textContent = G.meta.goal;
-    $('foe').textContent = session.foe;
+    $('foe').textContent = pick((G.meta.foe ?? FOE)[session.level]);
     const h = document.createElement('h2');
     h.textContent = G.meta.name;
     $('origins').replaceChildren(h, ...G.meta.origins.map(text => Object.assign(document.createElement('p'), { textContent: text })));
