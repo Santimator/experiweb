@@ -8,7 +8,7 @@ export const meta = {
     goal: "Catch mAIa's lion. Or walk yours safely across.",
     levels: [60, 600, 6000],
     origins: [
-        'Not an ancient game, but one distilled from an old one. Madoka Kitao, a professional shōgi player, created it in 2008 with illustrator Maiko Fujita, to bring children (and anyone put off by 81 squares) into Japanese chess.',
+        'Not an ancient game, but one distilled from an old one. Madoka Kitao, a professional shōgi player, created it in 2008 with designer Maiko Fujita, to bring children (and anyone put off by 81 squares) into Japanese chess.',
         'What survives from shōgi is its most famous idea, centuries old: in this war, nobody really dies. They just change sides.',
         'Twelve squares look like a toy, but computers have played this board out completely: with perfect play, the player who moves second wins. Nobody plays perfectly, which is the fun part.'
     ]

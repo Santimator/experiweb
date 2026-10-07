@@ -9,7 +9,7 @@
     <meta name="description" content="One short game against mAIa, picked for you.">
     <title>WC Games!</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="wc.css?v=2">
+    <link rel="stylesheet" href="wc.css?v=3">
 </head>
 <body>
     <main id="wc">
@@ -24,6 +24,13 @@
         <section id="origins"></section>
         <a href="../" id="back">← Games</a>
     </main>
+    <div id="out" hidden>
+        <div class="out-card">
+            <p class="out-eyebrow">Time's up</p>
+            <h2 id="nudge"></h2>
+            <button id="leave" type="button">Close tab</button>
+        </div>
+    </div>
     <script type="module" src="app.mjs"></script>
 </body>
 </html>

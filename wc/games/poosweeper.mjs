@@ -14,9 +14,9 @@ export const meta = {
         ['mAIa had the chili.', 'mAIa went to an all-you-can-eat buffet.', 'mAIa has been holding it all week.']
     ],
     origins: [
-        'This is Minesweeper with a change of menu. The idea goes back to early-1980s home computer games such as Mined-Out, but the version everyone knows came with Windows 3.1 in 1992, written by Robert Donner and Curt Johnson. For a generation of office workers, it was the thing to do while pretending to work.',
-        'Mines were never everyone\'s idea of fun: a campaign in the early 2000s asked Microsoft to replace them with something kinder, and some later versions of Windows offered flowers instead. Here, mAIa offers something else.',
-        'Most of the time it is pure logic. Sometimes the numbers run out and you must guess, and the game lets you know exactly how bad your odds are. Mathematicians have proved that, in general, it is a very hard puzzle (NP-complete). In the WC, it is just a hard one.'
+        'This is Minesweeper with a change of menu. Hidden-mine games existed on early-1980s home computers (Mined-Out, 1983), but the version everyone knows was written by Robert Donner and Curt Johnson for Microsoft, sold in 1990 and bundled with Windows 3.1 in 1992. For a generation of office workers, it was the thing to do while pretending to work.',
+        'Mines were never everyone\'s idea of fun: in 2001, an "International Campaign to Ban Winmine" asked for flowers instead, and Windows Vista later offered exactly that. Here, mAIa offers something else.',
+        'Most of the time it is pure logic. Sometimes the numbers run out and you must guess, and you can often work out exactly how bad your odds are. In 2000, mathematician Richard Kaye proved that even telling whether a board makes sense is NP-complete, which is maths for very hard in general. In the WC, it is just hard.'
     ]
 };
 
