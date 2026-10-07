@@ -6,6 +6,7 @@ A small collection of browser games at [santiago-mj.com](https://santiago-mj.com
 
 | Game | Page | Players | Notes |
 | --- | --- | --- | --- |
+| **WC Games!** | `wc/` | 1 vs AI | One random short game (~5 min) against mAIa at a random strength. One tap, no menus. |
 | **Carrom** | `carrom.html` | 2–4, or 1 vs AI | Flick the striker to pocket your pieces. |
 | **Go** | `go.html` | 2, or 1 vs AI | 9×9, 13×13 or 19×19 board, with a pass rule and scoring. |
 | **CheRPSs** | `cherpss/` | 2 (local), or 1 vs AI | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. **Unlisted** while in playtesting: no lobby card, not indexed; open it by URL. |
@@ -23,6 +24,14 @@ Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happ
 - Matches are saved in the browser's `localStorage`.
 - The code is ES modules (`*.mjs`), so it needs to be served over HTTP. Opening the file directly from disk won't work.
 
+### WC Games!
+
+Tap the card and you land in a random game against mAIa, the AI, at a random level (3). Move guides (legal-move highlights) are also on or off at random. No rules are explained: you get a one-line goal and learn by playing. Rematch replays the same game, level and guides. Nothing is saved: close the tab and the match is gone. The game's origins are shown only once the match ends.
+
+- **Games:** The Royal Game of Ur, Dōbutsu shōgi.
+- **Adding a game:** one module in `wc/games/` (rules, goal line, origins text, levels, view; the interface is listed at the top of `app.mjs`), its styles in `wc.css`, and its name in `GAMES`. Only the picked game's module is loaded.
+- **AI:** one generic Monte Carlo tree search (`mcts.mjs`) in a Web Worker. It only knows each game's rules; a level is just a number of simulations per move (`meta.levels`). It handles dice too.
+
 ## Project layout
 
 ```
@@ -31,6 +40,7 @@ carrom.html/.js       Carrom
 go.html/.js           Go
 style.css             Shared styles for the lobby, Carrom and Go
 cherpss/              Self-contained CheRPSs (own HTML, CSS, modules, art)
+wc/                   WC Games! (page, generic AI, one module per game)
 favicon.svg
 _headers              Cloudflare Pages headers (security + caching)
 robots.txt

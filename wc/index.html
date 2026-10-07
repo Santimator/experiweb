@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a0a00">
+    <meta name="description" content="One short game against mAIa, picked for you.">
+    <title>WC Games!</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="wc.css?v=1">
+</head>
+<body>
+    <main id="wc">
+        <div id="timer" aria-label="Time here">00:00</div>
+        <p id="goal"></p>
+        <p id="foe"></p>
+        <section id="stage">
+            <div id="status" aria-live="polite"></div>
+            <div id="board"></div>
+            <div id="end" hidden><button id="rematch" type="button">Rematch</button></div>
+        </section>
+        <section id="origins"></section>
+        <a href="../" id="back">← Games</a>
+    </main>
+    <script type="module" src="app.mjs"></script>
+</body>
+</html>
