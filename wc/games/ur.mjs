@@ -11,7 +11,7 @@ export const meta = {
     origins: [
         'In the 1920s, Leonard Woolley dug up the Royal Cemetery of Ur, in southern Iraq, and found five boards like this one. They are about 4,500 years old, and versions of the game were played across the Middle East for some three thousand years.',
         'Nobody wrote the rules down on the boards. They come from a Babylonian clay tablet copied by a scribe called Itti-Marduk-balāṭu in 177 BC, which Irving Finkel of the British Museum deciphered and used to rebuild the game. Remarkably, a version of it was still played by the Jewish community of Cochin, in India, into the 20th century.',
-        'It is a race, but every roll asks a small question: run ahead, chase, block, or sit tight on a rosette. The dice decide how far. You decide what it means.'
+        'It is one of the oldest games we can still play, and it already had the balance good games keep chasing: the dice decide how far, you decide what it means.'
     ]
 };
 

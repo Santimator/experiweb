@@ -26,7 +26,7 @@ Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happ
 
 ### WC Games!
 
-Tap the card and you land in a random game against mAIa, the AI, at a random level (3). Move guides (legal-move highlights) are also on or off at random. No rules are explained: you get a one-line goal and learn by playing. Rematch replays the same game, level and guides. An unfinished match survives closing the tab (`localStorage`).
+Tap the card and you land in a random game against mAIa, the AI, at a random level (3). Move guides (legal-move highlights) are also on or off at random. No rules are explained: you get a one-line goal and learn by playing. Rematch replays the same game, level and guides. Nothing is saved: close the tab and the match is gone. The game's origins are shown only once the match ends.
 
 - **Games:** The Royal Game of Ur, Dōbutsu shōgi.
 - **Adding a game:** one module in `wc/games/` (rules, goal line, origins text, levels, view; the interface is listed at the top of `app.mjs`), its styles in `wc.css`, and its name in `GAMES`. Only the picked game's module is loaded.

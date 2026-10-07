@@ -4,11 +4,10 @@
 // result(s) (null, 0 = you won, 1 = mAIa won, 0.5 = draw; kept in s.w), view(root, s, ui) and trace(s, move).
 
 const GAMES = ['ur', 'dobutsu'];
-const STORE = 'wc-v1';
 const AI_PAUSE_MS = 700;   // mAIa never answers faster than this, so you can see what happened
 const PASS_PAUSE_MS = 1300;
 
-// Index = mAIa's level. One line is picked per session.
+// What mAIa's level feels like, in mAIa's voice. Index = level; any line of a level says the same thing.
 const FOE = [
     ["You are mAIa's first opponent ever, be gentle.",
      'mAIa learned this game five minutes ago.',
@@ -27,18 +26,7 @@ const pick = list => list[Math.random() * list.length | 0];
 let session, G, worker, request = 0, visibleSince = performance.now();
 
 // ===== SESSION =====
-function load() {
-    try {
-        const saved = JSON.parse(localStorage.getItem(STORE));
-        if (saved && GAMES.includes(saved.game) && (!saved.s || saved.s.w === null)) return saved;
-    } catch { /* storage off: just play */ }
-    return null;
-}
-
-function save() {
-    try { localStorage.setItem(STORE, JSON.stringify({ ...session, elapsed: elapsed() })); } catch { }
-}
-
+// Nothing is saved: close the tab and the match is gone.
 function fresh() {
     const level = Math.random() * 3 | 0;
     return { game: pick(GAMES), level, guides: Math.random() < 0.5, foe: pick(FOE[level]) };
@@ -63,7 +51,7 @@ function tick() {
     $('timer').textContent = (h ? h + ':' : '') + mm + ':' + ss;
 }
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { session.elapsed = elapsed(); save(); }
+    if (document.hidden) session.elapsed = elapsed();
     else visibleSince = performance.now();
 });
 
@@ -72,7 +60,6 @@ function play(move) {
     session.last = G.trace(session.s, move);
     session.s = G.play(session.s, move);
     if (over()) session.elapsed = session.elapsed + performance.now() - visibleSince;
-    save();
     render();
 }
 
@@ -101,16 +88,17 @@ function render() {
     $('status').className = done ? 'end' : mine ? 'you' : 'foe';
     $('board').classList.toggle('done', done);
     $('end').hidden = !done;
+    $('origins').hidden = !done; // the story is the reward, not a manual
     tick();
     next();
 }
 
 // ===== START =====
 async function init() {
-    session = load() ?? fresh();
+    session = fresh();
     G = await import(`./games/${session.game}.mjs`);
     $('board').className = session.game;
-    if (!session.s) startMatch();
+    startMatch();
     worker = new Worker(new URL('./worker.mjs', import.meta.url), { type: 'module' });
 
     $('goal').textContent = G.meta.goal;
@@ -119,9 +107,8 @@ async function init() {
     h.textContent = G.meta.name;
     $('origins').replaceChildren(h, ...G.meta.origins.map(text => Object.assign(document.createElement('p'), { textContent: text })));
 
-    $('rematch').addEventListener('click', () => { request++; startMatch(); save(); render(); });
+    $('rematch').addEventListener('click', () => { request++; startMatch(); render(); });
     setInterval(tick, 250);
-    save();
     render();
 }
 
