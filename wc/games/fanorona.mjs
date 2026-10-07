@@ -8,14 +8,13 @@ export const meta = {
     goal: "Capture all of mAIa's pieces.",
     levels: [60, 400, 2000],
     origins: [
-        'Fanorona is the national board game of Madagascar, played there since at least the 17th century. Its board is a double version of alquerque, an older game known around the Mediterranean and the Arab world.',
-        'A Malagasy story tells of a king who chose his heir by who returned first from a game of Fanorona, while one son was absorbed in a match. Some say the game was played to divine battle results. Both are told, neither is proven.',
-        'It opens with a massacre and ends in a chase. Computers solved it in 2007: with perfect play, it is a draw. In 22 against 22, something always gives.'
+        'Fanorona is the national board game of Madagascar. Nobody knows exactly how old it is: it most likely grew out of alquerque, an older game known around the Mediterranean and the Arab world, played on a board half this size.',
+        'A Malagasy legend tells of King Ralambo, who promised his throne to whichever son reached him first. One son could not leave a difficult game of Fanorona, and lost a kingdom. Another says that when the French invaded in 1895, Queen Ranavalona III trusted a ritual game more than her army. Both are told; neither is proven.',
+        'It opens with a massacre and ends in a chase. In 2007, researchers at Maastricht University proved that with perfect play it is a draw. Nobody plays perfectly in the WC.'
     ]
 };
 
 const R = 5, C = 9, SIZE = R * C;
-const MAX_QUIET = 40; // turns in a row without a capture end the game as a draw
 
 function dirs(i) {
     const r = (i / C) | 0, c = i % C, out = [[-1, 0], [1, 0], [0, -1], [0, 1]];
@@ -33,14 +32,11 @@ export function start(first) {
     for (let i = 0; i < 18; i++) b[i] = 2;            // mAIa: the top two rows
     for (let i = 27; i < SIZE; i++) b[i] = 1;         // you: the bottom two rows
     [2, 1, 2, 1, 0, 2, 1, 2, 1].forEach((v, c) => b[18 + c] = v); // the middle row alternates, centre empty
-    const s = { b, t: first, w: null, chain: null, turns: 0, quiet: 0, seen: [] };
-    s.seen = [key(s)];
-    return s;
+    return { b, t: first, w: null, chain: null };
 }
 
 export const turn = s => s.t;
 export const result = s => s.w;
-const key = s => s.b.join('') + s.t;
 
 // All moves of the piece at `i` for player `who`, with the chain restrictions if any.
 function pieceMoves(b, i, who, chain, out) {
@@ -91,7 +87,7 @@ function victims(b, from, to, how, foe) {
 
 export function play(s, m) {
     const b = s.b.slice(), me = s.t, foe = 2 - me;
-    let chain = null, quiet = s.quiet;
+    let chain = null;
     if (m !== '-') {
         const { from, to, how } = parse(m);
         b[to] = b[from];
@@ -99,30 +95,16 @@ export function play(s, m) {
         if (how) {
             const { out, d } = victims(s.b, from, to, how, foe);
             for (const p of out) b[p] = 0;
-            quiet = 0;
-            // The very first turn of the game allows a single capture.
-            if (s.turns > 0) {
-                const c = { at: to, dir: dirKey(d), visited: [...(s.chain?.visited ?? [from]), to] };
-                const more = [];
-                pieceMoves(b, to, me, c, more);
-                if (more.some(x => /[AW]$/.test(x))) chain = c;
-            }
+            // The same piece may keep capturing, never in the same direction twice running or onto a point it visited.
+            const c = { at: to, dir: dirKey(d), visited: [...(s.chain?.visited ?? [from]), to] };
+            const more = [];
+            pieceMoves(b, to, me, c, more);
+            if (more.some(x => /[AW]$/.test(x))) chain = c;
         }
     }
-    // A turn without any capture is a plain step (or being stuck); those count towards the draw.
-    if (!/[AW]$/.test(m) && !s.chain) quiet++;
-    const next = { b, t: chain ? me : 1 - me, w: null, chain, turns: s.turns + (chain ? 0 : 1), quiet, seen: s.seen };
+    const next = { b, t: chain ? me : 1 - me, w: null, chain };
     if (!b.includes(foe)) next.w = me;
     else if (!b.includes(me + 1)) next.w = foe - 1;
-    else if (!chain) {
-        if (next.quiet >= MAX_QUIET) next.w = 0.5;
-        // Captures can't be undone, so only positions since the last one can repeat.
-        const seen = quiet ? s.seen : [], k = key(next);
-        let n = 1;
-        for (const x of seen) if (x === k) n++;
-        if (n >= 3) next.w = 0.5;
-        next.seen = [...seen, k];
-    }
     return next;
 }
 

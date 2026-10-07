@@ -9,7 +9,7 @@ export const meta = {
     levels: [60, 400, 1500],
     origins: [
         'Tafl games were the board games of the Norse world, played from Scandinavia to Ireland centuries before chess arrived there. Brandubh, "black raven" in Old Irish, is the small Irish one.',
-        'A wooden board with 7×7 holes found at Ballinderry, in Ireland, is usually linked to it. The rules were never written down by the people who played them: what you just played is a modern reconstruction, and reconstructions disagree on the details.',
+        'A 10th-century yew board with 7×7 holes, found in 1932 at Ballinderry, in Ireland, is usually linked to it. The rules were never written down by the people who played them: what you just played is a modern reconstruction, and reconstructions disagree on the details.',
         'It is a fight between two shapes: a small, strong group in the middle and a larger, thinner ring around it. Neither side can win by being the other.'
     ]
 };
@@ -17,7 +17,6 @@ export const meta = {
 const N = 7, THRONE = 24, CORNERS = new Set([0, 6, 42, 48]);
 const ATT = 1, DEF = 2, KING = 3;
 const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-const MAX_PLIES = 200; // a match this long is called a draw
 
 // Which player a piece belongs to.
 const side = (s, v) => v === ATT ? s.att : 1 - s.att;
@@ -79,16 +78,15 @@ export function play(s, m) {
         b[to] = b[from];
         b[from] = 0;
         const mine = i => i >= 0 && b[i] && side(s, b[i]) === me;
-        // Corners and the empty throne take part in captures; the throne with the king on it helps the defenders.
+        // Corners help both sides capture. The throne helps against attackers always, against defenders only when empty.
         const hostile = (i, victim) => CORNERS.has(i) || i === THRONE && (!b[i] || victim === ATT) || mine(i);
         for (const [dr, dc] of DIRS) {
             const n = at(to, dr, dc), f = at(to, 2 * dr, 2 * dc);
             if (n < 0 || !b[n] || side(s, b[n]) === me) continue;
             if (b[n] === KING) {
-                // On or beside the throne the king must be surrounded; elsewhere two attackers are enough.
-                const around = DIRS.map(([y, x]) => at(n, y, x));
-                if (n === THRONE || around.includes(THRONE)) {
-                    if (around.every(i => i === THRONE || b[i] === ATT)) w = me;
+                // On the throne the king must be surrounded; anywhere else two attackers (or one and a corner) do.
+                if (n === THRONE) {
+                    if (DIRS.every(([y, x]) => b[at(n, y, x)] === ATT)) w = me;
                 } else if (f >= 0 && (b[f] === ATT || CORNERS.has(f))) w = me;
             } else if (f >= 0 && hostile(f, b[n])) {
                 b[n] = 0;
@@ -103,7 +101,7 @@ export function play(s, m) {
         const seen = b.filter(Boolean).length === s.b.filter(Boolean).length ? s.seen : [];
         let n = 1;
         for (const x of seen) if (x === k) n++;
-        if (n >= 3 || next.ply >= MAX_PLIES) next.w = 0.5;
+        if (n >= 3) next.w = 0.5;
         next.seen = [...seen, k];
     }
     return next;

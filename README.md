@@ -26,10 +26,10 @@ Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happ
 
 ### WC Games!
 
-Tap the card and you land in a random game against mAIa, the AI, at a random level (3). Move guides (legal-move highlights) are also on or off at random. No rules are explained: you get a one-line goal and learn by playing. Rematch replays the same game, level and guides. Nothing is saved: close the tab and the match is gone. The game's origins are shown only once the match ends.
+Tap the card and you land in a random game against mAIa, the AI, at a random level (3). Move guides (legal-move highlights) are also on or off at random. No rules are explained: you get a one-line goal and learn by playing. Rematch replays the same game, level and guides. Nothing is saved: close the tab and the match is gone. After 10 minutes on the page (rematches included) a time's-up card covers it, with one button; the card survives reloads (`localStorage`) until that button is pressed. The game's origins are shown only once the match ends.
 
 - **Games:** The Royal Game of Ur, Dōbutsu shōgi, Brandubh (you get attackers or defenders at random), Fanorona, and Poosweeper (solo Minesweeper: mAIa's level is how much poo it hid).
-- **Trying one game:** `wc/?game=fanorona&level=2&guides=1` (all optional).
+- **Trying one game:** `wc/?game=fanorona&level=2&guides=1` (all optional). `&limit=5` brings the time's-up card after 5 seconds.
 - **Adding a game:** one module in `wc/games/` (rules, goal line, origins text, levels, view; the interface is listed at the top of `app.mjs`), its styles in `wc.css`, and its name in `GAMES`. Only the picked game's module is loaded.
 - **AI:** one generic Monte Carlo tree search (`mcts.mjs`) in a Web Worker. It only knows each game's rules; a level is just a number of simulations per move (`meta.levels`). It handles dice too.
 

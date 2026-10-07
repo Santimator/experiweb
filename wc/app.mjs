@@ -4,7 +4,7 @@
 // result(s) (null, 0 = you won, 1 = mAIa won, 0.5 = draw; kept in s.w), view(root, s, ui) and trace(s, move).
 // Optional: meta.goal can be a function of the state (when your side changes per match), meta.foe replaces the
 // level lines, and meta.solo marks a puzzle with no mAIa turns (then levels are the puzzle's difficulty).
-// Testing a specific game: ?game=brandubh&level=2&guides=1
+// Testing a specific game: ?game=brandubh&level=2&guides=1 (and ?limit=5 for a 5-second time's-up card)
 
 const GAMES = ['ur', 'dobutsu', 'brandubh', 'fanorona', 'poosweeper'];
 const AI_PAUSE_MS = 700;   // mAIa never answers faster than this, so you can see what happened
@@ -23,10 +23,23 @@ const FOE = [
      "mAIa doesn't do gentle."]
 ];
 
+// After ten minutes on the page (rematches included), this card sends you back to your life. It stays on
+// reload; only its button lifts it.
+const LIMIT_MS = (+new URLSearchParams(location.search).get('limit') || 600) * 1000, OUT = 'wc-out';
+const NUDGES = [
+    'You are expected somewhere else.',
+    'Remember the meeting.',
+    'Go do something nice for your wife.',
+    'Your legs are falling asleep.',
+    'Someone may be waiting for this room.',
+    'mAIa will still be here tomorrow.',
+    'The world outside misses you.'
+];
+
 const $ = id => document.getElementById(id);
 const pick = list => list[Math.random() * list.length | 0];
 
-let session, G, worker, request = 0, visibleSince = performance.now();
+let session, G, worker, request = 0, visibleSince = performance.now(), stayMs = 0, staySince = performance.now();
 
 // ===== SESSION =====
 // Nothing is saved: close the tab and the match is gone.
@@ -57,8 +70,24 @@ function tick() {
     $('timer').textContent = (h ? h + ':' : '') + mm + ':' + ss;
 }
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) session.elapsed = elapsed();
-    else visibleSince = performance.now();
+    if (!session) return;
+    if (document.hidden) { session.elapsed = elapsed(); stayMs = stay(); }
+    else visibleSince = staySince = performance.now();
+});
+
+// ===== TIME'S UP =====
+const stay = () => stayMs + (document.hidden ? 0 : performance.now() - staySince);
+function timeUp() {
+    request++; // mAIa stops mid-thought
+    try { localStorage.setItem(OUT, '1'); } catch { }
+    $('nudge').textContent = pick(NUDGES);
+    $('out').hidden = false;
+}
+$('leave').addEventListener('click', () => {
+    try { localStorage.removeItem(OUT); } catch { }
+    // Browsers only let a page close a tab that a script opened, so this usually falls through to the lobby.
+    window.close();
+    setTimeout(() => location.replace('../'), 200);
 });
 
 // ===== PLAY =====
@@ -102,6 +131,9 @@ function render() {
 
 // ===== START =====
 async function init() {
+    let out = false;
+    try { out = localStorage.getItem(OUT) === '1'; } catch { }
+    if (out) return timeUp();
     session = fresh();
     G = await import(`./games/${session.game}.mjs`);
     $('board').className = session.game;
@@ -114,7 +146,11 @@ async function init() {
     $('origins').replaceChildren(h, ...G.meta.origins.map(text => Object.assign(document.createElement('p'), { textContent: text })));
 
     $('rematch').addEventListener('click', () => { request++; startMatch(); render(); });
-    setInterval(tick, 250);
+    const clock = setInterval(() => {
+        if (stay() < LIMIT_MS) return tick();
+        clearInterval(clock);
+        timeUp();
+    }, 250);
     render();
 }
 
