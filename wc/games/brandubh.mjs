@@ -11,6 +11,13 @@ export const meta = {
         'Tafl games were the board games of the Norse world, played from Scandinavia to Ireland centuries before chess arrived there. Brandubh, "black raven" in Old Irish, is the small Irish one.',
         'A 10th-century yew board with 7×7 holes, found in 1932 at Ballinderry, in Ireland, is usually linked to it. The rules were never written down by the people who played them: what you just played is a modern reconstruction, and reconstructions disagree on the details.',
         'It is a fight between two shapes: a small, strong group in the middle and a larger, thinner ring around it. Neither side can win by being the other.'
+    ],
+    // [lead, text] pairs, shown under the origins once the match ends.
+    trivia: [
+        ["Five against eight.", "Medieval Irish texts describe brandub with thirteen pieces, five against eight, and call the central piece the branán, the chief. That is where the modern setup comes from: a king, four defenders and eight attackers."],
+        ["An Irish board, not a Viking one.", "The Ballinderry board has a carved head at each end as a handle and Irish-style interlace on its border, which suggests it was made for an Irish owner, not a Norse one."],
+        ["Two centuries of a typo.", "The only eyewitness account of tafl rules comes from the botanist Linnaeus, who watched the Sámi play tablut in Lapland in 1732. The 1811 English translation of his diary garbled them, and for most of the next two centuries everyone played the translator's mistakes."],
+        ["A king carved from a whale.", "A 10th-century grave at Baldursheimur, in Iceland, held a whole set: 24 pieces and a small whalebone king. It is now in the National Museum of Iceland."]
     ]
 };
 

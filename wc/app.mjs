@@ -1,6 +1,6 @@
 // WC Games!: one random short game against mAIa at a random strength. No menus.
 // Each game is one module in games/ (rules + texts + view); only the picked one is loaded.
-// A game module exports: meta {name, goal, levels, origins}, start(first, level), turn(s), moves(s), play(s, move),
+// A game module exports: meta {name, goal, levels, origins, trivia}, start(first, level), turn(s), moves(s), play(s, move),
 // result(s) (null, 0 = you won, 1 = mAIa won, 0.5 = draw; kept in s.w), view(root, s, ui) and trace(s, move).
 // Optional: meta.goal can be a function of the state (when your side changes per match), meta.foe replaces the
 // level lines, and meta.solo marks a puzzle with no mAIa turns (then levels are the puzzle's difficulty).
@@ -143,7 +143,16 @@ async function init() {
     $('foe').textContent = pick((G.meta.foe ?? FOE)[session.level]);
     const h = document.createElement('h2');
     h.textContent = G.meta.name;
-    $('origins').replaceChildren(h, ...G.meta.origins.map(text => Object.assign(document.createElement('p'), { textContent: text })));
+    const facts = document.createElement('ul');
+    for (const [lead, text] of G.meta.trivia ?? []) {
+        const li = document.createElement('li'), b = document.createElement('b');
+        b.textContent = lead;
+        li.append(b, ' ' + text);
+        facts.append(li);
+    }
+    const more = Object.assign(document.createElement('h3'), { textContent: 'Worth knowing' });
+    $('origins').replaceChildren(h, ...G.meta.origins.map(text => Object.assign(document.createElement('p'), { textContent: text })),
+        ...(facts.children.length ? [more, facts] : []));
 
     $('rematch').addEventListener('click', () => { request++; startMatch(); render(); });
     const clock = setInterval(() => {

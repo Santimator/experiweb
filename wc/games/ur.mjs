@@ -12,6 +12,13 @@ export const meta = {
         'In the 1920s, Leonard Woolley dug up the Royal Cemetery of Ur, in southern Iraq, and found five boards like this one. They are about 4,500 years old, and versions of the game were played across the Middle East for well over two thousand years.',
         'Nobody wrote the rules down on the boards. They come from a Babylonian clay tablet copied by a scribe called Itti-Marduk-balāṭu in 177 BC, which Irving Finkel of the British Museum deciphered and used to rebuild the game. Remarkably, a version of it was still played by the Jewish community of Cochin, in India, until the 1950s.',
         'It is one of the oldest games we can still play, and it already had the balance good games keep chasing: the dice decide how far, you decide what it means.'
+    ],
+    // [lead, text] pairs, shown under the origins once the match ends.
+    trivia: [
+        ["The triangles are dice.", "Ur's players threw small four-cornered pyramids with two of the four tips inlaid with a white dot. Each one is a coin toss, so four of them score 0 to 4: a 2 comes up 6 times in 16, while 0 and 4 are rare (1 in 16). The Babylonian tablet, written two thousand years later, used knucklebones instead: one from a sheep and, oddly, one from an ox."],
+        ["The rules that waited a century.", "The rules tablet reached the British Museum around 1880. Its first reader took it for astronomy and bird omens, and it sat in storage for about a hundred years, until Finkel noticed the game grid on its back in the early 1980s. Part of that grid was used for telling fortunes."],
+        ["Bored guards played it too.", "A twenty-squares board is scratched between the hooves of a winged bull that guarded a gate of Sargon II's citadel at Khorsabad, around 700 BC. The sculpture is in the British Museum."],
+        ["A pharaoh packed it for eternity.", "Tutankhamun was buried with at least five game boxes: senet on one side, the game of twenty squares on the other."]
     ]
 };
 

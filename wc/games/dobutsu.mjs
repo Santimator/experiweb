@@ -10,7 +10,14 @@ export const meta = {
     origins: [
         'Not an ancient game, but one distilled from an old one. Madoka Kitao, a professional shōgi player, created it in 2008 with designer Maiko Fujita, to bring children (and anyone put off by 81 squares) into Japanese chess.',
         'What survives from shōgi is its most famous idea, centuries old: in this war, nobody really dies. They just change sides.',
-        'Twelve squares look like a toy, but computers have played this board out completely: with perfect play, the player who moves second wins. Nobody plays perfectly, which is the fun part.'
+        'Twelve squares look like a toy, but it is a whole game of shōgi folded small. Computers have played it out completely; people never will, which is the fun part.'
+    ],
+    // [lead, text] pairs, shown under the origins once the match ends.
+    trivia: [
+        ["The dots are the rulebook.", "Each tile shows the directions its animal can step, so a small child can play without reading a word. Shōgi pieces carry kanji instead; these carry drawings, on square tiles like toy blocks."],
+        ["Half a million copies.", "By 2012, four years after its release, it had sold some 500,000 copies, the best-selling shōgi game in Japan."],
+        ["Solved in an afternoon.", "In 2009 Tetsuro Tanaka, at the University of Tokyo, had a computer work through all of its roughly 99 million reachable positions. It took about five and a half hours. Result: with perfect play the second player wins, in 78 moves."],
+        ["Prisoners who change sides.", "Shōgi's drop rule is usually explained by 16th-century mercenaries, who switched lords rather than die. The story goes that after 1945 the American occupation saw it as abusing prisoners of war, and professional player Kōzō Masuda talked them out of banning the game."]
     ]
 };
 

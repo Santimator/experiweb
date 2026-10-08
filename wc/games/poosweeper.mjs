@@ -17,6 +17,13 @@ export const meta = {
         'This is Minesweeper with a change of menu. Hidden-mine games existed on early-1980s home computers (Mined-Out, 1983), but the version everyone knows was written by Robert Donner and Curt Johnson for Microsoft, sold in 1990 and bundled with Windows 3.1 in 1992. For a generation of office workers, it was the thing to do while pretending to work.',
         'Mines were never everyone\'s idea of fun: in 2001, an "International Campaign to Ban Winmine" asked for flowers instead, and Windows Vista later offered exactly that. Here, mAIa offers something else.',
         'Most of the time it is pure logic. Sometimes the numbers run out and you must guess, and you can often work out exactly how bad your odds are. In 2000, mathematician Richard Kaye proved that even telling whether a board makes sense is NP-complete, which is maths for very hard in general. In the WC, it is just hard.'
+    ],
+    // [lead, text] pairs, shown under the origins once the match ends.
+    trivia: [
+        ["Office training in disguise.", "It is widely said that Microsoft bundled Solitaire to teach drag-and-drop and Minesweeper to teach right-clicking, back when the mouse was new to most office workers. It makes a good story, but no one has produced a memo."],
+        ["xyzzy.", "Until Windows XP, typing xyzzy and then Shift+Enter turned a single pixel in the top-left corner of the screen black whenever the pointer was over a mine."],
+        ["Who did it first?", "Ian Andrew, who made Mined-Out in 1983, says Microsoft copied his game. Curt Johnson says the idea came from somewhere else, and not from Mined-Out."],
+        ["From free to subscription.", "Windows 8 dropped the game in 2012. Its replacement in the Microsoft Store came with 30-second video ads, and later with a subscription to remove them."]
     ]
 };
 
