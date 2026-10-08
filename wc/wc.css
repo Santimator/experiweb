@@ -162,6 +162,20 @@ body {
     margin-bottom: 8px;
 }
 #origins p + p { margin-top: 10px; }
+#origins h3 {
+    margin: 26px 0 10px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+#origins ul { list-style: none; }
+#origins li {
+    padding-left: 14px;
+    border-left: 2px solid rgba(232, 192, 96, 0.35);
+}
+#origins li + li { margin-top: 14px; }
+#origins li b { color: var(--text); }
 
 #back {
     margin-top: 28px;

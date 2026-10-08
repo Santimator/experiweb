@@ -11,6 +11,13 @@ export const meta = {
         'Fanorona is the national board game of Madagascar. Nobody knows exactly how old it is: it most likely grew out of alquerque, an older game known around the Mediterranean and the Arab world, played on a board half this size.',
         'A Malagasy legend tells of King Ralambo, who promised his throne to whichever son reached him first. One son could not leave a difficult game of Fanorona, and lost a kingdom. Another says that when the French invaded in 1895, Queen Ranavalona III trusted a ritual game more than her army. Both are told; neither is proven.',
         'It opens with a massacre and ends in a chase. In 2007, researchers at Maastricht University proved that with perfect play it is a draw. Nobody plays perfectly in the WC.'
+    ],
+    // [lead, text] pairs, shown under the origins once the match ends.
+    trivia: [
+        ["A consolation prize.", "Traditionally, losing earns you a vela: in the next game, the previous winner may not capture and must hand you one piece per turn until 17 have fallen. Only then does normal play resume."],
+        ["A family tree in writing.", "Its ancestor, alquerque, is first named (as qirkat) in the 10th-century Arabic Book of Songs, and its rules were first written down in 1283, in the book of games made for King Alfonso X of Castile."],
+        ["Boards that grow with you.", "Malagasy children start on fanoron-telo (3×3) and fanoron-dimy (5×5). The full 9×5 game is fanoron-tsivy."],
+        ["Still at the tavern.", "In 2026, it turned up as a tavern game in Assassin's Creed Black Flag Resynced, next to checkers and nine men's morris."]
     ]
 };
 
