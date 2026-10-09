@@ -4,9 +4,11 @@
 // result(s) (null, 0 = you won, 1 = mAIa won, 0.5 = draw; kept in s.w), view(root, s, ui) and trace(s, move).
 // Optional: meta.goal can be a function of the state (when your side changes per match), meta.foe replaces the
 // level lines, and meta.solo marks a puzzle with no mAIa turns (then levels are the puzzle's difficulty).
+// Hidden-information games export ai(s, level) (used instead of the search) and may export status(s), the
+// prompt shown on your turn.
 // Testing a specific game: ?game=brandubh&level=2&guides=1 (and ?limit=5 for a 5-second time's-up card)
 
-const GAMES = ['ur', 'dobutsu', 'brandubh', 'fanorona', 'poosweeper'];
+const GAMES = ['ur', 'dobutsu', 'brandubh', 'fanorona', 'poosweeper', 'konane', 'hasami', 'surakarta', 'puluc', 'tab', 'durak', 'koikoi', 'cuttle'];
 const AI_PAUSE_MS = 700;   // mAIa never answers faster than this, so you can see what happened
 const PASS_PAUSE_MS = 1300;
 
@@ -107,7 +109,7 @@ function next() {
             if (data.id !== request) return;
             setTimeout(() => id === request && play(data.move), Math.max(0, AI_PAUSE_MS - (performance.now() - asked)));
         };
-        worker.postMessage({ id, game: session.game, state: s, sims: G.meta.levels[session.level] });
+        worker.postMessage({ id, game: session.game, state: s, sims: G.meta.levels[session.level], level: session.level });
     } else if (!G.meta.solo && G.moves(s)[0] === '-') {
         setTimeout(() => id === request && play('-'), PASS_PAUSE_MS);
     }
@@ -119,7 +121,7 @@ function render() {
     G.view($('board'), s, { guides: session.guides, canPlay: !done && mine && !stuck, last: session.last, onMove: play });
     const r = G.result(s);
     $('status').textContent = done ? (r === 0 ? 'You win!' : r === 1 ? G.meta.lost ?? 'mAIa wins' : 'A draw')
-        : stuck ? 'Nothing to play. Passing…' : G.meta.solo ? '' : mine ? 'Your move' : 'mAIa is thinking…';
+        : stuck ? 'Nothing to play. Passing…' : G.meta.solo ? '' : mine ? G.status?.(s) ?? 'Your move' : 'mAIa is thinking…';
     $('status').className = done ? 'end' : mine ? 'you' : 'foe';
     $('board').classList.toggle('done', done);
     $('end').hidden = !done;

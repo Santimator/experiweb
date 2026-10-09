@@ -9,7 +9,7 @@ A small collection of browser games at [santiago-mj.com](https://santiago-mj.com
 | **WC Games!** | `wc/` | 1 vs AI | One random short game (~5 min) against mAIa at a random strength. One tap, no menus. |
 | **Carrom** | `carrom.html` | 2–4, or 1 vs AI | Flick the striker to pocket your pieces. |
 | **Go** | `go.html` | 2, or 1 vs AI | 9×9, 13×13 or 19×19 board, with a pass rule and scoring. |
-| **CheRPSs** | `cherpss/` | 2 (local), or 1 vs AI | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. **Unlisted** while in playtesting: no lobby card, not indexed; open it by URL. |
+| **CheRPSs** | `cherpss/` | 2 (local), or 1 vs AI | Chess where every capture becomes a real-time Rock / Scissors / Paper monster duel. |
 
 `index.html` is the lobby that links to each listed game.
 
@@ -28,10 +28,10 @@ Chess + Rock-Paper-Scissors. Normal chess moves, but a capture doesn't just happ
 
 Tap the card and you land in a random game against mAIa, the AI, at a random level (3). Move guides (legal-move highlights) are also on or off at random. No rules are explained: you get a one-line goal and learn by playing. Rematch replays the same game, level and guides. Nothing is saved: close the tab and the match is gone. After 10 minutes on the page (rematches included) a time's-up card covers it, with one button; the card survives reloads (`localStorage`) until that button is pressed. The game's origins are shown only once the match ends.
 
-- **Games:** The Royal Game of Ur, Dōbutsu shōgi, Brandubh (you get attackers or defenders at random), Fanorona, and Poosweeper (solo Minesweeper: mAIa's level is how much poo it hid).
+- **Games:** The Royal Game of Ur, Dōbutsu shōgi, Brandubh (you get attackers or defenders at random), Fanorona, Poosweeper (solo Minesweeper: mAIa's level is how much poo it hid), Kōnane, Hasami shōgi, Surakarta, Puluc, Tâb, and three card games: Durak, Koi-Koi and Cuttle.
 - **Trying one game:** `wc/?game=fanorona&level=2&guides=1` (all optional). `&limit=5` brings the time's-up card after 5 seconds.
 - **Adding a game:** one module in `wc/games/` (rules, goal line, origins text, levels, view; the interface is listed at the top of `app.mjs`), its styles in `wc.css`, and its name in `GAMES`. Only the picked game's module is loaded.
-- **AI:** one generic Monte Carlo tree search (`mcts.mjs`) in a Web Worker. It only knows each game's rules; a level is just a number of simulations per move (`meta.levels`). It handles dice too.
+- **AI:** one generic Monte Carlo tree search (`mcts.mjs`) in a Web Worker. It only knows each game's rules; a level is just a number of simulations per move (`meta.levels`). It handles dice too. Card games hide information, so they bring their own rule-based `ai()` that reads only what mAIa's seat can see; there a level is how often mAIa plays a random legal move.
 
 ## Project layout
 

@@ -20,7 +20,3 @@
 /*.mjs
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: public, max-age=3600
-
-# CheRPSs is unlisted (no lobby card) while it is being playtested.
-/cherpss/*
-  X-Robots-Tag: noindex, nofollow
