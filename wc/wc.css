@@ -82,6 +82,30 @@ body {
     color: var(--text-dim);
 }
 #status.you { color: var(--you); }
+#note {
+    min-height: 18px;
+    margin-top: -6px;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--accent);
+}
+.step {
+    position: absolute;
+    top: 1px;
+    right: 3px;
+    z-index: 2;
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 800;
+    color: #1a0a00;
+    background: #f4d58a;
+    border-radius: 7px;
+    min-width: 14px;
+    padding: 0 3px;
+    line-height: 14px;
+    text-align: center;
+}
+.ghost { position: absolute; width: 46%; height: 46%; border-radius: 50%; border: 2px dashed rgba(224, 80, 60, 0.8); }
 #status.end { font-size: 22px; letter-spacing: 0.5px; text-transform: none; color: var(--accent); }
 #board.done .ur-dice { visibility: hidden; }
 

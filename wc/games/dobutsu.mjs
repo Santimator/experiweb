@@ -183,3 +183,16 @@ export function trace(s, m) {
     if (m === '-') return [];
     return m.includes('*') ? [+m.slice(2)] : m.split('>').map(Number);
 }
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+const NAME = { [LION]: 'lion', [GIRAFFE]: 'giraffe', [ELEPHANT]: 'elephant', [CHICK]: 'chick', [HEN]: 'hen' };
+export function note(s, m, n) {
+    if (m === '-') return `${who(s)} can't move`;
+    if (m.includes('*')) { const name = NAME[HAND[m[0]]]; return `${who(s)} ${verb(s, 'drop')} ${name === 'elephant' ? 'an' : 'a'} ${name}`; }
+    const [from, to] = m.split('>').map(Number), out = [];
+    if (s.b[to]) out.push(`${who(s)} ${verb(s, 'take')} the ${NAME[kind(s.b[to])]}`);
+    if (kind(s.b[from]) === CHICK && kind(n.b[to]) === HEN) out.push('The chick grows up');
+    if (n.w === s.t && kind(s.b[from]) === LION && !s.b[to]) out.push('The lion made it across');
+    return out.join(' · ') || null;
+}

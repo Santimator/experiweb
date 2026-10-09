@@ -39,7 +39,7 @@ export function start(first) {
     for (let i = 0; i < 18; i++) b[i] = 2;            // mAIa: the top two rows
     for (let i = 27; i < SIZE; i++) b[i] = 1;         // you: the bottom two rows
     [2, 1, 2, 1, 0, 2, 1, 2, 1].forEach((v, c) => b[18 + c] = v); // the middle row alternates, centre empty
-    return { b, t: first, w: null, chain: null };
+    return { b, t: first, w: null, chain: null, gone: [] };
 }
 
 export const turn = s => s.t;
@@ -94,7 +94,7 @@ function victims(b, from, to, how, foe) {
 
 export function play(s, m) {
     const b = s.b.slice(), me = s.t, foe = 2 - me;
-    let chain = null;
+    let chain = null, gone = m === '-' ? s.gone : s.chain ? s.gone : [];
     if (m !== '-') {
         const { from, to, how } = parse(m);
         b[to] = b[from];
@@ -102,6 +102,7 @@ export function play(s, m) {
         if (how) {
             const { out, d } = victims(s.b, from, to, how, foe);
             for (const p of out) b[p] = 0;
+            gone = [...gone, ...out]; // shown as ghosts until the turn is over
             // The same piece may keep capturing, never in the same direction twice running or onto a point it visited.
             const c = { at: to, dir: dirKey(d), visited: [...(s.chain?.visited ?? [from]), to] };
             const more = [];
@@ -109,7 +110,7 @@ export function play(s, m) {
             if (more.some(x => /[AW]$/.test(x))) chain = c;
         }
     }
-    const next = { b, t: chain ? me : 1 - me, w: null, chain };
+    const next = { b, t: chain ? me : 1 - me, w: null, chain, gone };
     if (!b.includes(foe)) next.w = me;
     else if (!b.includes(me + 1)) next.w = foe - 1;
     return next;
@@ -130,6 +131,7 @@ export function view(root, s, ui) {
     }
     const movable = new Set(ms.map(m => parse(m).from));
     const last = new Set(ui.last ?? []);
+    const steps = ui.last?.length > 2 ? new Map(ui.last.map((p, i) => [p, i + 1])) : null;
 
     const board = document.createElement('div');
     board.className = 'fn-board';
@@ -142,6 +144,8 @@ export function view(root, s, ui) {
             (ui.guides && !choosing && targets.has(i) ? ' target' : '') + (pick ? ' pick' : '') +
             (ui.guides && selected === null && movable.has(i) ? ' can' : '');
         if (v) b.innerHTML = `<span class="fn-piece p${v - 1}"></span>`;
+        else if (s.gone?.includes(i)) b.innerHTML = '<span class="ghost"></span>';
+        if (steps?.has(i)) b.insertAdjacentHTML('beforeend', `<em class="step">${steps.get(i)}</em>`);
         b.addEventListener('click', () => tap(i));
         board.append(b);
     }
@@ -194,4 +198,13 @@ export function trace(s, m) {
     if (m === '-') return [];
     const { from, to } = parse(m);
     return [from, to];
+}
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    if (m === '-') return s.chain ? `${who(s)} ${verb(s, 'stop')}` : `${who(s)} can't move`;
+    const taken = s.b.filter(v => v === 2 - s.t).length - n.b.filter(v => v === 2 - s.t).length;
+    if (!taken) return null;
+    return `${taken} captured` + (n.chain ? ' … and again' : '');
 }

@@ -276,3 +276,14 @@ export function view(root, s, ui) {
 }
 
 export const trace = () => [];
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    if (m === 'koikoi') return `${who(s)} ${verb(s, 'call')} koi-koi!`;
+    if (m === 'stop') return `${who(s)} ${verb(s, 'stop')} and ${verb(s, 'score')}`;
+    if (n.results.length !== s.results.length) return null; // the hand is over; the score line says the rest
+    const had = new Set(yaku(s.caps[s.t]).map(([name]) => name));
+    const fresh = yaku(n.caps[s.t]).map(([name]) => name).filter(name => !had.has(name));
+    return fresh.length ? `${who(s)} ${verb(s, 'make')} ${fresh.join(' and ')}` : null;
+}

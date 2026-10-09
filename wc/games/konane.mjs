@@ -27,7 +27,7 @@ const OPENING = [0, 5, 30, 35, 14, 15, 20, 21];
 export function start(first) {
     const b = Array(SIZE).fill(0);
     for (let i = 0; i < SIZE; i++) b[i] = ((((i / N) | 0) + i % N) % 2 === 0 ? first : 1 - first) + 1;
-    return { b, black: first, t: first, phase: 0, hole: -1, w: null };
+    return { b, black: first, t: first, phase: 0, hole: -1, w: null, gone: [] };
 }
 
 export const turn = s => s.t;
@@ -67,7 +67,7 @@ export function moves(s) {
 
 export function play(s, m) {
     const b = s.b.slice(), me = s.t;
-    let phase = s.phase, hole = s.hole;
+    let phase = s.phase, hole = s.hole, gone = [];
     if (m[0] === 'x') {
         hole = +m.slice(1);
         b[hole] = 0;
@@ -75,11 +75,11 @@ export function play(s, m) {
     } else if (m !== '-') {
         const [from, to] = m.split('>').map(Number);
         const step = to - from > 0 ? (to - from >= N ? N : 1) : (from - to >= N ? -N : -1);
-        for (let k = 1; k < (to - from) / step; k += 2) b[from + k * step] = 0; // every other point is a jumped stone
+        for (let k = 1; k < (to - from) / step; k += 2) { b[from + k * step] = 0; gone.push(from + k * step); } // every other point is a jumped stone
         b[to] = b[from];
         b[from] = 0;
     }
-    const next = { b, black: s.black, t: 1 - me, phase, hole, w: null };
+    const next = { b, black: s.black, t: 1 - me, phase, hole, w: null, gone };
     // Whoever has no jump on their turn loses.
     if (phase === 2 && !jumps(b, 1 - me).length) next.w = me;
     return next;
@@ -95,6 +95,7 @@ export function view(root, s, ui) {
     const targets = new Map(ms.filter(m => m.startsWith(selected + '>')).map(m => [+m.split('>')[1], m]));
     const movable = new Set(ms.filter(m => m.includes('>')).map(m => +m.split('>')[0]));
     const last = new Set(ui.last ?? []);
+    const steps = ui.last?.length > 2 ? new Map(ui.last.map((p, i) => [p, i + 1])) : null;
 
     const board = document.createElement('div');
     board.className = 'kn-board';
@@ -105,6 +106,8 @@ export function view(root, s, ui) {
             (ui.guides && (targets.has(i) || lifts.has(i)) ? ' target' : '') +
             (ui.guides && selected === null && movable.has(i) ? ' can' : '');
         if (v) b.innerHTML = `<span class="kn-stone ${v - 1 === s.black ? 'dark' : 'light'}"></span>`;
+        else if (s.gone?.includes(i)) b.innerHTML = '<span class="ghost"></span>';
+        if (steps?.has(i)) b.insertAdjacentHTML('beforeend', `<em class="step">${steps.get(i)}</em>`);
         b.addEventListener('click', () => {
             if (lifts.has(i)) { ui.onMove('x' + i); return; }
             if (targets.has(i)) { const m = targets.get(i); selected = null; ui.onMove(m); return; }
@@ -120,5 +123,18 @@ export const status = s => s.phase < 2 ? 'Lift one of your stones' : 'Your move'
 
 export function trace(s, m) {
     if (m === '-') return [];
-    return m[0] === 'x' ? [+m.slice(1)] : m.split('>').map(Number);
+    if (m[0] === 'x') return [+m.slice(1)];
+    // Every landing point of a multiple jump, in order.
+    const [from, to] = m.split('>').map(Number), step = (to - from) / Math.abs(to - from) * (Math.abs(to - from) >= N ? N : 1);
+    const out = [from];
+    for (let p = from + 2 * step; ; p += 2 * step) { out.push(p); if (p === to) break; }
+    return out;
+}
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    if (m[0] === 'x') return `${who(s)} ${verb(s, 'lift')} a stone`;
+    const k = n.gone.length;
+    return k > 1 ? `${['', '', 'Double', 'Triple', 'Quadruple'][k] ?? k + '×'} jump!` : null;
 }

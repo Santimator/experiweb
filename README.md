@@ -30,6 +30,7 @@ Tap the card and you land in a random game against mAIa, the AI, at a random lev
 
 - **Games:** The Royal Game of Ur, Dōbutsu shōgi, Brandubh (you get attackers or defenders at random), Fanorona, Poosweeper (solo Minesweeper: mAIa's level is how much poo it hid), Kōnane, Hasami shōgi, Surakarta, Puluc, Tâb, and three card games: Durak, Koi-Koi and Cuttle.
 - **Trying one game:** `wc/?game=fanorona&level=2&guides=1` (all optional). `&limit=5` brings the time's-up card after 5 seconds.
+- **Following along:** with no rules on screen, a short note says what just happened ("mAIa goes again", "3 captured"), a turn of several moves is numbered on the board, captured pieces leave a ghost until the turn ends, and mAIa slows down when it chains moves.
 - **Adding a game:** one module in `wc/games/` (rules, goal line, origins text, levels, view; the interface is listed at the top of `app.mjs`), its styles in `wc.css`, and its name in `GAMES`. Only the picked game's module is loaded.
 - **AI:** one generic Monte Carlo tree search (`mcts.mjs`) in a Web Worker. It only knows each game's rules; a level is just a number of simulations per move (`meta.levels`). It handles dice too. Card games hide information, so they bring their own rule-based `ai()` that reads only what mAIa's seat can see; there a level is how often mAIa plays a random legal move.
 

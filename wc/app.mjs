@@ -4,12 +4,15 @@
 // result(s) (null, 0 = you won, 1 = mAIa won, 0.5 = draw; kept in s.w), view(root, s, ui) and trace(s, move).
 // Optional: meta.goal can be a function of the state (when your side changes per match), meta.foe replaces the
 // level lines, and meta.solo marks a puzzle with no mAIa turns (then levels are the puzzle's difficulty).
+// Optional note(s, move, next): a few words on what just happened ("mAIa goes again"), never a rule.
 // Hidden-information games export ai(s, level) (used instead of the search) and may export status(s), the
 // prompt shown on your turn.
 // Testing a specific game: ?game=brandubh&level=2&guides=1 (and ?limit=5 for a 5-second time's-up card)
 
 const GAMES = ['ur', 'dobutsu', 'brandubh', 'fanorona', 'poosweeper', 'konane', 'hasami', 'surakarta', 'puluc', 'tab', 'durak', 'koikoi', 'cuttle'];
-const AI_PAUSE_MS = 700;   // mAIa never answers faster than this, so you can see what happened
+const AI_PAUSE_MS = 700;     // mAIa never answers faster than this, so you can see what happened
+const CHAIN_PAUSE_MS = 1100; // ...and goes slower when it keeps moving in the same turn (chains, extra throws)
+const NOTE_PAUSE_MS = 1500;  // ...and slower still after something worth a note
 const PASS_PAUSE_MS = 1300;
 
 // What mAIa's level feels like, in mAIa's voice. Index = level; any line of a level says the same thing.
@@ -56,6 +59,8 @@ function fresh() {
 function startMatch() {
     session.s = G.start(Math.random() < 0.5 ? 0 : 1, session.level);
     session.last = null;
+    session.trailWho = null;
+    session.note = null;
     session.elapsed = 0;
     visibleSince = performance.now();
 }
@@ -94,11 +99,18 @@ $('leave').addEventListener('click', () => {
 
 // ===== PLAY =====
 function play(move) {
-    session.last = G.trace(session.s, move);
-    session.s = G.play(session.s, move);
+    const before = session.s, who = G.turn(before), path = G.trace(before, move);
+    // A turn can take several moves; its trail keeps growing so the views can number the steps.
+    const joins = session.trailWho === who && path.length && session.last?.length && same(session.last[session.last.length - 1], path[0]);
+    session.last = session.trailWho === who ? [...(session.last ?? []), ...path.slice(joins ? 1 : 0)] : path;
+    session.trailWho = who;
+    session.s = G.play(before, move);
+    session.note = G.note?.(before, move, session.s) ?? null;
     if (over()) session.elapsed = session.elapsed + performance.now() - visibleSince;
     render();
 }
+
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 function next() {
     if (over()) return;
@@ -107,7 +119,8 @@ function next() {
         const asked = performance.now();
         worker.onmessage = ({ data }) => {
             if (data.id !== request) return;
-            setTimeout(() => id === request && play(data.move), Math.max(0, AI_PAUSE_MS - (performance.now() - asked)));
+            const pause = session.note ? NOTE_PAUSE_MS : session.trailWho === 1 ? CHAIN_PAUSE_MS : AI_PAUSE_MS;
+            setTimeout(() => id === request && play(data.move), Math.max(0, pause - (performance.now() - asked)));
         };
         worker.postMessage({ id, game: session.game, state: s, sims: G.meta.levels[session.level], level: session.level });
     } else if (!G.meta.solo && G.moves(s)[0] === '-') {
@@ -123,6 +136,7 @@ function render() {
     $('status').textContent = done ? (r === 0 ? 'You win!' : r === 1 ? G.meta.lost ?? 'mAIa wins' : 'A draw')
         : stuck ? 'Nothing to play. Passing…' : G.meta.solo ? '' : mine ? G.status?.(s) ?? 'Your move' : 'mAIa is thinking…';
     $('status').className = done ? 'end' : mine ? 'you' : 'foe';
+    $('note').textContent = session.note ?? '';
     $('board').classList.toggle('done', done);
     $('end').hidden = !done;
     $('origins').hidden = !done; // the story is the reward, not a manual

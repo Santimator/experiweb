@@ -104,6 +104,8 @@ export function view(root, s, ui) {
         }
     }
     const lastCells = new Set((ui.last ?? []).map(([pos, who]) => cellKey(pos, who)));
+    // A turn of several moves (extra throws) is numbered step by step.
+    const steps = ui.last?.length > 2 ? new Map(ui.last.map(([pos, who], i) => [cellKey(pos, who), i + 1])) : null;
 
     const board = document.createElement('div');
     board.className = 'ur-board';
@@ -120,6 +122,7 @@ export function view(root, s, ui) {
                 b.innerHTML = `<span class="ur-piece p${here.who}"><i></i><i></i><i></i><i></i><i></i></span>` + (here.n > 1 ? `<b class="count">${here.n}</b>` : '');
             }
             if (tray && !here) b.classList.add('empty');
+            if (steps?.has(k)) b.insertAdjacentHTML('beforeend', `<em class="step">${steps.get(k)}</em>`);
             if (ui.guides && movable.has(k) && selected === null) b.classList.add('can');
             if (selected !== null && cellKey(selected, 0) === k) b.classList.add('sel');
             if (ui.guides && targets.has(k)) b.classList.add('target');
@@ -146,4 +149,17 @@ export function trace(s, m) {
     if (m === '-') return [];
     const [from, to] = m.split('>').map(Number);
     return [[from, s.t], [to, s.t]];
+}
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+// What just happened, in a few words.
+export function note(s, m, n) {
+    if (m === '-') return s.r === 0 ? `${who(s)} rolled a zero` : `${who(s)} can't move`;
+    const to = +m.split('>')[1], out = [];
+    const waiting = p => p.filter(x => x === 0).length;
+    if (waiting(n.p[1 - s.t]) > waiting(s.p[1 - s.t])) out.push('Knocked back to the start!');
+    if (to === HOME) out.push('One more piece home');
+    if (n.w === null && n.t === s.t) out.push(`${who(s)} ${verb(s, 'go')} again`);
+    return out.join(' · ') || null;
 }

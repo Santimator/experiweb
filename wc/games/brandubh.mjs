@@ -145,3 +145,14 @@ export function view(root, s, ui) {
 export function trace(s, m) {
     return m === '-' ? [] : m.split('>').map(Number);
 }
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    if (m === '-') return `${who(s)} can't move`;
+    const to = +m.split('>')[1];
+    if (n.w === s.t && n.b[to] === KING && CORNERS.has(to)) return 'The king escapes!';
+    if (n.w === s.t) return 'The king is caught!';
+    const taken = s.b.filter(Boolean).length - n.b.filter(Boolean).length;
+    return taken ? (taken > 1 ? `${taken} captured` : 'Captured!') : null;
+}
