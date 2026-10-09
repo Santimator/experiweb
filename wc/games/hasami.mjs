@@ -108,3 +108,10 @@ export function view(root, s, ui) {
 export function trace(s, m) {
     return m === '-' ? [] : m.split('>').map(Number);
 }
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    const k = n.taken[s.t] - s.taken[s.t];
+    return k ? `Sandwiched! ${k} taken` : null;
+}

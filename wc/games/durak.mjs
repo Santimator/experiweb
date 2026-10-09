@@ -173,3 +173,11 @@ export function view(root, s, ui) {
 }
 
 export const trace = () => [];
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    if (m === 'take') return `${who(s)} ${verb(s, 'take')} the cards`;
+    if (m === 'done') return s.phase === 'throw' ? 'Cards handed over' : 'All beaten off';
+    return null;
+}

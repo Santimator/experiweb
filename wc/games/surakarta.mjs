@@ -149,3 +149,9 @@ function lines() {
 export function trace(s, m) {
     return m === '-' ? [] : m.replace('X', '').split('>').map(Number);
 }
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m) {
+    return m.endsWith('X') ? 'Round the loop: captured!' : null;
+}

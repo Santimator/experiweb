@@ -4,7 +4,7 @@
 // 'three' (pick from the scrap), 'seven' (play the card the 7 turned over).
 // Moves: draw, pass, pt<c>, sc<c>:<t>, u<c>[:<t>], pm<c>, j<c>:<t>, k<c> (counter), ok, take<c>, scrap7.
 
-import { deck, shuffle, rank, suit, cardHtml, backHtml, pick } from '../cards.mjs';
+import { deck, shuffle, rank, suit, cardHtml, backHtml, pick, label } from '../cards.mjs';
 
 export const meta = {
     name: 'Cuttle',
@@ -338,3 +338,21 @@ export function view(root, s, ui) {
 }
 
 export const trace = () => [];
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    if (m === 'draw') return `${who(s)} ${verb(s, 'draw')}`;
+    if (m === 'pass') return `${who(s)} ${verb(s, 'pass')}`;
+    if (m === 'ok') return s.pending.counters.length % 2 ? 'Countered!' : null;
+    if (m[0] === 'k') return `${who(s)} ${verb(s, 'counter')} with a 2`;
+    if (m.startsWith('take')) return `${who(s)} ${verb(s, 'take')} the ${label(+m.slice(4))} from the scrap`;
+    if (m === 'scrap7') return `The ${label(s.seven)} goes to the scrap`;
+    const [head, target] = m.split(':'), kind = head.match(/^[a-z]+/)[0], c = +head.slice(kind.length);
+    const out = kind === 'pt' ? `${who(s)} ${verb(s, 'play')} the ${label(c)} for points`
+        : kind === 'sc' ? `${who(s)} ${verb(s, 'scuttle')} the ${label(+target)}`
+        : kind === 'j' ? `${who(s)} ${verb(s, 'take')} the ${label(+target)} with a jack`
+        : kind === 'pm' ? `${who(s)} ${verb(s, 'place')} the ${label(c)}`
+        : `${who(s)} ${verb(s, 'use')} the ${label(c)}` + (target ? ` on the ${label(+target)}` : '');
+    return n.phase === 'seven' && n.t === s.t ? `${out} · turns over the ${label(n.seven)}` : out;
+}

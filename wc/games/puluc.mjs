@@ -129,3 +129,18 @@ export function trace(s, m) {
     const [from, to] = m.split('>');
     return [from === 'h' ? (s.t === 0 ? 'h' : 'off') : from, to === 'off' ? (s.t === 0 ? 'off' : 'h') : to];
 }
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    if (m === '-') return `${who(s)} can't move`;
+    const [from, to] = m.split('>'), me = s.t;
+    const stack = from === 'h' ? [me] : s.track[+from];
+    if (to === 'off') {
+        const killed = stack.filter(p => p !== me).length;
+        return killed ? `Home with ${killed} prisoner${killed > 1 ? 's' : ''}: gone for good` : 'Back home, ready to go again';
+    }
+    const there = s.track[+to];
+    if (!there) return null;
+    return there.includes(me) ? 'Prisoners freed!' : 'Prisoner taken!';
+}

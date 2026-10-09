@@ -122,6 +122,7 @@ export function view(root, s, ui) {
     const canSplit = ms.some(m => parseInt(m) === selected && m.includes('.'));
     const movable = new Set(ms.map(m => parseInt(m)));
     const last = new Set(ui.last ?? []);
+    const steps = ui.last?.length > 2 ? new Map(ui.last.map((p, i) => [p, i + 1])) : null;
 
     const board = document.createElement('div');
     board.className = 'tb-board';
@@ -135,6 +136,7 @@ export function view(root, s, ui) {
             b.innerHTML = `<span class="tb-piece p${cell.o}${asleep ? ' asleep' : ''}${been ? ' been' : ''}"></span>` +
                 (cell.p.length > 1 ? `<b class="count">${cell.p.length}</b>` : '');
         }
+        if (steps?.has(i)) b.insertAdjacentHTML('beforeend', `<em class="step">${steps.get(i)}</em>`);
         b.addEventListener('click', () => {
             if (targets.has(i)) { const m = targets.get(i); selected = null; single = false; ui.onMove(m); return; }
             // Tapping a selected stack again picks up just one piece (on a tâb); once more lets go.
@@ -161,4 +163,19 @@ export function view(root, s, ui) {
 
 export function trace(s, m) {
     return m === '-' ? [] : m.split(/[>.]/).map(Number);
+}
+
+const who = s => s.t === 0 ? 'You' : 'mAIa';
+const verb = (s, v) => s.t === 0 ? v : /(o|s|sh|ch|x)$/.test(v) ? v + 'es' : v + 's';
+export function note(s, m, n) {
+    const out = [];
+    if (m === '-') out.push(legal(s).length ? `${who(s)} ${verb(s, 'let')} the ${s.r} go` : `Nothing to do with a ${s.r}`);
+    else {
+        const [from, to] = m.split(/[>.]/).map(Number);
+        if (!(s.b[from].p[0] & ACTIVE)) out.push('A piece wakes up');
+        if (s.b[to] && s.b[to].o !== s.t) out.push(`${s.b[to].p.length} captured`);
+        if (frame(s.t, to) < C && frame(s.t, from) >= C) out.push('Into the enemy row');
+    }
+    if (n.w === null && n.t === s.t) out.push(`${who(s)} ${verb(s, 'throw')} again`);
+    return out.join(' · ') || null;
 }
